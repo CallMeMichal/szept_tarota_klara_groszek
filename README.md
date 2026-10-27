@@ -19,8 +19,13 @@ frontend/                        # React + Vite, /api proxowane na backend
 
 ## Uruchomienie
 
+Wymagany Docker (PostgreSQL lokalnie i w testach).
+
 ```sh
-# backend: http://localhost:5292
+# PostgreSQL 17 na localhost:5433 (dane w wolumenie postgres-data)
+docker compose up -d
+
+# backend: http://localhost:5292; w Development sam stosuje migracje przy starcie
 dotnet run --project backend/src/SzeptTarota.Api --launch-profile http
 
 # frontend: http://localhost:5173
@@ -29,9 +34,37 @@ npm install
 npm run dev
 ```
 
+Connection string jest w `ConnectionStrings:Database` (`appsettings.Development.json`). Poza Development migracje stosuje się ręcznie albo przez `Database:ApplyMigrationsOnStartup=true`.
+
+## Migracje (EF Core)
+
+```sh
+cd backend
+dotnet tool restore
+dotnet ef migrations add <Nazwa> --project src/SzeptTarota.Infrastructure --startup-project src/SzeptTarota.Api --output-dir Persistence/Migrations
+dotnet ef database update --project src/SzeptTarota.Infrastructure --startup-project src/SzeptTarota.Api
+```
+
 ## Testy
 
 ```sh
-dotnet test backend
+dotnet test backend      # wymaga uruchomionego Dockera
 cd frontend && npm run lint && npm run build
 ```
+
+Testy integracyjne wysyłają zapytania HTTP do API uruchomionego przez `ApiFactory` (`WebApplicationFactory`). Fabryka startuje PostgreSQL w Testcontainers (jeden kontener na kolekcję `Api`) i stosuje migracje. Klasy testów oznaczamy `[Collection(ApiCollection.Name)]` i przyjmują `ApiFactory` w konstruktorze.
+
+### Czas
+
+Aplikacja bierze czas wyłącznie z wstrzykniętego `TimeProvider`, nigdy z `DateTime.Now` / `DateTimeOffset.UtcNow`. W testach to `FakeTimeProvider` dostępny jako `factory.Time` (`SetUtcNow`, `Advance`).
+
+### Fake'i adapterów zewnętrznych
+
+Każda zewnętrzna usługa (płatności, kalendarz, maile, pliki) jest za interfejsem z Application; czas to systemowy `TimeProvider`. W testach podmieniamy je zawsze tak samo (pierwszy przykład w `ApiFactory`: `TimeProvider` → `FakeTimeProvider`):
+
+1. Fake w `tests/SzeptTarota.Api.Tests/Fakes/`, implementuje interfejs i trzyma stan w pamięci (np. lista wysłanych maili).
+2. Publiczna właściwość w `ApiFactory`, np. `public FakeEmailSender Emails { get; } = new();`.
+3. Rejestracja w `ConfigureTestServices` w `ApiFactory.ConfigureWebHost`: `services.ReplaceWithFake<IEmailSender>(Emails);`.
+4. Test ustawia i sprawdza fake przez `factory.Emails`.
+
+Fake'i są współdzielone w kolekcji, więc test ustawia stan, którego potrzebuje, zamiast liczyć na stan po poprzednim teście.
