@@ -40,7 +40,7 @@ Connection string jest w `ConnectionStrings:Database` (`appsettings.Development.
 
 ## Podgląd na GitHub Pages
 
-Workflow `.github/workflows/deploy-frontend-pages.yml` przy każdym pushu na `main` (zmiany w `frontend/`) lintuje, buduje i wdraża frontend na GitHub Pages pod `/<repo>/` (`BASE_PATH`). Kopia `index.html` jako `404.html` sprawia, że wejście wprost na podstronę i odświeżenie działa. Pages to tylko podgląd testowy, bez backendu. W ustawieniach repo trzeba raz włączyć Pages ze źródłem „GitHub Actions”.
+Workflow `.github/workflows/deploy-frontend-pages.yml` przy każdym pushu na `main` lintuje, buduje i wdraża frontend na GitHub Pages pod `/<repo>/` (`BASE_PATH`). Kopia `index.html` jako `404.html` sprawia, że wejście wprost na podstronę i odświeżenie działa. Pages to tylko podgląd testowy, bez backendu: https://callmemichal.github.io/szept_tarota_klara_groszek/
 
 ## Migracje (EF Core)
 
