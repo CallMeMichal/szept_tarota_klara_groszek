@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using SzeptTarota.Api.Cart;
 using SzeptTarota.Api.Catalog;
 using SzeptTarota.Api.Contact;
 using SzeptTarota.Application;
@@ -49,6 +50,7 @@ api.MapHealthChecks("/health", new HealthCheckOptions
     .WithName("Health");
 
 api.MapProductEndpoints();
+api.MapCartEndpoints();
 api.MapContactEndpoints();
 
 app.Run();

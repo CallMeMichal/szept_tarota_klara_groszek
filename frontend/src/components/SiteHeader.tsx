@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import moonStar from '../assets/home/moon-star.svg'
+import { cartPath, useCart } from '../cart.ts'
 import { homeNavItems, homeSectionPath } from '../homeSections.ts'
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const cartCount = useCart().length
 
   return (
     <header className="site-header">
@@ -42,6 +44,16 @@ export function SiteHeader() {
             ))}
           </ul>
         </nav>
+
+        <Link to={cartPath} className="cart-link" onClick={() => setMenuOpen(false)}>
+          Koszyk
+          {cartCount > 0 && (
+            <span className="cart-link__count">
+              {cartCount}
+              <span className="visually-hidden"> {cartCount === 1 ? 'pozycja' : 'pozycji'}</span>
+            </span>
+          )}
+        </Link>
       </div>
     </header>
   )

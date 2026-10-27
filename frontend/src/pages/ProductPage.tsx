@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useParams } from 'react-router'
 import { ProductImage } from '../components/ProductImage.tsx'
+import { addEbookToCart, cartPath, useCart } from '../cart.ts'
 import {
   categoryLabels,
   deliveryNotes,
@@ -79,6 +80,7 @@ function ProductContent({ product }: { product: ProductDetails }) {
             )}
           </dl>
           <p className="product-page__kind-note">{deliveryNotes[product.kind]}</p>
+          {product.kind === 'ebook' && <AddEbookToCart product={product} />}
         </div>
       </header>
 
@@ -88,6 +90,27 @@ function ProductContent({ product }: { product: ProductDetails }) {
         ))}
       </div>
     </>
+  )
+}
+
+function AddEbookToCart({ product }: { product: ProductDetails }) {
+  const inCart = useCart().some((item) => item.slug === product.slug)
+
+  // Ebook może być w Koszyku najwyżej raz, więc po dodaniu zamiast przycisku
+  // prowadzimy do Koszyka.
+  return inCart ? (
+    <p className="product-page__cart">
+      <span>Ten Ebook jest już w Koszyku.</span>
+      <Link className="button button--ghost" to={cartPath}>
+        Przejdź do Koszyka
+      </Link>
+    </p>
+  ) : (
+    <p className="product-page__cart">
+      <button type="button" className="button button--primary" onClick={() => addEbookToCart(product)}>
+        Dodaj do koszyka
+      </button>
+    </p>
   )
 }
 
