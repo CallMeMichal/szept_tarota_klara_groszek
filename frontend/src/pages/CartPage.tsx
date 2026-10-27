@@ -7,6 +7,7 @@ import {
   type CartItem,
   type CartValidation,
 } from '../cart.ts'
+import { ProductImage } from '../components/ProductImage.tsx'
 import { formatPrice, kindLabels, productPath } from '../catalog.ts'
 import { homeSectionPath, homeSections } from '../homeSections.ts'
 
@@ -78,6 +79,7 @@ function CheckedCart({ cart }: { cart: CartValidation }) {
       <ul className="cart-lines">
         {cart.items.map((line, index) => (
           <li key={index} className="cart-line">
+            <CartLineImage slug={line.slug} linked={line.name !== null} />
             <div className="cart-line__product">
               {line.name ? (
                 <Link to={productPath(line.slug)}>{line.name}</Link>
@@ -133,6 +135,7 @@ function UncheckedCart({ items, checking }: { items: CartItem[]; checking: boole
       <ul className="cart-lines">
         {items.map((item, index) => (
           <li key={index} className="cart-line">
+            <CartLineImage slug={item.slug} linked />
             <div className="cart-line__product">
               <Link to={productPath(item.slug)}>{item.name}</Link>
             </div>
@@ -153,6 +156,19 @@ function UncheckedCart({ items, checking }: { items: CartItem[]; checking: boole
           : 'Nie udało się sprawdzić aktualnych cen. Pokazuję ceny z chwili dodania; sprawdzę je ponownie przed płatnością.'}
       </p>
     </>
+  )
+}
+
+/** Miniatura grafiki Produktu; prowadzi na jego podstronę, o ile Produkt jest w ofercie. */
+function CartLineImage({ slug, linked }: { slug: string; linked: boolean }) {
+  const image = <ProductImage className="cart-line__image" slug={slug} />
+  // Nazwa obok już jest linkiem, więc miniatura nie trafia drugi raz do kolejności Tab.
+  return linked ? (
+    <Link to={productPath(slug)} tabIndex={-1} aria-hidden="true">
+      {image}
+    </Link>
+  ) : (
+    image
   )
 }
 
