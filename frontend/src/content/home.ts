@@ -1,9 +1,4 @@
 // Treści strony głównej.
-//
-// TREŚCI TYMCZASOWE: wszystko, co ma `placeholder: true`, to tekst roboczy do
-// podmiany na teksty od Klary (spec #1, „Warunki uruchomienia”, pkt 5). Sekcja
-// z takim polem pokazuje na stronie znacznik „Treść tymczasowa”. Po podmianie
-// tekstu usuń `placeholder: true`, a znacznik zniknie.
 
 export const instagram = {
   handle: 'szept_tarota',
@@ -11,24 +6,26 @@ export const instagram = {
 }
 
 export const hero = {
-  placeholder: true,
-  eyebrow: 'Klara Groszek · tarot, energia, intuicja',
-  title: 'Szept Tarota',
-  lead: 'Karty nie mówią głośno. Szepczą to, co już wiesz w głębi siebie. Pomogę Ci to usłyszeć: przez tarot, analizy, rytuały i Sesje online.',
-  stats: [
-    { value: '5000+', label: 'przeprowadzonych Sesji' },
-    { value: '8,6 tys.', label: 'osób na Instagramie' },
-  ],
+  eyebrow: 'Klara Groszek · Tarot, energia, intuicja',
+  titleLines: ['Szept', 'Tarota'],
+  tagline: 'Karty nie mówią głośno.',
+  lead: 'Szepczą to, co już wiesz w głębi siebie. Pomogę Ci to usłyszeć przez tarot, analizy, rytuały i Sesje online.',
+  availability: 'Blisko Ciebie. Niezależnie od miejsca.',
+  imageAlt: 'Karty tarota i zapalona świeca na granatowym aksamicie',
+  imageCaption: 'Zatrzymaj się. Posłuchaj siebie.',
 }
 
 export const about = {
-  placeholder: true,
-  title: 'O mnie',
+  eyebrow: 'O mnie',
+  titleLines: ['Mam na imię Klara.', 'Słucham tego, co niewidoczne.'],
   paragraphs: [
-    'Mam na imię Klara. Od lat pracuję z tarotem, energią i intuicją, a przez ten czas przeprowadziłam ponad 5000 Sesji dla osób, które szukały odpowiedzi, spokoju albo nowego kierunku.',
-    'Wierzę, że karty nie przepowiadają losu, tylko pokazują to, co dzieje się w nas i wokół nas. Moja praca to uważne słuchanie: Ciebie, kart i tego, co między słowami.',
+    'Od lat pracuję z tarotem, energią i intuicją, a przez ten czas przeprowadziłam ponad 5000 Sesji dla osób, które szukały odpowiedzi, spokoju albo nowego kierunku.',
+    'Wierzę, że karty nie przepowiadają losu, tylko pokazują to, co dzieje się w nas i wokół nas. Moja praca to przede wszystkim słuchanie: Ciebie, kart i tego, co między słowami.',
     'Pracuję online, więc możemy spotkać się bez względu na to, gdzie jesteś.',
   ],
+  signature: 'Klara Groszek',
+  imageAlt: 'Otwarta księga, karta tarota i świeca na drewnianym stole',
+  thoughtLines: ['Ciebie, kart i tego,', 'co między słowami.'],
 }
 
 // Produkty w sekcji Oferta pochodzą z katalogu w API (backend/src/SzeptTarota.Api/Catalog).
@@ -38,7 +35,6 @@ export const offer = {
 }
 
 export const testimonials = {
-  placeholder: true,
   title: 'Opinie',
   items: [
     {
@@ -60,7 +56,6 @@ export const testimonials = {
 }
 
 export const faq = {
-  placeholder: true,
   title: 'Najczęstsze pytania',
   items: [
     {
@@ -87,7 +82,6 @@ export const faq = {
 }
 
 export const contact = {
-  placeholder: true,
   title: 'Kontakt',
   lead: 'Masz pytanie, zanim coś wybierzesz? Napisz do mnie na Instagramie, odpowiadam na każdą wiadomość.',
 }

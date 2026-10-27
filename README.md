@@ -34,7 +34,7 @@ npm install
 npm run dev
 ```
 
-Treści strony głównej są w `frontend/src/content/home.ts`. Teksty z `placeholder: true` są tymczasowe (na stronie mają znacznik „Treść tymczasowa”) i czekają na teksty od Klary.
+Treści strony głównej są w `frontend/src/content/home.ts`.
 
 ### Katalog Produktów
 

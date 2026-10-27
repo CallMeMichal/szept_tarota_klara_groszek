@@ -10,6 +10,19 @@
   --gold-600: #a8823c;
   --ivory: #f5efe2;
 
+  /* Paleta z projektu w Figmie (strona startowa). */
+  --ink-950: #0a1023;
+  --ink-900: #101a33;
+  --sand-500: #c7ab72;
+  --sand-400: #e2ca96;
+  --cream: #f3eee4;
+  --mist: #b8bbc6;
+  --hairline: rgba(255, 255, 255, 0.13);
+  --paper: #eae3d6;
+  --ink-700: #20283a;
+  --slate: #626675;
+  --sand-border: rgba(199, 171, 114, 0.3);
+
   --text: #d8d3e6;
   --text-muted: #a7a3bd;
   --text-h: var(--ivory);
@@ -18,12 +31,15 @@
   --surface: rgba(19, 28, 68, 0.6);
 
   --serif: 'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia, serif;
-  --sans: 'Jost Variable', 'Jost', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Inter Variable', 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
 
-  --header-height: 4rem;
+  --header-height: 100px;
+
+  @media (max-width: 760px) {
+    --header-height: 4rem;
+  }
 
   font: 17px/1.65 var(--sans);
-  font-weight: 350;
   color-scheme: dark;
   color: var(--text);
   background: var(--night-950);

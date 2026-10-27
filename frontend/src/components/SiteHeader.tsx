@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
+import moonStar from '../assets/home/moon-star.svg'
 import { homeSectionPath, homeSections } from '../homeSections.ts'
-import { Moon } from './Moon.tsx'
 
 const navItems = [
   { id: homeSections.about, label: 'O mnie' },
@@ -18,7 +18,7 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="site-header__inner">
         <Link to="/" className="brand" onClick={() => setMenuOpen(false)}>
-          <Moon className="brand__moon" />
+          <img className="brand__moon" src={moonStar} width={32} height={32} alt="" />
           <span>Szept Tarota</span>
         </Link>
 

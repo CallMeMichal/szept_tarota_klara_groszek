@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
+import arrowGhost from '../assets/home/arrow-up-right-ghost.svg'
+import aboutRitual from '../assets/home/about-ritual.jpg'
+import arrowPrimary from '../assets/home/arrow-up-right-primary.svg'
+import globeIcon from '../assets/home/globe.svg'
+import heroTarot from '../assets/home/hero-tarot.jpg'
+import intuitionSeal from '../assets/home/intuition-seal.svg'
+import orbit from '../assets/home/orbit.svg'
 import { HomeSection } from '../components/HomeSection.tsx'
 import { OfferCatalog } from '../components/OfferCatalog.tsx'
-import { Moon } from '../components/Moon.tsx'
-import { PlaceholderNote } from '../components/PlaceholderNote.tsx'
 import {
   about,
   contact,
@@ -68,44 +73,75 @@ export function HomePage({ section }: HomePageProps) {
   return (
     <>
       <section id={homeSections.start} className="hero" aria-labelledby="start-title">
-        <Moon className="hero__moon" />
-        <p className="eyebrow">{hero.eyebrow}</p>
-        <h1 id="start-title">{hero.title}</h1>
-        <p className="hero__lead">{hero.lead}</p>
-        <div className="hero__actions">
-          <Link className="button button--primary" to={homeSectionPath(homeSections.offer)}>
-            Zobacz ofertę
-          </Link>
-          <Link className="button button--ghost" to={homeSectionPath(homeSections.about)}>
-            Poznaj mnie
-          </Link>
-        </div>
-        <dl className="hero__stats">
-          {hero.stats.map((stat) => (
-            <div key={stat.label}>
-              <dt>{stat.label}</dt>
-              <dd>{stat.value}</dd>
+        <div className="hero__inner">
+          <div className="hero__intro">
+            <p className="hero__eyebrow">{hero.eyebrow}</p>
+            <h1 id="start-title">
+              {hero.titleLines.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </h1>
+            <p className="hero__tagline">{hero.tagline}</p>
+            <p className="hero__lead">{hero.lead}</p>
+            <div className="hero__actions">
+              <Link className="button button--primary" to={homeSectionPath(homeSections.offer)}>
+                Zobacz ofertę
+                <img src={arrowPrimary} width={16} height={16} alt="" />
+              </Link>
+              <Link className="button button--ghost" to={homeSectionPath(homeSections.about)}>
+                Poznaj mnie
+                <img src={arrowGhost} width={16} height={16} alt="" />
+              </Link>
             </div>
-          ))}
-        </dl>
-        <PlaceholderNote show={hero.placeholder} />
+            <p className="hero__availability">
+              <img src={globeIcon} width={15} height={15} alt="" />
+              {hero.availability}
+            </p>
+          </div>
+
+          <figure className="hero__visual">
+            <img className="hero__orbit" src={orbit} width={640} height={640} alt="" />
+            <div className="hero__arch">
+              <img src={heroTarot} width={1024} height={1024} alt={hero.imageAlt} />
+            </div>
+            <img className="hero__seal" src={intuitionSeal} width={116} height={116} alt="" />
+            <figcaption className="hero__caption">{hero.imageCaption}</figcaption>
+          </figure>
+        </div>
       </section>
 
-      <HomeSection
-        id={homeSections.about}
-        title={about.title}
-        placeholder={about.placeholder}
-        className="about"
-      >
-        <div className="about__portrait" aria-hidden="true">
-          <Moon className="about__moon" />
+      <section id={homeSections.about} className="about" aria-labelledby="o-mnie-title">
+        <div className="about__inner">
+          <figure className="about__portrait">
+            <img src={aboutRitual} width={928} height={1152} alt={about.imageAlt} />
+            <blockquote className="about__thought">
+              <span className="about__thought-symbol" aria-hidden="true">
+                ✧
+              </span>
+              <p>
+                {about.thoughtLines.map((line) => (
+                  <span key={line}>{line}</span>
+                ))}
+              </p>
+            </blockquote>
+          </figure>
+
+          <div className="about__story">
+            <p className="about__eyebrow">{about.eyebrow}</p>
+            <h2 id="o-mnie-title">
+              {about.titleLines.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </h2>
+            {about.paragraphs.map((paragraph) => (
+              <p key={paragraph} className="about__text">
+                {paragraph}
+              </p>
+            ))}
+            <p className="about__signature">{about.signature}</p>
+          </div>
         </div>
-        <div className="about__text">
-          {about.paragraphs.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
-          ))}
-        </div>
-      </HomeSection>
+      </section>
 
       <HomeSection id={homeSections.offer} title={offer.title}>
         <p className="section__lead">{offer.lead}</p>
@@ -115,7 +151,6 @@ export function HomePage({ section }: HomePageProps) {
       <HomeSection
         id={homeSections.testimonials}
         title={testimonials.title}
-        placeholder={testimonials.placeholder}
       >
         <ul className="testimonials">
           {testimonials.items.map((item) => (
@@ -129,7 +164,7 @@ export function HomePage({ section }: HomePageProps) {
         </ul>
       </HomeSection>
 
-      <HomeSection id={homeSections.faq} title={faq.title} placeholder={faq.placeholder}>
+      <HomeSection id={homeSections.faq} title={faq.title}>
         <div className="faq">
           {faq.items.map((item) => (
             <details key={item.question}>
@@ -140,7 +175,7 @@ export function HomePage({ section }: HomePageProps) {
         </div>
       </HomeSection>
 
-      <HomeSection id={homeSections.contact} title={contact.title} placeholder={contact.placeholder}>
+      <HomeSection id={homeSections.contact} title={contact.title}>
         <p className="section__lead">{contact.lead}</p>
         <p>
           <a
