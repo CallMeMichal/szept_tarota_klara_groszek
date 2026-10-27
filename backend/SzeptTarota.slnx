@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SzeptTarota.Api/SzeptTarota.Api.csproj" />
+    <Project Path="src/SzeptTarota.Application/SzeptTarota.Application.csproj" />
+    <Project Path="src/SzeptTarota.Domain/SzeptTarota.Domain.csproj" />
+    <Project Path="src/SzeptTarota.Infrastructure/SzeptTarota.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SzeptTarota.Api.Tests/SzeptTarota.Api.Tests.csproj" />
+  </Folder>
+</Solution>
