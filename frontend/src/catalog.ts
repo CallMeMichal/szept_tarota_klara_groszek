@@ -1,4 +1,5 @@
-// Katalog Produktów z API (/api/products). Źródłem prawdy o cenach i
+// Katalog Produktów z API (/api/products; na GitHub Pages ze statycznych plików
+// wygenerowanych z tego samego products.json). Źródłem prawdy o cenach i
 // Produktach jest backend; tu są tylko typy odpowiedzi i polskie etykiety.
 
 export type ProductKind = 'ebook' | 'service' | 'session'

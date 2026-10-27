@@ -6,10 +6,16 @@ export type ApiState<T> =
   | { status: 'not-found' }
   | { status: 'error' }
 
-/**
- * Pobiera JSON z API. Na podglądzie na GitHub Pages nie ma backendu,
- * więc stan 'error' jest tam normalny i strona musi go pokazać.
- */
+// Podgląd na GitHub Pages nie ma backendu: build dokłada tam katalog jako
+// statyczne pliki JSON (vite.config.ts), a zapytania idą do nich.
+const staticCatalog = import.meta.env.VITE_STATIC_CATALOG === 'true'
+
+/** Adres odpowiedzi API: /api/products/x albo statyczny plik <base>api/products/x.json. */
+function apiUrl(path: string) {
+  return staticCatalog ? `${import.meta.env.BASE_URL}${path.slice(1)}.json` : path
+}
+
+/** Pobiera JSON z API. */
 export function useApi<T>(path: string): ApiState<T> {
   const [state, setState] = useState<{ path: string; result: ApiState<T> }>({
     path,
@@ -19,12 +25,13 @@ export function useApi<T>(path: string): ApiState<T> {
   useEffect(() => {
     const controller = new AbortController()
 
-    fetch(path, { signal: controller.signal, headers: { Accept: 'application/json' } })
+    fetch(apiUrl(path), { signal: controller.signal, headers: { Accept: 'application/json' } })
       .then(async (response): Promise<ApiState<T>> => {
         // 404 z HTML-em to nie odpowiedź API, tylko strona hostingu bez
-        // backendu (404.html na GitHub Pages), czyli API jest niedostępne.
+        // backendu, czyli API jest niedostępne. Przy statycznym katalogu
+        // brak pliku znaczy po prostu, że nie ma takiego Produktu.
         const isHtml = response.headers.get('Content-Type')?.includes('text/html')
-        if (response.status === 404 && !isHtml) return { status: 'not-found' }
+        if (response.status === 404 && (staticCatalog || !isHtml)) return { status: 'not-found' }
         if (!response.ok) return { status: 'error' }
         return { status: 'ok', data: (await response.json()) as T }
       })

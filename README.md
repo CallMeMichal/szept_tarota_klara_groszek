@@ -44,7 +44,7 @@ Connection string jest w `ConnectionStrings:Database` (`appsettings.Development.
 
 ## Podgląd na GitHub Pages
 
-Workflow `.github/workflows/deploy-frontend-pages.yml` przy każdym pushu na `main` lintuje, buduje i wdraża frontend na GitHub Pages pod `/<repo>/` (`BASE_PATH`). Kopia `index.html` jako `404.html` sprawia, że wejście wprost na podstronę i odświeżenie działa. Pages to tylko podgląd testowy, bez backendu: https://callmemichal.github.io/szept_tarota_klara_groszek/
+Workflow `.github/workflows/deploy-frontend-pages.yml` przy każdym pushu na `main` lintuje, buduje i wdraża frontend na GitHub Pages pod `/<repo>/` (`BASE_PATH`). Kopia `index.html` jako `404.html` sprawia, że wejście wprost na podstronę i odświeżenie działa. Pages to tylko podgląd testowy, bez backendu: przy `VITE_STATIC_CATALOG=true` build dokłada katalog Produktów z `products.json` jako statyczne pliki `api/products*.json`, więc Oferta i podstrony Produktów działają, ale nic nie da się kupić. https://callmemichal.github.io/szept_tarota_klara_groszek/
 
 ## Migracje (EF Core)
 
