@@ -8,8 +8,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -18,6 +16,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
     defaults:
       run:
         working-directory: frontend
@@ -51,6 +52,11 @@ jobs:
 
   deploy:
     needs: build
+    # Ręczne uruchomienie z innej gałęzi nie wdraża.
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      pages: write
+      id-token: write
     runs-on: ubuntu-latest
     environment:
       name: github-pages

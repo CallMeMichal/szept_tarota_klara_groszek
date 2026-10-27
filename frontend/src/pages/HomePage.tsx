@@ -17,7 +17,9 @@ export function HomePage() {
   // Przeglądarka szuka kotwicy z adresu, zanim React wyrenderuje sekcje,
   // więc wejście na /#o-mnie przewijamy ręcznie po pierwszym renderze.
   useEffect(() => {
-    const sectionId = decodeURIComponent(window.location.hash.slice(1))
+    // Bez decodeURIComponent: identyfikatory sekcji są ASCII, a błędny
+    // adres (np. #%E0) rzucałby wyjątek i wyłączał całą stronę.
+    const sectionId = window.location.hash.slice(1)
     if (sectionId) document.getElementById(sectionId)?.scrollIntoView()
   }, [])
 
