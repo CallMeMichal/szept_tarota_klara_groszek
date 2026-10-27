@@ -5,6 +5,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using SzeptTarota.Api.Cart;
 using SzeptTarota.Api.Catalog;
 using SzeptTarota.Api.Contact;
+using SzeptTarota.Api.Orders;
 using SzeptTarota.Application;
 using SzeptTarota.Infrastructure;
 
@@ -15,6 +16,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddProductCatalog(catalogDirectory);
+builder.Services.AddEbookStorage(
+    builder.Configuration["EbookStorage:Directory"] ?? Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
 builder.Services.AddContactRateLimiting(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
@@ -52,6 +55,7 @@ api.MapHealthChecks("/health", new HealthCheckOptions
 api.MapProductEndpoints();
 api.MapCartEndpoints();
 api.MapContactEndpoints();
+api.MapOrderEndpoints();
 
 app.Run();
 

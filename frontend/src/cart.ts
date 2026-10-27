@@ -113,3 +113,68 @@ export async function validateCart(items: CartItem[], signal: AbortSignal): Prom
   }
   return (await response.json()) as CartValidation
 }
+
+/** Opróżnia Koszyk, np. po opłaconym Zamówieniu. */
+export function clearCart() {
+  writeItems([])
+}
+
+// POST /api/checkout i GET /api/orders/{id} (OrderEndpoints.cs).
+
+export type CheckoutForm = {
+  /** Pozycje z cenami, które Klient widzi teraz w Koszyku. */
+  items: { slug: string; price: number }[]
+  email: string
+  billing: { name: string; street: string; postalCode: string; city: string; taxId: string | null }
+  acceptedConsents: string[]
+}
+
+export type CheckoutResult =
+  | { status: 'started'; redirectUrl: string }
+  /** Ceny albo pozycje zmieniły się od ostatniego sprawdzenia Koszyka. */
+  | { status: 'cart-changed'; cart: CartValidation }
+  /** Błędy pól formularza, np. `email`, `billing.postalCode`, `acceptedConsents`. */
+  | { status: 'invalid'; errors: Record<string, string[]> }
+  | { status: 'unavailable' }
+  | { status: 'error' }
+
+export async function startCheckout(form: CheckoutForm): Promise<CheckoutResult> {
+  try {
+    const response = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(form),
+    })
+    const isJson = response.headers.get('Content-Type')?.includes('json')
+    if (response.ok && isJson) {
+      const { redirectUrl } = (await response.json()) as { redirectUrl: string }
+      return { status: 'started', redirectUrl }
+    }
+    if (response.status === 409 && isJson) {
+      return { status: 'cart-changed', cart: (await response.json()) as CartValidation }
+    }
+    if (response.status === 400 && isJson) {
+      const { errors } = (await response.json()) as { errors?: Record<string, string[]> }
+      return { status: 'invalid', errors: errors ?? {} }
+    }
+    if (response.status === 503) return { status: 'unavailable' }
+    return { status: 'error' }
+  } catch {
+    return { status: 'error' }
+  }
+}
+
+export type OrderStatus = 'pendingPayment' | 'paid' | 'expired'
+
+export type OrderSummary = {
+  id: string
+  status: OrderStatus
+  items: { slug: string; name: string; kind: ProductKind; price: number }[]
+  total: number
+}
+
+/** Strona, na którą Stripe odsyła Klienta po płatności (Shop:SiteUrl + /zamowienie/<id>). */
+export const orderPath = (id: string) => `/zamowienie/${id}`
+
+/** Adres powrotu po przerwanej płatności to Koszyk z tym parametrem. */
+export const interruptedPaymentParam = 'platnosc'

@@ -2,10 +2,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SzeptTarota.Application;
 using SzeptTarota.Application.Catalog;
 using SzeptTarota.Application.Contact;
+using SzeptTarota.Application.Ebooks;
+using SzeptTarota.Application.Email;
+using SzeptTarota.Application.Orders;
+using SzeptTarota.Application.Payments;
 using SzeptTarota.Infrastructure.Catalog;
 using SzeptTarota.Infrastructure.Contact;
+using SzeptTarota.Infrastructure.Ebooks;
+using SzeptTarota.Infrastructure.Email;
+using SzeptTarota.Infrastructure.Orders;
+using SzeptTarota.Infrastructure.Payments;
 using SzeptTarota.Infrastructure.Persistence;
 
 namespace SzeptTarota.Infrastructure;
@@ -23,11 +32,21 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString);
         });
 
+        services.AddScoped<IOrderStore, EfOrderStore>();
+
         services.AddHealthChecks()
             .AddDbContextCheck<SzeptTarotaDbContext>("database");
 
         services.Configure<ContactOptions>(configuration.GetSection(ContactOptions.SectionName));
         services.AddSingleton<IContactMailer, SmtpContactMailer>();
+
+        services.Configure<ShopOptions>(configuration.GetSection(ShopOptions.SectionName));
+
+        services.Configure<StripeOptions>(configuration.GetSection(StripeOptions.SectionName));
+        services.AddSingleton<IPaymentGateway, StripePaymentGateway>();
+
+        services.Configure<ResendOptions>(configuration.GetSection(ResendOptions.SectionName));
+        services.AddHttpClient<IEmailSender, ResendEmailSender>(http => http.BaseAddress = ResendEmailSender.BaseAddress);
 
         return services;
     }
@@ -36,6 +55,13 @@ public static class DependencyInjection
     public static IServiceCollection AddProductCatalog(this IServiceCollection services, string catalogDirectory)
     {
         services.AddSingleton<IProductCatalog>(JsonProductCatalog.Load(catalogDirectory));
+        return services;
+    }
+
+    /// <summary>Pliki Ebooków z katalogu <paramref name="ebookDirectory"/> na dysku serwera.</summary>
+    public static IServiceCollection AddEbookStorage(this IServiceCollection services, string ebookDirectory)
+    {
+        services.AddSingleton<IEbookStorage>(new FileSystemEbookStorage(ebookDirectory));
         return services;
     }
 

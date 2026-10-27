@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Time.Testing;
 using SzeptTarota.Api.Tests.Fakes;
 using SzeptTarota.Application.Contact;
+using SzeptTarota.Application.Ebooks;
+using SzeptTarota.Application.Email;
+using SzeptTarota.Application.Payments;
 using Testcontainers.PostgreSql;
 
 namespace SzeptTarota.Api.Tests.Infrastructure;
@@ -21,6 +24,16 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public FakeContactMailer ContactMailer { get; } = new();
 
+    public FakePaymentGateway Payments { get; } = new();
+
+    public FakeEmailSender Emails { get; } = new();
+
+    public FakeEbookStorage Ebooks { get; } = new();
+
+    public const string SiteUrl = "https://szept-tarota.test";
+
+    public const string KlaraEmail = "klara@szept-tarota.test";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -29,11 +42,16 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         // Wszystkie zapytania z testów idą z jednego „adresu”, więc limit formularza
         // kontaktowego podnosimy; test limitu ustawia własny.
         builder.UseSetting("Contact:RateLimit:PermitLimit", "1000");
+        builder.UseSetting("Shop:SiteUrl", SiteUrl);
+        builder.UseSetting("Shop:KlaraEmail", KlaraEmail);
 
         builder.ConfigureTestServices(services =>
         {
             services.ReplaceWithFake<TimeProvider>(Time);
             services.ReplaceWithFake<IContactMailer>(ContactMailer);
+            services.ReplaceWithFake<IPaymentGateway>(Payments);
+            services.ReplaceWithFake<IEmailSender>(Emails);
+            services.ReplaceWithFake<IEbookStorage>(Ebooks);
         });
     }
 

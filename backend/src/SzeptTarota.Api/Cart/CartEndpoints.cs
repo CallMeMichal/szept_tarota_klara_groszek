@@ -7,7 +7,7 @@ namespace SzeptTarota.Api.Cart;
 public static class CartEndpoints
 {
     /// <summary>Więcej pozycji nie ma sensu w jednym Zamówieniu; limit chroni przed zapytaniami-olbrzymami.</summary>
-    private const int MaxItems = 50;
+    internal const int MaxItems = 50;
 
     public static IEndpointRouteBuilder MapCartEndpoints(this IEndpointRouteBuilder api)
     {

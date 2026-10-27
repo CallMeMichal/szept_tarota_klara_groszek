@@ -1,12 +1,13 @@
 import { Route, Routes } from 'react-router'
 import './App.css'
-import { cartPath } from './cart.ts'
+import { cartPath, orderPath } from './cart.ts'
 import { SiteFooter } from './components/SiteFooter.tsx'
 import { SiteHeader } from './components/SiteHeader.tsx'
 import { homeSections, linkedSectionIds } from './homeSections.ts'
 import { CartPage } from './pages/CartPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { NotFoundPage } from './pages/NotFoundPage.tsx'
+import { OrderPage } from './pages/OrderPage.tsx'
 import { ProductPage } from './pages/ProductPage.tsx'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           ))}
           <Route path="oferta/:slug" element={<ProductPage />} />
           <Route path={cartPath} element={<CartPage />} />
+          <Route path={orderPath(':id')} element={<OrderPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

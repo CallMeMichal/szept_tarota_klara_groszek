@@ -483,3 +483,6 @@ $RECYCLE.BIN/
 
 # Playwright MCP artifacts
 .playwright-mcp/
+
+# Pliki Ebooków (płatna treść) leżą na serwerze, nie w repo
+backend/src/SzeptTarota.Api/App_Data/
