@@ -44,14 +44,23 @@ public sealed class SmtpContactMailer(IOptions<ContactOptions> options) : IConta
         email.From.Add(new MailboxAddress("Szept Tarota", sender));
         email.To.Add(MailboxAddress.Parse(contact.RecipientEmail));
         email.ReplyTo.Add(new MailboxAddress(message.Name, message.Email));
-        email.Subject = $"Wiadomość ze strony od {message.Name}";
+        // Stały temat: dane z formularza trafiają tylko do treści, nie do nagłówków.
+        email.Subject = "Wiadomość ze strony Szept Tarota";
         email.Body = new TextPart("plain")
         {
             Text = $"Od: {message.Name} <{message.Email}>\n\n{message.Message}",
         };
 
+        // Tylko szyfrowane połączenie: 465 to TLS od razu, inne porty STARTTLS.
+        // Bez szyfrowania nie wysyłamy hasła ani wiadomości.
+        var security = contact.Smtp.Port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
         using var smtp = new SmtpClient();
-        await smtp.ConnectAsync(contact.Smtp.Host, contact.Smtp.Port, SecureSocketOptions.Auto, cancellationToken);
+        await smtp.ConnectAsync(contact.Smtp.Host, contact.Smtp.Port, security, cancellationToken);
+        if (!smtp.IsSecure)
+        {
+            throw new InvalidOperationException("Połączenie z serwerem poczty nie jest szyfrowane.");
+        }
+
         if (!string.IsNullOrEmpty(contact.Smtp.Username))
         {
             await smtp.AuthenticateAsync(contact.Smtp.Username, contact.Smtp.Password ?? "", cancellationToken);

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Hosting;
 using SzeptTarota.Api.Tests.Infrastructure;
 using SzeptTarota.Application.Contact;
 
@@ -51,6 +52,38 @@ public class ContactEndpointTests : IDisposable
         var problem = await response.Content.ReadFromJsonAsync<ValidationProblemResponse>();
         Assert.Equal(["email", "message", "name"], problem!.Errors.Keys.Order());
         Assert.Empty(_factory.ContactMailer.Sent);
+    }
+
+    [Fact]
+    public async Task Rejects_a_name_with_line_breaks_that_could_inject_mail_headers()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/contact", new
+        {
+            name = "Anna" + (char)13 + (char)10 + "Bcc: ofiara@example.com",
+            email = "anna@example.com",
+            message = "Dzień dobry!",
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Empty(_factory.ContactMailer.Sent);
+    }
+
+    [Fact]
+    public async Task Limits_how_many_messages_one_address_can_send()
+    {
+        await using var strictLimit = _factory.WithWebHostBuilder(builder =>
+            builder.UseSetting("Contact:RateLimit:PermitLimit", "1"));
+        var client = strictLimit.CreateClient();
+        var message = new { name = "Anna", email = "anna@example.com", message = "Dzień dobry!" };
+
+        var first = await client.PostAsJsonAsync("/api/contact", message);
+        var second = await client.PostAsJsonAsync("/api/contact", message);
+
+        Assert.Equal(HttpStatusCode.NoContent, first.StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
+        Assert.Single(_factory.ContactMailer.Sent);
     }
 
     [Fact]

@@ -1,5 +1,7 @@
 using System.Net.Mail;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.RateLimiting;
 using SzeptTarota.Application.Contact;
 
 namespace SzeptTarota.Api.Contact;
@@ -9,6 +11,25 @@ public static class ContactEndpoints
     private const int MaxNameLength = 100;
     private const int MaxEmailLength = 200;
     private const int MaxMessageLength = 5000;
+    private const string RateLimitPolicy = "contact";
+
+    /// <summary>
+    /// Limit wiadomości z jednego adresu IP, żeby formularz nie służył do zasypywania skrzynki.
+    /// Domyślnie 5 na 10 minut; zmienia się w <c>Contact:RateLimit:PermitLimit</c> i <c>WindowMinutes</c>.
+    /// </summary>
+    public static IServiceCollection AddContactRateLimiting(this IServiceCollection services, IConfiguration configuration)
+    {
+        var permitLimit = configuration.GetValue("Contact:RateLimit:PermitLimit", 5);
+        var window = TimeSpan.FromMinutes(configuration.GetValue("Contact:RateLimit:WindowMinutes", 10));
+
+        return services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.AddPolicy(RateLimitPolicy, context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = permitLimit, Window = window }));
+        });
+    }
 
     public static IEndpointRouteBuilder MapContactEndpoints(this IEndpointRouteBuilder api)
     {
@@ -45,6 +66,7 @@ public static class ContactEndpoints
 
                 return TypedResults.NoContent();
             })
+            .RequireRateLimiting(RateLimitPolicy)
             .WithName("SendContactMessage");
 
         return api;
@@ -54,7 +76,9 @@ public static class ContactEndpoints
     {
         var errors = new Dictionary<string, string[]>();
 
-        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Trim().Length > MaxNameLength)
+        // Imię trafia do nagłówka Reply-To, więc bez znaków sterujących (np. nowych linii).
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Trim().Length > MaxNameLength
+            || request.Name.Any(char.IsControl))
         {
             errors["name"] = [$"Podaj imię (do {MaxNameLength} znaków)."];
         }

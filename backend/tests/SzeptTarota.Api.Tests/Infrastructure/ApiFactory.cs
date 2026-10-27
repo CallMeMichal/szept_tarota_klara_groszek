@@ -26,6 +26,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Database", _database.GetConnectionString());
         builder.UseSetting("Database:ApplyMigrationsOnStartup", "true");
+        // Wszystkie zapytania z testów idą z jednego „adresu”, więc limit formularza
+        // kontaktowego podnosimy; test limitu ustawia własny.
+        builder.UseSetting("Contact:RateLimit:PermitLimit", "1000");
 
         builder.ConfigureTestServices(services =>
         {
