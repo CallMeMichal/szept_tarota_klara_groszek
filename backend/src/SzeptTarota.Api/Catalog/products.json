@@ -1,6 +1,71 @@
 {
   "products": [
     {
+      "slug": "tarot-dla-poczatkujacych",
+      "kind": "ebook",
+      "category": "ebooks",
+      "name": "Tarot dla początkujących",
+      "tagline": "Pierwsze kroki z kartami",
+      "description": [
+        {
+          "type": "paragraph",
+          "text": "Przykładowy Ebook: treść i cenę uzupełni Klara."
+        },
+        {
+          "type": "paragraph",
+          "text": "Poznaj znaczenie 78 kart, naucz się prostych rozkładów i zacznij czytać Tarot dla siebie."
+        },
+        {
+          "type": "list",
+          "items": [
+            "znaczenia Arkanów Wielkich i Małych",
+            "trzy proste rozkłady na co dzień",
+            "jak zadawać kartom dobre pytania"
+          ]
+        }
+      ],
+      "price": 4900,
+      "ebookFileKey": "ebooks/tarot-dla-poczatkujacych.pdf"
+    },
+    {
+      "slug": "rytualy-ksiezyca",
+      "kind": "ebook",
+      "category": "ebooks",
+      "name": "Rytuały Księżyca",
+      "tagline": "Pracuj z energią każdej fazy",
+      "description": [
+        {
+          "type": "paragraph",
+          "text": "Przykładowy Ebook: treść i cenę uzupełni Klara."
+        },
+        {
+          "type": "paragraph",
+          "text": "Proste rytuały na nów i pełnię, które pomogą Ci stawiać intencje i oczyszczać to, co już Ci nie służy."
+        }
+      ],
+      "price": 3900,
+      "ebookFileKey": "ebooks/rytualy-ksiezyca.pdf"
+    },
+    {
+      "slug": "dziennik-intuicji",
+      "kind": "ebook",
+      "category": "ebooks",
+      "name": "Dziennik Intuicji",
+      "tagline": "30 dni wsłuchiwania się w siebie",
+      "description": [
+        {
+          "type": "paragraph",
+          "text": "Przykładowy Ebook: treść i cenę uzupełni Klara."
+        },
+        {
+          "type": "paragraph",
+          "text": "Codzienne pytania i krótkie ćwiczenia z jedną kartą, które pomogą Ci odróżnić głos intuicji od głosu lęku."
+        }
+      ],
+      "price": 2900,
+      "ebookFileKey": "ebooks/dziennik-intuicji.pdf"
+    },
+    {
       "slug": "kronika-duszy",
       "kind": "service",
       "category": "analyses",

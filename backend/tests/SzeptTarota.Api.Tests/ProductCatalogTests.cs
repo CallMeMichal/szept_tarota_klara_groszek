@@ -8,13 +8,14 @@ namespace SzeptTarota.Api.Tests;
 public class ProductCatalogTests(ApiFactory factory)
 {
     [Fact]
-    public async Task List_returns_every_Product_imported_from_naffy()
+    public async Task List_returns_every_Product_imported_from_naffy_and_the_sample_Ebooks()
     {
         var client = factory.CreateClient();
 
         var products = await client.GetFromJsonAsync<List<ProductResponse>>("/api/products");
 
-        Assert.Equal(14, products!.Count);
+        Assert.Equal(17, products!.Count);
+        Assert.Equal(3, products.Count(p => p.Kind == "ebook"));
         var mapaDuszy = Assert.Single(products, p => p.Slug == "mapa-duszy");
         Assert.Equal("Mapa Duszy", mapaDuszy.Name);
         Assert.Equal("Odkryj swoją prawdziwą ścieżkę życia", mapaDuszy.Tagline);
