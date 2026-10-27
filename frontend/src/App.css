@@ -172,19 +172,18 @@
   }
 }
 
-/* Koszyk w prawej kolumnie nagłówka; na telefonie obok przycisku menu. */
+/* Ikona Koszyka w prawej kolumnie nagłówka; na telefonie obok przycisku menu.
+   Liczba pozycji siedzi w prawym dolnym rogu ikony. */
 .cart-link {
+  position: relative;
   justify-self: end;
   display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  padding: 6px;
   color: var(--cream);
-  font-size: 13px;
-  text-decoration: none;
 
   @media (max-width: 760px) {
     order: 1;
-    margin: 0 16px 0 auto;
+    margin: 0 12px 0 auto;
   }
 }
 
@@ -192,13 +191,21 @@
   color: var(--sand-400);
 }
 
+.cart-link__icon {
+  display: block;
+}
+
 .cart-link__count {
-  min-width: 22px;
-  padding: 2px 7px;
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
   color: var(--ink-950);
   background: var(--sand-400);
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   line-height: 18px;
   text-align: center;

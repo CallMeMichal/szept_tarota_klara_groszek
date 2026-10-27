@@ -46,15 +46,40 @@ export function SiteHeader() {
         </nav>
 
         <Link to={cartPath} className="cart-link" onClick={() => setMenuOpen(false)}>
-          Koszyk
+          <svg
+            className="cart-link__icon"
+            viewBox="0 0 24 24"
+            width={26}
+            height={26}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L20.5 8H6.2" />
+            <circle cx="9.5" cy="19.5" r="1.25" />
+            <circle cx="17" cy="19.5" r="1.25" />
+          </svg>
+          <span className="visually-hidden">Koszyk</span>
           {cartCount > 0 && (
             <span className="cart-link__count">
               {cartCount}
-              <span className="visually-hidden"> {cartCount === 1 ? 'pozycja' : 'pozycji'}</span>
+              <span className="visually-hidden"> {positionsLabel(cartCount)}</span>
             </span>
           )}
         </Link>
       </div>
     </header>
   )
+}
+
+/** „1 pozycja”, „2 pozycje”, „5 pozycji”: odmiana dla czytników ekranu. */
+function positionsLabel(count: number) {
+  const lastDigit = count % 10
+  const lastTwoDigits = count % 100
+  if (count === 1) return 'pozycja'
+  if (lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14)) return 'pozycje'
+  return 'pozycji'
 }
