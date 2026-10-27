@@ -87,7 +87,7 @@ export function OfferCatalog({ onLoaded }: OfferCatalogProps) {
 function ProductCard({ product }: { product: ProductSummary }) {
   return (
     <Link className="product-card" to={productPath(product.slug)}>
-      <ProductImage className="product-card__image" imageUrl={product.imageUrl} />
+      <ProductImage className="product-card__image" slug={product.slug} />
       <div className="product-card__body">
         <p className="product-card__kind">{kindLabels[product.kind]}</p>
         <h4>{product.name}</h4>

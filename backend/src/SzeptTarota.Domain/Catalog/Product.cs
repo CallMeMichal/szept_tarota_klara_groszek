@@ -8,7 +8,6 @@ public sealed record Product(
     string Name,
     string Tagline,
     IReadOnlyList<DescriptionBlock> Description,
-    string? Image,
     int Price,
     int? DurationMinutes,
     IReadOnlyList<FormField> Form,

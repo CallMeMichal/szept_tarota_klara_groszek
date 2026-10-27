@@ -7,7 +7,7 @@ using SzeptTarota.Domain.Catalog;
 namespace SzeptTarota.Infrastructure.Catalog;
 
 /// <summary>
-/// Katalog Produktów z pliku <c>products.json</c> w katalogu treści; grafiki są we frontendzie, tu tylko ich nazwy plików.
+/// Katalog Produktów z pliku <c>products.json</c> w katalogu treści.
 /// Błędny katalog zatrzymuje start aplikacji, zamiast pokazać Klientom niepełną ofertę.
 /// </summary>
 public sealed partial class JsonProductCatalog : IProductCatalog
@@ -74,11 +74,6 @@ public sealed partial class JsonProductCatalog : IProductCatalog
             {
                 yield return $"{at} pole formularza '{duplicate.Key}' występuje {duplicate.Count()} razy";
             }
-
-            if (product.Image is not null && Path.GetFileName(product.Image) != product.Image)
-            {
-                yield return $"{at} grafika '{product.Image}' ma być samą nazwą pliku z frontend/public/products";
-            }
         }
     }
 
@@ -95,12 +90,11 @@ public sealed partial class JsonProductCatalog : IProductCatalog
         string Tagline,
         IReadOnlyList<DescriptionBlock> Description,
         int Price,
-        string? Image = null,
         int? DurationMinutes = null,
         IReadOnlyList<FormField>? Form = null,
         string? EbookFileKey = null)
     {
         public Product ToProduct() =>
-            new(Slug, Kind, Category, Name, Tagline, Description, Image, Price, DurationMinutes, Form ?? [], EbookFileKey);
+            new(Slug, Kind, Category, Name, Tagline, Description, Price, DurationMinutes, Form ?? [], EbookFileKey);
     }
 }

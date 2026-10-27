@@ -13,7 +13,6 @@ export type ProductSummary = {
   tagline: string
   /** Cena w groszach. */
   price: number
-  imageUrl: string | null
   durationMinutes: number | null
 }
 

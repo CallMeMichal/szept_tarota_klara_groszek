@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Runtime.CompilerServices;
 using SzeptTarota.Api.Tests.Infrastructure;
 
 namespace SzeptTarota.Api.Tests;
@@ -22,33 +21,6 @@ public class ProductCatalogTests(ApiFactory factory)
         Assert.Equal(34900, mapaDuszy.Price);
         Assert.Equal("service", mapaDuszy.Kind);
         Assert.Equal("analyses", mapaDuszy.Category);
-    }
-
-    [Fact]
-    public async Task Product_images_point_to_files_served_by_the_frontend()
-    {
-        var client = factory.CreateClient();
-        var products = await client.GetFromJsonAsync<List<ProductResponse>>("/api/products");
-        var frontendPublic = Path.Combine(RepositoryRoot(), "frontend", "public");
-
-        var mapaDuszy = Assert.Single(products!, p => p.Slug == "mapa-duszy");
-        Assert.Equal("/products/mapa-duszy.webp", mapaDuszy.ImageUrl);
-        Assert.All(products!.Where(p => p.ImageUrl is not null), product =>
-            Assert.True(
-                File.Exists(Path.Combine(frontendPublic, product.ImageUrl!.TrimStart('/'))),
-                $"Brak grafiki {product.ImageUrl} w frontend/public dla '{product.Slug}'."));
-    }
-
-    // Od pliku źródłowego testu, nie od katalogu builda, który może leżeć poza repo.
-    private static string RepositoryRoot([CallerFilePath] string testFile = "")
-    {
-        var directory = new FileInfo(testFile).Directory;
-        while (directory is not null && !Directory.Exists(Path.Combine(directory.FullName, "frontend")))
-        {
-            directory = directory.Parent;
-        }
-
-        return directory?.FullName ?? throw new DirectoryNotFoundException("Nie znaleziono katalogu repo z frontend/.");
     }
 
     [Fact]
@@ -99,7 +71,6 @@ public class ProductCatalogTests(ApiFactory factory)
         string Name,
         string Tagline,
         int Price,
-        string? ImageUrl,
         int? DurationMinutes,
         List<DescriptionBlockResponse> Description,
         List<FormFieldResponse> Form);
@@ -115,6 +86,5 @@ public class ProductCatalogTests(ApiFactory factory)
         string Name,
         string Tagline,
         int Price,
-        string? ImageUrl,
         int? DurationMinutes);
 }

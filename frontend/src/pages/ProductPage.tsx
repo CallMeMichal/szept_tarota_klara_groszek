@@ -60,7 +60,7 @@ function ProductContent({ product }: { product: ProductDetails }) {
   return (
     <>
       <header className="product-page__header">
-        <ProductImage className="product-page__image" imageUrl={product.imageUrl} />
+        <ProductImage className="product-page__image" slug={product.slug} />
         <div className="product-page__summary">
           <p className="eyebrow">{categoryLabels[product.category]}</p>
           <h1>{product.name}</h1>

@@ -38,7 +38,7 @@ Treści strony głównej są w `frontend/src/content/home.ts`. Teksty z `placeho
 
 ### Katalog Produktów
 
-Produkty są treścią w repo: `backend/src/SzeptTarota.Api/Catalog/products.json`. Grafiki leżą na razie we frontendzie, w `frontend/public/products/` (adres `/products/<plik>`), żeby było je widać na podglądzie na GitHub Pages; w katalogu jest tylko nazwa pliku, a test sprawdza, że każdy plik istnieje. Backend wczytuje katalog przy starcie i nie wystartuje, jeśli jest błędny (np. powtórzony slug, Sesja bez długości). Slug jest adresem podstrony (`/oferta/<slug>`), więc raz opublikowanego nie zmieniamy. Ceny są w groszach. Startowa wersja to import oferty z naffy.io.
+Produkty są treścią w repo: `backend/src/SzeptTarota.Api/Catalog/products.json`. Grafiki Produktów są tylko we frontendzie: `frontend/src/assets/products/<slug>.webp`; Produkt bez pliku dostaje księżyc marki. Backend wczytuje katalog przy starcie i nie wystartuje, jeśli jest błędny (np. powtórzony slug, Sesja bez długości). Slug jest adresem podstrony (`/oferta/<slug>`), więc raz opublikowanego nie zmieniamy. Ceny są w groszach. Startowa wersja to import oferty z naffy.io.
 
 Connection string jest w `ConnectionStrings:Database` (`appsettings.Development.json`). Poza Development migracje stosuje się ręcznie albo przez `Database:ApplyMigrationsOnStartup=true`.
 

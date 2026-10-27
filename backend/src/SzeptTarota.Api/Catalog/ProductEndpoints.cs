@@ -32,7 +32,6 @@ public sealed record ProductSummary(
     string Name,
     string Tagline,
     int Price,
-    string? ImageUrl,
     int? DurationMinutes)
 {
     public static ProductSummary From(Product product) => new(
@@ -42,7 +41,6 @@ public sealed record ProductSummary(
         product.Name,
         product.Tagline,
         product.Price,
-        CatalogImages.UrlFor(product.Image),
         product.DurationMinutes);
 }
 
@@ -54,7 +52,6 @@ public sealed record ProductDetails(
     string Name,
     string Tagline,
     int Price,
-    string? ImageUrl,
     int? DurationMinutes,
     IReadOnlyList<DescriptionBlock> Description,
     IReadOnlyList<FormField> Form)
@@ -66,7 +63,6 @@ public sealed record ProductDetails(
         product.Name,
         product.Tagline,
         product.Price,
-        CatalogImages.UrlFor(product.Image),
         product.DurationMinutes,
         product.Description,
         product.Form);
