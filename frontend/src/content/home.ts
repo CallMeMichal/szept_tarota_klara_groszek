@@ -31,10 +31,10 @@ export const about = {
   ],
 }
 
+// Produkty w sekcji Oferta pochodzą z katalogu w API (backend/src/SzeptTarota.Api/Catalog).
 export const offer = {
   title: 'Oferta',
-  lead: 'Ebooki, Analizy, Rytuały, Sesje i Kursy pojawią się tutaj wkrótce.',
-  categories: ['Ebooki', 'Analizy', 'Rytuały', 'Sesje', 'Kursy'],
+  lead: 'Analizy, Rytuały, Sesje i Kursy, każde przygotowane indywidualnie dla Ciebie.',
 }
 
 export const testimonials = {

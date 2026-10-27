@@ -1,0 +1,938 @@
+{
+  "products": [
+    {
+      "slug": "kronika-duszy",
+      "kind": "service",
+      "category": "analyses",
+      "name": "Kronika Duszy",
+      "tagline": "Odkryj cień Twojej Duszy",
+      "description": [
+        {
+          "type": "paragraph",
+          "text": "Czy masz wrażenie, że Twoje życie zatacza koła?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Zmieniają się ludzie, zmieniają się okoliczności… ale emocja zostaje ta sama?"
+        },
+        {
+          "type": "paragraph",
+          "text": "To nie przypadek. To wzorzec."
+        },
+        {
+          "type": "paragraph",
+          "text": "Kronika Duszy to transformacyjna analiza, w której schodzimy głęboko do źródła Twoich schematów. Pracujemy z cieniem, blokadami i tym, co realnie zatrzymuje Cię w miejscu: w relacjach, finansach i decyzjach życiowych."
+        },
+        {
+          "type": "paragraph",
+          "text": "W tej pracy zobaczysz:"
+        },
+        {
+          "type": "paragraph",
+          "text": "✨ fundament Twojej duszy i naturalne predyspozycje"
+        },
+        {
+          "type": "paragraph",
+          "text": "✨ wzorce emocjonalne i relacyjne"
+        },
+        {
+          "type": "paragraph",
+          "text": "✨ blokady energetyczne do uzdrowienia"
+        },
+        {
+          "type": "paragraph",
+          "text": "✨ ścieżkę zawodową i finansową"
+        },
+        {
+          "type": "paragraph",
+          "text": "✨ główny temat obecnego etapu życia"
+        },
+        {
+          "type": "paragraph",
+          "text": "To nie jest wróżba."
+        },
+        {
+          "type": "paragraph",
+          "text": "To głęboki wgląd w Ciebie"
+        }
+      ],
+      "image": "kronika-duszy.webp",
+      "price": 44400,
+      "form": []
+    },
+    {
+      "slug": "mapa-duszy",
+      "kind": "service",
+      "category": "analyses",
+      "name": "Mapa Duszy",
+      "tagline": "Odkryj swoją prawdziwą ścieżkę życia",
+      "description": [
+        {
+          "type": "paragraph",
+          "text": "Czy wiesz, że Twoja energia i doświadczenia niosą w sobie wskazówki, które mogą odmienić Twoje życie? Mapa Duszy to indywidualna analiza Twojej energii, karmy i talentów, która pokaże Ci, gdzie jesteś teraz i jak w pełni wykorzystać swój potencjał."
+        },
+        {
+          "type": "paragraph",
+          "text": "Co zyskujesz dzięki Mapie Duszy:"
+        },
+        {
+          "type": "paragraph",
+          "text": "Portret numerologiczny Duszy"
+        },
+        {
+          "type": "paragraph",
+          "text": "Poznasz swoją misję, dary, wyzwania i karmiczne lekcje zapisane w Twojej dacie urodzenia. Odkryjesz dominujące liczby Duszy, Przeznaczenia i Drogi Życia oraz dowiesz się, gdzie jesteś w cyklu swojego Roku Osobistego."
+        },
+        {
+          "type": "paragraph",
+          "text": "Tarot poprzednich wcieleń"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dowiesz się, jakie talenty, rany lub długi karmiczne niesiesz ze sobą. Poznasz energie, które warto oczyścić, by odblokować pełen potencjał w tym życiu."
+        },
+        {
+          "type": "paragraph",
+          "text": "Tarot Wewnętrznego Dziecka"
+        },
+        {
+          "type": "paragraph",
+          "text": "zrozumiesz potrzeby, lęki i niewyrażone emocje swojego Wewnętrznego Dziecka. Otrzymasz wskazówki, jak je uzdrowić i w pełni zaopiekować."
+        },
+        {
+          "type": "paragraph",
+          "text": "Blokady na drodze Duszy"
+        },
+        {
+          "type": "paragraph",
+          "text": "Odkryjesz trzy główne blokady duchowe i emocjonalne, ich źródło oraz sposoby transformacji, które pozwolą Ci ruszyć z miejsca i odnaleźć pełnię siebie."
+        },
+        {
+          "type": "paragraph",
+          "text": "Diagnoza energetyczna"
+        },
+        {
+          "type": "paragraph",
+          "text": "Intuicyjny wgląd w Twoją aurę, sprawdzenie przyczepionych energii, blokad i nieszczelności oraz wskazanie, czy potrzebne jest oczyszczenie."
+        },
+        {
+          "type": "paragraph",
+          "text": "Każda Mapa Duszy tworzona jest indywidualnie, z pełnym skupieniem na Twojej energii i historii, a czas realizacji wynosi do 10 dni roboczych. To inwestycja w siebie i swoją drogę."
+        }
+      ],
+      "image": "mapa-duszy.webp",
+      "price": 34900,
+      "form": []
+    },
+    {
+      "slug": "analiza-partnerska",
+      "kind": "service",
+      "category": "analyses",
+      "name": "Analiza Partnerska",
+      "tagline": "Analiza, która pokazuje jego uczucia, intencje i realny kierunek relacji",
+      "description": [
+        {
+          "type": "heading",
+          "text": "Co zyskasz dzięki tej analizie?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ten produkt to szczegółowe, pisemne opracowanie, w którym krok po kroku odpowiem na 10 kluczowych pytań dotyczących Twojej relacji:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Jego uczucia wobec Ciebie co naprawdę kryje się w jego sercu (nawet jeśli tego nie okazuje).",
+            "Jego intencje czego podświadomie chce od tej relacji i od Ciebie.",
+            "Czy widzi Cię w swojej przyszłości czy planuje z Tobą stały związek.",
+            "Co go przy Tobie trzyma jakie Twoje cechy i energia magnetycznie go przyciągają.",
+            "Co go blokuje poznasz jedną, główną przeszkodę po jego stronie, która utrudnia Wam porozumienie.",
+            "Twoja realna pozycja w jego życiu kim dla niego jesteś (opcją czy priorytetem?).",
+            "Aktualna dynamika między Wami co tak naprawdę dzieje się teraz w Waszym polu energetycznym.",
+            "Najbliższy rozwój sytuacji co wydarzy się w tej relacji w najbliższym czasie.",
+            "Czy ta relacja ma przyszłość realna ocena Waszych szans na dłuższą metę.",
+            "Karta Rady dla Ciebie konkretna wskazówka, co powinnaś teraz zrobić i jaką postawę przyjąć, aby uzdrowić sytuację."
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Dla kogo jest ta analiza?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dla kobiet, które czują, że partner wysyła im sprzeczne sygnały (raz jest blisko, raz daleko)."
+        },
+        {
+          "type": "paragraph",
+          "text": "Dla osób w związkach na zakręcie, które stoją przed ważnymi decyzjami."
+        },
+        {
+          "type": "paragraph",
+          "text": "Dla każdego, kto potrzebuje obiektywnego, głębokiego spojrzenia na intencje drugiej strony bez lukru, ale z pełnym wsparciem i empatią."
+        },
+        {
+          "type": "heading",
+          "text": "Jak to działa?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Kupujesz analizę przez szybkie i bezpieczne płatności naffy (bądź poprzez Instagram, pisząc wiadomość prywatną)"
+        },
+        {
+          "type": "paragraph",
+          "text": "W formularzu po zakupie podajesz Wasze imiona oraz daty urodzenia (możesz też krótko opisać Waszą obecną sytuację)."
+        },
+        {
+          "type": "paragraph",
+          "text": "W ciągu 3 dni otrzymasz ode mnie spersonalizowany, obszerny plik PDF z pełnym wglądem prosto na swój e-mail."
+        },
+        {
+          "type": "paragraph",
+          "text": "Dowiedz się, na czym stoisz i odzyskasz kontrolę nad swoim życiem uczuciowym już dziś."
+        },
+        {
+          "type": "paragraph",
+          "text": "Z miłością,"
+        },
+        {
+          "type": "paragraph",
+          "text": "Klara 💕"
+        }
+      ],
+      "image": "analiza-partnerska.webp",
+      "price": 12900,
+      "form": []
+    },
+    {
+      "slug": "lustro-cienia",
+      "kind": "service",
+      "category": "analyses",
+      "name": "Lustro Cienia: Zrozum swoje blokady",
+      "tagline": "Odzyskaj sprawstwo i zrozum swoje blokady",
+      "description": [
+        {
+          "type": "heading",
+          "text": "Czy masz wrażenie, że w kółko uderzasz w ten sam niewidzialny mur?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Czujesz lęk przed zmianą, choć obecna sytuacja Cię niszczy? Często sabotujesz własne sukcesy i nie rozumiesz, dlaczego to robisz?"
+        },
+        {
+          "type": "paragraph",
+          "text": "To nie jest pech. To Twoje podświadome mechanizmy obronne. Kiedyś miały Cię chronić, dziś trzymają Cię w miejscu i generują koszty emocjonalne, których nie musisz już ponosić."
+        },
+        {
+          "type": "heading",
+          "text": "Czym jest „Lustro Cienia”?"
+        },
+        {
+          "type": "paragraph",
+          "text": "To nie jest „przepowiadanie przyszłości”. To głęboka praca z archetypami Tarota w ujęciu psychologicznym. Moim zadaniem jest pokazać Ci to, czego Twoje oko nie chce lub nie może teraz dostrzec."
+        },
+        {
+          "type": "heading",
+          "text": "W ramach analizy sprawdzimy:"
+        },
+        {
+          "type": "paragraph",
+          "text": "Twoją obecną narrację - co sobie wmawiasz i jak to sabotuje Twoją rzeczywistość."
+        },
+        {
+          "type": "paragraph",
+          "text": "Martwy punkt - co wypierasz, a co włada Twoimi decyzjami „z tylnego siedzenia”."
+        },
+        {
+          "type": "paragraph",
+          "text": "Źródło oporu - nazwiemy Twój lęk, by przestał być Twoim wrogiem."
+        },
+        {
+          "type": "paragraph",
+          "text": "Ukryty potencjał - zasób, który w Tobie drzemie, a który został przykryty przez stres."
+        },
+        {
+          "type": "paragraph",
+          "text": "Plan działania - konkretny, przyziemny krok, który wykonasz od razu po odczycie."
+        },
+        {
+          "type": "paragraph",
+          "text": "Co otrzymasz?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Indywidualną analizę sytuacji (format PDF)."
+        },
+        {
+          "type": "paragraph",
+          "text": "Zdjęcie Twojego rozkładu, abyś mogła również zagłębić się w rozkład i wracać do niego w każdej chwili."
+        },
+        {
+          "type": "paragraph",
+          "text": "Zadanie rozwojowe oparte na wyciągniętych kartach dla realnej zmiany, nie tylko refleksji."
+        },
+        {
+          "type": "paragraph",
+          "text": "Twoja Inwestycja: 149 zł"
+        },
+        {
+          "type": "paragraph",
+          "text": "(Cena regularna: 199 zł)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dlaczego teraz?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Zamiast kolejnej książki o samopomocy, którą odłożysz na półkę, otrzymasz spersonalizowany wgląd w Twoje \"tu i teraz\". Przestań zgadywać, dlaczego stoisz w miejscu. Zacznij widzieć."
+        },
+        {
+          "type": "paragraph",
+          "text": "Ważne: Pracuję w nurcie tarota psychologicznego i rozwojowego. Moje sesje nie zastępują terapii ani leczenia psychiatrycznego."
+        }
+      ],
+      "image": "lustro-cienia.webp",
+      "price": 14900,
+      "form": []
+    },
+    {
+      "slug": "tarot-3-miesiace",
+      "kind": "service",
+      "category": "analyses",
+      "name": "Tarot 3 miesiące",
+      "tagline": "Analiza 3 najbliższych miesięcy",
+      "description": [
+        {
+          "type": "heading",
+          "text": "Tarot na 3 miesiące. Pełny wgląd w Twoje życie"
+        },
+        {
+          "type": "paragraph",
+          "text": "Chcesz poznać swoją drogę na najbliższe trzy miesiące? Ten rozkład Tarota daje Ci szczegółową i opisową analizę, która pozwoli Ci zrozumieć swoją obecną sytuację i przygotować się na to, co nadchodzi."
+        },
+        {
+          "type": "paragraph",
+          "text": "Co otrzymasz w Tarot na 3 miesiące:"
+        },
+        {
+          "type": "heading",
+          "text": "Ogólna energia"
+        },
+        {
+          "type": "paragraph",
+          "text": "W jakim punkcie życia jesteś teraz, jakie wyzwania i możliwości pojawiają się w Twojej przestrzeni."
+        },
+        {
+          "type": "heading",
+          "text": "Miłość"
+        },
+        {
+          "type": "paragraph",
+          "text": "Co nadejdzie w sferze uczuć, relacji i emocji, czego możesz się spodziewać i na co zwrócić uwagę."
+        },
+        {
+          "type": "heading",
+          "text": "Finanse"
+        },
+        {
+          "type": "paragraph",
+          "text": "Przewidywania dotyczące pieniędzy, pracy i sytuacji zawodowej w nadchodzących miesiącach."
+        },
+        {
+          "type": "heading",
+          "text": "Zdrowie"
+        },
+        {
+          "type": "paragraph",
+          "text": "Wskazania, na co warto zwrócić uwagę w trosce o ciało i samopoczucie."
+        },
+        {
+          "type": "heading",
+          "text": "Karta Rady"
+        },
+        {
+          "type": "paragraph",
+          "text": "Cenne wskazówki i podpowiedzi od Tarota, które pomogą Ci mądrze kierować swoją energią i podejmować świadome decyzje."
+        },
+        {
+          "type": "paragraph",
+          "text": "Rozkład jest głęboki, opisowy i szczegółowy, przygotowany indywidualnie z uwzględnieniem Twojej unikalnej energii. Każda analiza obejmuje kilka stron treści, dzięki czemu otrzymujesz pełny wgląd i praktyczne wskazówki do działania."
+        }
+      ],
+      "image": "tarot-3-miesiace.webp",
+      "price": 14900,
+      "form": []
+    },
+    {
+      "slug": "tarot-6-miesiecy",
+      "kind": "service",
+      "category": "analyses",
+      "name": "Tarot 6 miesięcy",
+      "tagline": "Głęboki wgląd w najbliższe miesiące Twojego życia",
+      "description": [
+        {
+          "type": "heading",
+          "text": "Tarot na 6 miesięcy. Pełny wgląd w Twoje życie"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ten rozkład Tarota przeznaczony jest dla osób, które chcą zobaczyć szerzej i głębiej. To analiza półroczna, pokazująca kierunek, w jakim zmierza Twoje życie, oraz procesy, które będą się stopniowo rozwijać w najbliższych sześciu miesiącach."
+        },
+        {
+          "type": "paragraph",
+          "text": "Co otrzymasz w rozkładzie Tarot na 6 miesięcy:"
+        },
+        {
+          "type": "heading",
+          "text": "Ogólna energia półrocza"
+        },
+        {
+          "type": "paragraph",
+          "text": "W jakim etapie życia jesteś obecnie i jaki główny temat będzie prowadził Cię przez kolejne miesiące."
+        },
+        {
+          "type": "heading",
+          "text": "Miłość"
+        },
+        {
+          "type": "paragraph",
+          "text": "Długofalowy obraz relacji, uczuć i emocji. Wskazania dotyczące rozwoju związków, nowych znajomości lub ważnych decyzji sercowych."
+        },
+        {
+          "type": "heading",
+          "text": "Finanse i praca"
+        },
+        {
+          "type": "paragraph",
+          "text": "Prognoza finansowa i zawodowa na sześć miesięcy. Możliwe zmiany, stabilizacja lub nowe kierunki rozwoju."
+        },
+        {
+          "type": "heading",
+          "text": "Zdrowie"
+        },
+        {
+          "type": "paragraph",
+          "text": "Energia ciała i psychiki w nadchodzącym półroczu oraz sygnały, na które warto zwrócić szczególną uwagę."
+        },
+        {
+          "type": "heading",
+          "text": "Proces i czas"
+        },
+        {
+          "type": "paragraph",
+          "text": "Jak poszczególne miesiące będą się otwierać, co przyjdzie szybciej, a co wymaga cierpliwości."
+        },
+        {
+          "type": "heading",
+          "text": "Karta Rady"
+        },
+        {
+          "type": "paragraph",
+          "text": "Kluczowe przesłanie Tarota, które pomoże Ci świadomie przejść przez ten okres i właściwie zarządzać swoją energią."
+        },
+        {
+          "type": "paragraph",
+          "text": "Jest to głęboki, rozbudowany i opisowy rozkład, przygotowywany indywidualnie. Analiza obejmuje kilka stron treści i daje pełen obraz procesów, a nie tylko pojedyncze odpowiedzi"
+        }
+      ],
+      "image": "tarot-6-miesiecy.webp",
+      "price": 24900,
+      "form": []
+    },
+    {
+      "slug": "tarot-premium-12-miesiecy",
+      "kind": "service",
+      "category": "analyses",
+      "name": "Tarot PREMIUM 12 miesięcy",
+      "tagline": "Głęboki wgląd w Twoje życie",
+      "description": [
+        {
+          "type": "heading",
+          "text": "Tarot na cały rok"
+        },
+        {
+          "type": "paragraph",
+          "text": "Pełna mapa nadchodzących 12 miesięcy"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ten rozkład Tarota to kompleksowa, roczna analiza przeznaczona dla osób, które chcą świadomie zaplanować swoją drogę i zrozumieć głębokie procesy zachodzące w ich życiu. Pokazuje nie tylko wydarzenia, ale przede wszystkim kierunek, dynamikę zmian i lekcje, które będą się odsłaniać miesiąc po miesiącu."
+        },
+        {
+          "type": "paragraph",
+          "text": "Co otrzymasz w rozkładzie Tarot na cały rok:"
+        },
+        {
+          "type": "heading",
+          "text": "Energia przewodnia roku"
+        },
+        {
+          "type": "paragraph",
+          "text": "Główny temat i wibracja, która będzie prowadzić Cię przez najbliższe 12 miesięcy. W jakim cyklu jesteś i czego ten rok od Ciebie wymaga."
+        },
+        {
+          "type": "heading",
+          "text": "Miłość i relacje"
+        },
+        {
+          "type": "paragraph",
+          "text": "Rozwój relacji w perspektywie rocznej. Kluczowe momenty, decyzje sercowe, nowe znajomości lub pogłębianie obecnych więzi. Wskazania, na co zwrócić uwagę i czego unikać."
+        },
+        {
+          "type": "heading",
+          "text": "Finanse i praca"
+        },
+        {
+          "type": "paragraph",
+          "text": "Roczna prognoza finansowa i zawodowa. Okresy wzrostu, stabilizacji lub zmian. Potencjalne szanse, ryzyka oraz najlepsze momenty na działanie."
+        },
+        {
+          "type": "heading",
+          "text": "Zdrowie i energia życiowa"
+        },
+        {
+          "type": "paragraph",
+          "text": "Stan energetyczny ciała i psychiki w ciągu roku. Sygnały ostrzegawcze oraz wskazówki, jak zadbać o równowagę i regenerację."
+        },
+        {
+          "type": "heading",
+          "text": "Przebieg roku miesiąc po miesiącu"
+        },
+        {
+          "type": "paragraph",
+          "text": "Jak będą układały się kolejne etapy. Które miesiące przyniosą intensywne zmiany, a które dadzą czas na zatrzymanie i integrację."
+        },
+        {
+          "type": "heading",
+          "text": "Karta Rady na cały rok"
+        },
+        {
+          "type": "paragraph",
+          "text": "Najważniejsze przesłanie Tarota. Wskazówka, jak prowadzić swoją energię, aby ten rok przyniósł jak najlepsze rezultaty."
+        },
+        {
+          "type": "paragraph",
+          "text": "Jest to bardzo rozbudowany, głęboki i opisowy rozkład, przygotowywany indywidualnie. Analiza obejmuje wiele stron treści i stanowi pełną mapę procesu, a nie jednorazową wróżbę."
+        }
+      ],
+      "image": "tarot-premium-12-miesiecy.webp",
+      "price": 39900,
+      "form": []
+    },
+    {
+      "slug": "analiza-pola-energetycznego",
+      "kind": "service",
+      "category": "analyses",
+      "name": "Analiza Pola Energetycznego",
+      "tagline": "Głęboka analiza pola energetycznego i subtelnych wpływów w Twojej aurze",
+      "description": [
+        {
+          "type": "paragraph",
+          "text": "Twoje pole energetyczne przechowuje informacje o emocjach, doświadczeniach oraz wpływach, które oddziałują na Twoje życie. Czasami pojawiają się w nim przeciążenia, blokady lub energie pochodzące z relacji i sytuacji, które nadal mogą mieć wpływ na Twoją codzienność."
+        },
+        {
+          "type": "paragraph",
+          "text": "Podczas indywidualnej analizy pola energetycznego skupiam się na odczytaniu informacji zapisanych w Twojej aurze. W trakcie tej pracy pojawiają się obrazy, symbole, kolory emocji oraz różne formy połączeń energetycznych, które pozwalają zrozumieć aktualny stan Twojej energii."
+        },
+        {
+          "type": "paragraph",
+          "text": "W trakcie analizy sprawdzam między innymi:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "ogólną kondycję Twojego pola energetycznego",
+            "obecność przeciążeń, blokad lub osłabionych miejsc w aurze",
+            "możliwe wpływy energetyczne pochodzące z relacji lub otoczenia",
+            "połączenia energetyczne z innymi osobami",
+            "obszary, które mogą wymagać wzmocnienia lub energetycznej ochrony",
+            "emocje lub doświadczenia zapisane w polu energetycznym"
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Po zakończeniu analizy otrzymasz szczegółowy opis odczytanych informacji oraz wskazówki, które pomogą Ci wzmocnić Twoją energię i odzyskać większą równowagę."
+        },
+        {
+          "type": "paragraph",
+          "text": "Analiza wykonywana jest indywidualnie na podstawie Twojej energii i intencji."
+        },
+        {
+          "type": "paragraph",
+          "text": "Z Miłością,"
+        },
+        {
+          "type": "paragraph",
+          "text": "Klara 💕"
+        }
+      ],
+      "image": "analiza-pola-energetycznego.webp",
+      "price": 11100,
+      "form": []
+    },
+    {
+      "slug": "rytual-na-przyciagniecie-milosci",
+      "kind": "service",
+      "category": "rituals",
+      "name": "Rytuał na przyciągnięcie miłości",
+      "tagline": "Indywidualny rytuał energetyczny otwierający Twoją energię na miłość i nowe relacje",
+      "description": [
+        {
+          "type": "paragraph",
+          "text": "✧ Rytuał przyciągnięcia miłości"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ten rytuał skierowany jest do osób, które pragną otworzyć swoje pole energetyczne na miłość, bliskość oraz relację opartą na wzajemnym szacunku i głębokim połączeniu dusz. Jest to praca energetyczna wspierająca otwarcie serca na nową relację lub wzmocnienie energii miłości w Twoim życiu."
+        },
+        {
+          "type": "paragraph",
+          "text": "Podczas pracy energetycznej skupiam się na oczyszczeniu przestrzeni wokół Twojego serca z blokad emocjonalnych, dawnych zranień oraz energii poprzednich relacji, które mogą nadal wpływać na Twoje życie uczuciowe. Następnie wzmacniana jest energia przyciągania, dzięki czemu Twoje pole energetyczne zaczyna rezonować z częstotliwością miłości, bliskości i harmonii."
+        },
+        {
+          "type": "paragraph",
+          "text": "Rytuał jest szczególnie polecany osobom, które czują, że w ich życiu uczuciowym powtarzają się podobne schematy, które chcą zamknąć pewien rozdział przeszłości lub które są gotowe zaprosić do swojego życia nową, wartościową relację."
+        },
+        {
+          "type": "paragraph",
+          "text": "Po wykonaniu rytuału wiele osób odczuwa wyraźną zmianę w swojej energii. Pojawia się większa otwartość na miłość, spokój wewnętrzny oraz poczucie, że w życiu zaczyna pojawiać się nowa przestrzeń na relacje oparte na autentycznym połączeniu. Często jest to moment symbolicznego rozpoczęcia nowego etapu w sferze uczuć."
+        },
+        {
+          "type": "paragraph",
+          "text": "Rytuał wykonywany jest indywidualnie z intencją skierowaną na konkretną osobę i jej sytuację. Każda praca energetyczna dopasowana jest do energii danej osoby oraz jej aktualnej sytuacji życiowej. Termin wykonania rytuału zależny jest od aktualnej fazy księżyca, tak aby praca energetyczna mogła zostać przeprowadzona w najbardziej sprzyjającym dla tej intencji czasie."
+        },
+        {
+          "type": "paragraph",
+          "text": "Z intencją i uważnością"
+        },
+        {
+          "type": "paragraph",
+          "text": "Klara"
+        }
+      ],
+      "image": "rytual-na-przyciagniecie-milosci.webp",
+      "price": 33300,
+      "form": []
+    },
+    {
+      "slug": "rytual-na-przyciagniecie-obfitosci-finansowej",
+      "kind": "service",
+      "category": "rituals",
+      "name": "Rytuał na przyciągnięcie obfitości finansowej",
+      "tagline": "Indywidualny rytuał energetyczny otwierający Twoją energię na pieniądze i finansową obfitość",
+      "description": [
+        {
+          "type": "paragraph",
+          "text": "✧ Rytuał przyciągnięcia obfitości finansowej"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ten rytuał skierowany jest do osób, które pragną otworzyć swoje pole energetyczne na przepływ pieniędzy, nowych możliwości oraz większej stabilności finansowej. Jest to praca energetyczna wspierająca przyciąganie obfitości oraz wzmocnienie energii dobrobytu w Twoim życiu."
+        },
+        {
+          "type": "paragraph",
+          "text": "Podczas pracy energetycznej skupiam się na oczyszczeniu przestrzeni energetycznej z blokad związanych z finansami, poczuciem braku oraz ograniczających przekonań, które mogą wpływać na Twoje możliwości zarabiania i przyjmowania obfitości. Następnie wzmacniana jest energia przyciągania, dzięki czemu Twoje pole energetyczne zaczyna rezonować z częstotliwością dobrobytu, nowych szans oraz sprzyjających okoliczności."
+        },
+        {
+          "type": "paragraph",
+          "text": "Rytuał jest szczególnie polecany osobom, które czują stagnację finansową, pragną przyciągnąć nowe możliwości zawodowe, zwiększyć swoje dochody lub otworzyć się na nowe źródła obfitości w swoim życiu."
+        },
+        {
+          "type": "paragraph",
+          "text": "Po wykonaniu rytuału wiele osób odczuwa wyraźną zmianę w swojej energii. Pojawia się większa klarowność w działaniu, odwaga do podejmowania nowych decyzji oraz poczucie, że w życiu zaczynają pojawiać się sprzyjające okazje i nowe możliwości finansowe."
+        },
+        {
+          "type": "paragraph",
+          "text": "Rytuał wykonywany jest indywidualnie z intencją skierowaną na konkretną osobę i jej sytuację. Każda praca energetyczna dopasowana jest do energii danej osoby oraz jej aktualnej sytuacji życiowej. Termin wykonania rytuału zależny jest od aktualnej fazy księżyca, tak aby praca energetyczna mogła zostać przeprowadzona w najbardziej sprzyjającym dla tej intencji czasie."
+        },
+        {
+          "type": "paragraph",
+          "text": "Z intencją i uważnością,"
+        },
+        {
+          "type": "paragraph",
+          "text": "Klara ✨"
+        }
+      ],
+      "image": "rytual-na-przyciagniecie-obfitosci-finansowej.webp",
+      "price": 33300,
+      "form": []
+    },
+    {
+      "slug": "rytual-odciecia-energetycznego",
+      "kind": "service",
+      "category": "rituals",
+      "name": "Rytuał na odcięcie energetyczne",
+      "tagline": "Rytuał odcięcia energetycznego pomagający uwolnić się od relacji i energii, które już Ci nie służą",
+      "description": [
+        {
+          "type": "paragraph",
+          "text": "✧ Rytuał odcięcia energetycznego"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ten rytuał skierowany jest do osób, które czują, że w ich życiu nadal obecne są energie przeszłości, trudnych relacji lub sytuacji, które mimo upływu czasu wciąż mają wpływ na ich emocje, decyzje i samopoczucie. Jest to praca energetyczna pomagająca symbolicznie zamknąć pewien etap oraz odzyskać własną przestrzeń i wewnętrzną równowagę."
+        },
+        {
+          "type": "paragraph",
+          "text": "Podczas pracy energetycznej skupiam się na odnalezieniu i rozpuszczeniu energetycznych połączeń, które mogą łączyć Cię z osobami lub doświadczeniami z przeszłości. Często są to niewidzialne więzi emocjonalne, które powodują powracające myśli, trudność w ruszeniu dalej lub poczucie energetycznego obciążenia."
+        },
+        {
+          "type": "paragraph",
+          "text": "W trakcie rytuału następuje oczyszczenie pola energetycznego oraz symboliczne odcięcie tego, co nie jest już zgodne z Twoją drogą. Dzięki temu Twoja energia może ponownie wrócić do naturalnej równowagi, a w Twoim życiu pojawia się więcej przestrzeni na spokój, nowe doświadczenia oraz relacje oparte na zdrowych fundamentach."
+        },
+        {
+          "type": "paragraph",
+          "text": "Rytuał jest szczególnie polecany osobom, które chcą zamknąć pewien rozdział w swoim życiu, uwolnić się od wpływu toksycznych relacji, zakończonych związków lub sytuacji, które wciąż emocjonalnie do nich powracają."
+        },
+        {
+          "type": "paragraph",
+          "text": "Po wykonaniu rytuału wiele osób odczuwa ulgę, większy spokój wewnętrzny oraz poczucie odzyskania własnej energii. Często jest to moment symbolicznego zakończenia przeszłości i rozpoczęcia nowego etapu życia."
+        },
+        {
+          "type": "paragraph",
+          "text": "Rytuał wykonywany jest indywidualnie z intencją skierowaną na konkretną osobę i jej sytuację. Każda praca energetyczna dopasowana jest do energii danej osoby oraz jej aktualnych doświadczeń życiowych. Termin wykonania rytuału zależny jest od aktualnej fazy księżyca, tak aby praca energetyczna mogła zostać przeprowadzona w najbardziej sprzyjającym dla tej intencji czasie."
+        },
+        {
+          "type": "paragraph",
+          "text": "Z miłością,"
+        },
+        {
+          "type": "paragraph",
+          "text": "Klara 💞"
+        }
+      ],
+      "image": "rytual-odciecia-energetycznego.webp",
+      "price": 33300,
+      "form": []
+    },
+    {
+      "slug": "sesja-reiki-czakroterapia",
+      "kind": "session",
+      "category": "sessions",
+      "name": "Sesja Reiki + Czakroterapia",
+      "tagline": "Holistyczna sesja oczyszczania czakr i Reiki",
+      "description": [
+        {
+          "type": "paragraph",
+          "text": "Holistyczna sesja oczyszczania czakr i Reiki, powrót do równowagi w 60 minut"
+        },
+        {
+          "type": "paragraph",
+          "text": "Czujesz, że Twój „wewnętrzny akumulator” jest wyczerpany?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Codzienny stres, natłok myśli i emocjonalne obciążenia z czasem tworzą blokady w naszym polu energetycznym. Jeśli szukasz sposobu na głęboki reset, odzyskanie wewnętrznego spokoju i harmonii ta sesja jest dla Ciebie."
+        },
+        {
+          "type": "paragraph",
+          "text": "Co zyskasz dzięki naszej godzinnej sesji?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Podczas sesji łączę techniki oczyszczania energetycznego z dobroczynnym działaniem energii Reiki. To proces, który odbywa się na poziomie ciała i umysłu, pozwalając Ci odpuścić to, co Ci już nie służy."
+        },
+        {
+          "type": "paragraph",
+          "text": "Jak wygląda sesja?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Oczyszczenie aury: Zaczynamy od usunięcia nagromadzonych napięć, aby przygotować Twoje pole energetyczne na głęboką regenerację."
+        },
+        {
+          "type": "paragraph",
+          "text": "Harmonizacja czakr: Pracuję z siedmioma głównymi centrami energetycznymi (od podstawy kręgosłupa aż po czubek głowy). Usuwamy blokady, które mogą wpływać na Twoje samopoczucie, pewność siebie czy zdolność wyrażania siebie."
+        },
+        {
+          "type": "paragraph",
+          "text": "Przepływ Reiki: Podczas gdy Ty odpoczywasz, kanałuję uniwersalną energię życiową, która wspiera naturalne procesy regeneracji Twojego organizmu."
+        },
+        {
+          "type": "paragraph",
+          "text": "Dla kogo jest ta sesja?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dla każdego, kto czuje się przytłoczony codziennością."
+        },
+        {
+          "type": "paragraph",
+          "text": "Dla osób pracujących z emocjami i chcących głębszego kontaktu ze sobą."
+        },
+        {
+          "type": "paragraph",
+          "text": "Dla każdego, kto potrzebuje chwili „wyłączenia się” i głębokiego relaksu."
+        },
+        {
+          "type": "paragraph",
+          "text": "Co otrzymujesz?"
+        },
+        {
+          "type": "paragraph",
+          "text": "60 minut pełnego skupienia na Twojej energii."
+        },
+        {
+          "type": "paragraph",
+          "text": "Poczucie lekkości i wewnętrznego spokoju zaraz po sesji."
+        },
+        {
+          "type": "paragraph",
+          "text": "Narzędzia do lepszego zrozumienia własnego stanu energetycznego."
+        },
+        {
+          "type": "paragraph",
+          "text": "Przygotowanie:"
+        },
+        {
+          "type": "paragraph",
+          "text": "Nie musisz mieć żadnego doświadczenia. Wystarczy, że przyślesz mi swoją otwartość na proces. Po sesji warto zaplanować czas na spokojny powrót do codziennych obowiązków."
+        },
+        {
+          "type": "paragraph",
+          "text": "Zadbaj o swój dobrostan. Wybierz dogodny termin i zarezerwuj sesję już dziś"
+        }
+      ],
+      "image": null,
+      "price": 24900,
+      "durationMinutes": 60,
+      "form": []
+    },
+    {
+      "slug": "kronika-akaszy",
+      "kind": "session",
+      "category": "sessions",
+      "name": "Kronika Akaszy: Twój przekaz od Przewodników Duchowych",
+      "tagline": "Twój przekaz od Przewodników Duchowych",
+      "description": [
+        {
+          "type": "heading",
+          "text": "Kroniki Akaszy indywidualna sesja (PDF)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Kroniki Akaszy to pole uniwersalnej wiedzy, w którym zapisane są informacje dotyczące Twojej duszy, jej doświadczeń, lekcji, potencjału oraz aktualnej ścieżki życiowej. Podczas tej sesji uzyskujesz dostęp do odpowiedzi pochodzących z poziomu przewodników duchowych i wyższej świadomości."
+        },
+        {
+          "type": "paragraph",
+          "text": "W ramach sesji możesz zadać do 5 pytań, dotyczących m.in.:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "relacji i miłości",
+            "pracy, finansów i drogi zawodowej",
+            "blokad energetycznych i karmicznych",
+            "sensu aktualnych wydarzeń w Twoim życiu",
+            "Twojego rozwoju duchowego"
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Termin sesji ustalamy wspólnie indywidualnie, po zakupie. Sesja trwa około 60 minut i odbywa się offline (nie łączymy się online, nie ma rozmowy na żywo)."
+        },
+        {
+          "type": "paragraph",
+          "text": "Po zakończeniu sesji otrzymujesz ode mnie plik PDF, w którym znajdziesz:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "odpowiedzi na wszystkie zadane pytania",
+            "przekaz od Twoich przewodników duchowych",
+            "energię wglądu i zrozumienia aktualnej sytuacji"
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Sesja ma charakter informacyjny i rozwojowy jej celem jest wgląd, świadomość i wsparcie w podejmowaniu decyzji, zgodnie z Twoją ścieżką duszy."
+        }
+      ],
+      "image": null,
+      "price": 44400,
+      "durationMinutes": 60,
+      "form": []
+    },
+    {
+      "slug": "tarot-program-mentoringowy",
+      "kind": "session",
+      "category": "courses",
+      "name": "Tarot: Program Mentoringowy",
+      "tagline": "Świadoma Droga z Tarotem: autorski program mentoringowy",
+      "description": [
+        {
+          "type": "paragraph",
+          "text": "Połącz intuicję z głęboką wiedzą archetypową i numerologiczną. Kurs online + miesiąc intensywnej opieki nad Twoją praktyką."
+        },
+        {
+          "type": "paragraph",
+          "text": "Czy czujesz, że praca z Tarotem to coś więcej niż wróżenie z kart? Czy szukasz metody, która pozwoli Ci czytać je w sposób bezpieczny, świadomy i profesjonalny? Tarot to system wiedzy opartej na archetypach, symbolice i cyklach numerologicznych. Zapraszam Cię do autorskiego procesu szkoleniowego, w którym dzielę się 7-letnim doświadczeniem w pracy z energią. To nie jest kolejny kurs teoretyczny, to kompleksowe przygotowanie do bycia świadomą tarocistką."
+        },
+        {
+          "type": "heading",
+          "text": "Dlaczego ta metoda jest skuteczna?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Nie wierzę w bezmyślne wkuwanie znaczeń kart. Uczę rozumienia ich języka poprzez skojarzenia, analizę symboliki i powiązania z numerologią. Moja autorska metoda pozwoli Ci płynnie odczytywać energię, bez konieczności zaglądania do książek."
+        },
+        {
+          "type": "heading",
+          "text": "Twój proces edukacyjny obejmuje:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Intensywny Warsztat Online (na żywo): Dwa dni poświęcone na fundamenty, podczas których opanujesz:",
+            "Interpretację Arkanów Wielkich i Małych w oparciu o archetypy.",
+            "BHP Tarocisty: Techniki ochrony energetycznej i higieny pracy.",
+            "Sztukę czytania energii i konstruowania skutecznych rozkładów.",
+            "Znaczenie koloru i symbolu w codziennej praktyce.",
+            "Moduł Numerologiczny: Podstawy budowania portretów numerologicznych oraz pracy z matrycą losu."
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Miesięczny Proces Mentoringowy🔥:"
+        },
+        {
+          "type": "paragraph",
+          "text": "Wiem, że najwięcej pytań rodzi się w trakcie samodzielnej pracy, już po zakończeniu szkolenia. Dlatego zapewniam Ci moje pełne wsparcie przez kolejne 30 dni:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Wspólna analiza Twoich pierwszych rozkładów (prowadzenie krok po kroku).",
+            "Konsultacje trudniejszych sytuacji: nauczę Cię, na co zwracać uwagę w pracy z kartami, by zachować profesjonalizm i obiektywizm.",
+            "Moja dostępność: abyś nigdy nie czuła się zagubiona w swojej nowej roli."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Pakiet Materiałów:"
+        },
+        {
+          "type": "paragraph",
+          "text": "Autorski PDF z interpretacjami kart, kluczowymi wskazówkami oraz zasadami etycznymi pracy z Tarotem."
+        },
+        {
+          "type": "heading",
+          "text": "Dla kogo jest ten program?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dla osób, które chcą wyjść poza amatorskie czytanie i pragną zbudować fundamenty pod własną, świadomą praktykę zawodową."
+        },
+        {
+          "type": "paragraph",
+          "text": "(Cena obejmuje: szkolenie na żywo, miesięczne wsparcie mentora oraz materiały szkoleniowe)."
+        }
+      ],
+      "image": "tarot-program-mentoringowy.webp",
+      "price": 88800,
+      "durationMinutes": 60,
+      "form": []
+    }
+  ]
+}

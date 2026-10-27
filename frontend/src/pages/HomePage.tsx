@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { HomeSection } from '../components/HomeSection.tsx'
+import { OfferCatalog } from '../components/OfferCatalog.tsx'
 import { Moon } from '../components/Moon.tsx'
 import { PlaceholderNote } from '../components/PlaceholderNote.tsx'
 import {
@@ -66,12 +67,8 @@ export function HomePage() {
       </HomeSection>
 
       <HomeSection id={homeSections.offer} title={offer.title}>
-        <ul className="offer-categories">
-          {offer.categories.map((category) => (
-            <li key={category}>{category}</li>
-          ))}
-        </ul>
         <p className="section__lead">{offer.lead}</p>
+        <OfferCatalog />
       </HomeSection>
 
       <HomeSection

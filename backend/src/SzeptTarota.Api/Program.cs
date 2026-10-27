@@ -1,13 +1,22 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.FileProviders;
+using SzeptTarota.Api.Catalog;
 using SzeptTarota.Application;
 using SzeptTarota.Infrastructure;
+using SzeptTarota.Infrastructure.Catalog;
 
 var builder = WebApplication.CreateBuilder(args);
+var catalogDirectory = Path.Combine(builder.Environment.ContentRootPath, "Catalog");
 
 builder.Services.AddOpenApi();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddProductCatalog(catalogDirectory);
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 
 var app = builder.Build();
 
@@ -19,6 +28,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(catalogDirectory, JsonProductCatalog.ImagesDirectoryName)),
+    RequestPath = CatalogImages.RequestPath,
+});
 
 var api = app.MapGroup("/api");
 
@@ -37,6 +52,8 @@ api.MapHealthChecks("/health", new HealthCheckOptions
     }),
 })
     .WithName("Health");
+
+api.MapProductEndpoints();
 
 app.Run();
 

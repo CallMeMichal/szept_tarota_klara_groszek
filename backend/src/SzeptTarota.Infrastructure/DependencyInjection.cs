@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using SzeptTarota.Application.Catalog;
+using SzeptTarota.Infrastructure.Catalog;
 using SzeptTarota.Infrastructure.Persistence;
 
 namespace SzeptTarota.Infrastructure;
@@ -22,6 +24,13 @@ public static class DependencyInjection
         services.AddHealthChecks()
             .AddDbContextCheck<SzeptTarotaDbContext>("database");
 
+        return services;
+    }
+
+    /// <summary>Wczytuje katalog Produktów z <paramref name="catalogDirectory"/> od razu, żeby błędny katalog zatrzymał start.</summary>
+    public static IServiceCollection AddProductCatalog(this IServiceCollection services, string catalogDirectory)
+    {
+        services.AddSingleton<IProductCatalog>(JsonProductCatalog.Load(catalogDirectory));
         return services;
     }
 

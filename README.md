@@ -36,6 +36,10 @@ npm run dev
 
 Treści strony głównej są w `frontend/src/content/home.ts`. Teksty z `placeholder: true` są tymczasowe (na stronie mają znacznik „Treść tymczasowa”) i czekają na teksty od Klary.
 
+### Katalog Produktów
+
+Produkty są treścią w repo: `backend/src/SzeptTarota.Api/Catalog/products.json`, grafiki w `Catalog/images/` (serwowane pod `/api/catalog/images/`). Backend wczytuje katalog przy starcie i nie wystartuje, jeśli jest błędny (np. powtórzony slug, Sesja bez długości, brak pliku grafiki). Slug jest adresem podstrony (`/oferta/<slug>`), więc raz opublikowanego nie zmieniamy. Ceny są w groszach. Startowa wersja to import oferty z naffy.io.
+
 Connection string jest w `ConnectionStrings:Database` (`appsettings.Development.json`). Poza Development migracje stosuje się ręcznie albo przez `Database:ApplyMigrationsOnStartup=true`.
 
 ## Podgląd na GitHub Pages

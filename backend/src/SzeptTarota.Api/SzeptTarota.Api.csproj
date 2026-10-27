@@ -15,6 +15,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Katalog Produktów jest treścią w repo, czytaną z dysku przy starcie (ContentRoot/Catalog). -->
+    <Content Update="Catalog\products.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Catalog\images\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SzeptTarota.Application\SzeptTarota.Application.csproj" />
     <ProjectReference Include="..\SzeptTarota.Infrastructure\SzeptTarota.Infrastructure.csproj" />
   </ItemGroup>
