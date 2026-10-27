@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { homeSectionHref, homeSections } from '../homeSections.ts'
+import { homeSectionPath, homeSections } from '../homeSections.ts'
 import { Moon } from './Moon.tsx'
 
 const navItems = [
@@ -43,9 +43,9 @@ export function SiteHeader() {
           <ul>
             {navItems.map((item) => (
               <li key={item.id}>
-                <a href={homeSectionHref(item.id)} onClick={() => setMenuOpen(false)}>
+                <Link to={homeSectionPath(item.id)} onClick={() => setMenuOpen(false)}>
                   {item.label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

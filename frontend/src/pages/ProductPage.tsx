@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { ProductImage } from '../components/ProductImage.tsx'
 import {
   categoryLabels,
@@ -10,7 +10,7 @@ import {
   type DescriptionBlock,
   type ProductDetails,
 } from '../catalog.ts'
-import { homeSectionHref, homeSections } from '../homeSections.ts'
+import { homeSectionPath, homeSections } from '../homeSections.ts'
 import { useApi } from '../useApi.ts'
 import { NotFoundPage } from './NotFoundPage.tsx'
 
@@ -18,6 +18,12 @@ export function ProductPage() {
   const { slug = '' } = useParams()
   const product = useApi<ProductDetails>(`/api/products/${encodeURIComponent(slug)}`)
   const productName = product.status === 'ok' ? product.data.name : null
+
+  // Router nie przewija sam: Produkt otwarty z połowy strony głównej
+  // zaczynamy od góry.
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [slug])
 
   useEffect(() => {
     if (!productName) return
@@ -33,7 +39,7 @@ export function ProductPage() {
   return (
     <article className="section product-page" aria-busy={product.status === 'loading'}>
       <p className="product-page__back">
-        <a href={homeSectionHref(homeSections.offer)}>← Cała oferta</a>
+        <Link to={homeSectionPath(homeSections.offer)}>← Cała oferta</Link>
       </p>
 
       {product.status === 'loading' && <p className="section__lead">Rozkładam karty…</p>}

@@ -382,20 +382,21 @@ main {
   list-style: none;
 }
 
-.offer-categories a {
+.offer-categories button {
   display: block;
+  font: inherit;
+  cursor: pointer;
   padding: 0.5rem 1.25rem;
   font-family: var(--serif);
   font-size: 1.25rem;
   color: var(--gold-300);
-  text-decoration: none;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface);
   transition: background 0.2s ease;
 }
 
-.offer-categories a:hover {
+.offer-categories button:hover {
   background: rgba(212, 175, 97, 0.12);
 }
 

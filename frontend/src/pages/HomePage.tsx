@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { HomeSection } from '../components/HomeSection.tsx'
 import { OfferCatalog } from '../components/OfferCatalog.tsx'
 import { Moon } from '../components/Moon.tsx'
@@ -12,17 +13,57 @@ import {
   offer,
   testimonials,
 } from '../content/home.ts'
-import { homeSectionHref, homeSections } from '../homeSections.ts'
+import {
+  homeSectionPath,
+  homeSections,
+  isHomeSectionId,
+  type HomeSectionId,
+} from '../homeSections.ts'
 
-export function HomePage() {
-  // Przeglądarka szuka kotwicy z adresu, zanim React wyrenderuje sekcje,
-  // więc wejście na /#o-mnie przewijamy ręcznie po pierwszym renderze.
+// Sekcje pod Ofertą: przesuwają się w dół, gdy Produkty dojdą z API.
+const sectionsBelowOffer: HomeSectionId[] = [
+  homeSections.testimonials,
+  homeSections.faq,
+  homeSections.contact,
+]
+
+type HomePageProps = {
+  /** Sekcja z adresu (/oferta, /kontakt), do której przewijamy. */
+  section: HomeSectionId
+}
+
+export function HomePage({ section }: HomePageProps) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [offerLoaded, setOfferLoaded] = useState(false)
+
+  // Stare linki z kotwicą (/#o-mnie) przekierowujemy na ścieżkę sekcji.
+  // Bez decodeURIComponent: identyfikatory sekcji są ASCII, a błędny
+  // adres (np. #%E0) rzucałby wyjątek i wyłączał całą stronę.
+  const legacySection = location.hash.slice(1)
   useEffect(() => {
-    // Bez decodeURIComponent: identyfikatory sekcji są ASCII, a błędny
-    // adres (np. #%E0) rzucałby wyjątek i wyłączał całą stronę.
-    const sectionId = window.location.hash.slice(1)
-    if (sectionId) document.getElementById(sectionId)?.scrollIntoView()
-  }, [])
+    if (isHomeSectionId(legacySection)) {
+      navigate(homeSectionPath(legacySection), { replace: true })
+    }
+  }, [legacySection, navigate])
+
+  // Przewijamy przy każdym kliknięciu linku do sekcji (location.key), także
+  // gdy adres się nie zmienia, bo użytkownik mógł w międzyczasie przewinąć.
+  useEffect(() => {
+    if (section === homeSections.start) {
+      window.scrollTo({ top: 0 })
+    } else {
+      document.getElementById(section)?.scrollIntoView()
+    }
+  }, [section, location.key])
+
+  // Wejście wprost na /kontakt: Produkty doładowują się nad sekcją i
+  // spychają ją w dół, więc po ich wczytaniu przewijamy jeszcze raz.
+  useEffect(() => {
+    if (offerLoaded && sectionsBelowOffer.includes(section)) {
+      document.getElementById(section)?.scrollIntoView()
+    }
+  }, [offerLoaded, section])
 
   return (
     <>
@@ -32,12 +73,12 @@ export function HomePage() {
         <h1 id="start-title">{hero.title}</h1>
         <p className="hero__lead">{hero.lead}</p>
         <div className="hero__actions">
-          <a className="button button--primary" href={homeSectionHref(homeSections.offer)}>
+          <Link className="button button--primary" to={homeSectionPath(homeSections.offer)}>
             Zobacz ofertę
-          </a>
-          <a className="button button--ghost" href={homeSectionHref(homeSections.about)}>
+          </Link>
+          <Link className="button button--ghost" to={homeSectionPath(homeSections.about)}>
             Poznaj mnie
-          </a>
+          </Link>
         </div>
         <dl className="hero__stats">
           {hero.stats.map((stat) => (
@@ -68,7 +109,7 @@ export function HomePage() {
 
       <HomeSection id={homeSections.offer} title={offer.title}>
         <p className="section__lead">{offer.lead}</p>
-        <OfferCatalog />
+        <OfferCatalog onLoaded={() => setOfferLoaded(true)} />
       </HomeSection>
 
       <HomeSection

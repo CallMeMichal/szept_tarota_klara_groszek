@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router'
 import {
   categoryLabels,
@@ -12,9 +13,19 @@ import {
 import { useApi } from '../useApi.ts'
 import { ProductImage } from './ProductImage.tsx'
 
+type OfferCatalogProps = {
+  /** Wywoływane, gdy Produkty z API są już na stronie (zmienia się jej wysokość). */
+  onLoaded?: () => void
+}
+
 /** Produkty z katalogu w kategoriach sekcji Oferta; puste kategorie są pomijane. */
-export function OfferCatalog() {
+export function OfferCatalog({ onLoaded }: OfferCatalogProps) {
   const products = useApi<ProductSummary[]>('/api/products')
+  const loaded = products.status === 'ok'
+
+  useEffect(() => {
+    if (loaded) onLoaded?.()
+  }, [loaded, onLoaded])
 
   if (products.status === 'loading') {
     return <p className="section__lead">Rozkładam karty…</p>
@@ -41,7 +52,12 @@ export function OfferCatalog() {
         <ul className="offer-categories">
           {categories.map(({ category }) => (
             <li key={category}>
-              <a href={`#oferta-${category}`}>{categoryLabels[category]}</a>
+              <button
+                type="button"
+                onClick={() => document.getElementById(`oferta-${category}`)?.scrollIntoView()}
+              >
+                {categoryLabels[category]}
+              </button>
             </li>
           ))}
         </ul>
