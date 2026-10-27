@@ -34,7 +34,13 @@ npm install
 npm run dev
 ```
 
+Treści strony głównej są w `frontend/src/content/home.ts`. Teksty z `placeholder: true` są tymczasowe (na stronie mają znacznik „Treść tymczasowa”) i czekają na teksty od Klary.
+
 Connection string jest w `ConnectionStrings:Database` (`appsettings.Development.json`). Poza Development migracje stosuje się ręcznie albo przez `Database:ApplyMigrationsOnStartup=true`.
+
+## Podgląd na GitHub Pages
+
+Workflow `.github/workflows/deploy-frontend-pages.yml` przy każdym pushu na `main` (zmiany w `frontend/`) lintuje, buduje i wdraża frontend na GitHub Pages pod `/<repo>/` (`BASE_PATH`). Kopia `index.html` jako `404.html` sprawia, że wejście wprost na podstronę i odświeżenie działa. Pages to tylko podgląd testowy, bez backendu. W ustawieniach repo trzeba raz włączyć Pages ze źródłem „GitHub Actions”.
 
 ## Migracje (EF Core)
 

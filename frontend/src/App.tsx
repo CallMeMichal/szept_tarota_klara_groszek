@@ -1,21 +1,23 @@
-import { useEffect, useState } from 'react'
+import { Route, Routes } from 'react-router'
 import './App.css'
+import { SiteFooter } from './components/SiteFooter.tsx'
+import { SiteHeader } from './components/SiteHeader.tsx'
+import { HomePage } from './pages/HomePage.tsx'
+import { NotFoundPage } from './pages/NotFoundPage.tsx'
 
 function App() {
-  const [apiStatus, setApiStatus] = useState('…')
-
-  useEffect(() => {
-    fetch('/api/health')
-      .then((res) => res.json())
-      .then((data: { status: string }) => setApiStatus(data.status))
-      .catch(() => setApiStatus('brak połączenia'))
-  }, [])
-
   return (
-    <main>
-      <h1>Szept Tarota — Klara Groszek</h1>
-      <p>API: {apiStatus}</p>
-    </main>
+    <>
+      <div className="night-sky" aria-hidden="true" />
+      <SiteHeader />
+      <main>
+        <Routes>
+          <Route index element={<HomePage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </main>
+      <SiteFooter />
+    </>
   )
 }
 

@@ -1,111 +1,116 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Paleta z Instagrama Klary: granat nocnego nieba i złoto. */
+  --night-950: #070b1f;
+  --night-900: #0b1230;
+  --night-800: #131c44;
+  --night-700: #1e2a5c;
+  --gold-300: #f3dfa2;
+  --gold-400: #e2c17a;
+  --gold-500: #d4af61;
+  --gold-600: #a8823c;
+  --ivory: #f5efe2;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --text: #d8d3e6;
+  --text-muted: #a7a3bd;
+  --text-h: var(--ivory);
+  --accent: var(--gold-500);
+  --border: rgba(212, 175, 97, 0.28);
+  --surface: rgba(19, 28, 68, 0.6);
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
+  --serif: 'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Jost Variable', 'Jost', system-ui, 'Segoe UI', Roboto, sans-serif;
+
+  --header-height: 4rem;
+
+  font: 17px/1.65 var(--sans);
+  font-weight: 350;
+  color-scheme: dark;
   color: var(--text);
-  background: var(--bg);
+  background: var(--night-950);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  @media (max-width: 1024px) {
+  @media (max-width: 640px) {
     font-size: 16px;
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+html {
+  scroll-behavior: smooth;
+
+  @media (prefers-reduced-motion: reduce) {
+    scroll-behavior: auto;
+  }
 }
 
 body {
   margin: 0;
+  min-height: 100svh;
+  background:
+    radial-gradient(ellipse at 50% -10%, var(--night-700) 0%, transparent 60%),
+    linear-gradient(180deg, var(--night-900) 0%, var(--night-950) 100%);
+  background-attachment: fixed;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
 }
 
 h1,
-h2 {
-  font-family: var(--heading);
+h2,
+h3 {
+  font-family: var(--serif);
   font-weight: 500;
   color: var(--text-h);
+  line-height: 1.1;
+  margin: 0 0 0.5em;
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+  font-size: clamp(3rem, 11vw, 5.5rem);
+  letter-spacing: 0.01em;
 }
+
 h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
 }
+
 p {
-  margin: 0;
+  margin: 0 0 1em;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+a {
+  color: var(--gold-400);
+  text-underline-offset: 0.2em;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+a:hover {
+  color: var(--gold-300);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold-400);
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
