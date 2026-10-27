@@ -1,9 +1,12 @@
 namespace SzeptTarota.Api.Catalog;
 
-/// <summary>Grafiki Produktów z katalogu, serwowane pod <c>/api</c>, żeby frontend rozmawiał tylko z API.</summary>
+/// <summary>
+/// Grafiki Produktów leżą na razie we frontendzie (<c>frontend/public/products</c>), żeby było je widać
+/// także na podglądzie na GitHub Pages; katalog podaje tylko nazwę pliku.
+/// </summary>
 public static class CatalogImages
 {
-    public const string RequestPath = "/api/catalog/images";
+    public const string RequestPath = "/products";
 
     public static string? UrlFor(string? image) => image is null ? null : $"{RequestPath}/{image}";
 }

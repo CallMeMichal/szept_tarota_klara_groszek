@@ -7,13 +7,12 @@ using SzeptTarota.Domain.Catalog;
 namespace SzeptTarota.Infrastructure.Catalog;
 
 /// <summary>
-/// Katalog Produktów z pliku <c>products.json</c> w katalogu treści (grafiki w podkatalogu <c>images</c>).
+/// Katalog Produktów z pliku <c>products.json</c> w katalogu treści; grafiki są we frontendzie, tu tylko ich nazwy plików.
 /// Błędny katalog zatrzymuje start aplikacji, zamiast pokazać Klientom niepełną ofertę.
 /// </summary>
 public sealed partial class JsonProductCatalog : IProductCatalog
 {
     public const string FileName = "products.json";
-    public const string ImagesDirectoryName = "images";
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -41,7 +40,7 @@ public sealed partial class JsonProductCatalog : IProductCatalog
             ?? throw new InvalidDataException($"Pusty katalog Produktów: {path}.");
 
         var products = file.Products.Select(p => p.ToProduct()).ToList();
-        var errors = Validate(products, Path.Combine(catalogDirectory, ImagesDirectoryName)).ToList();
+        var errors = Validate(products).ToList();
         if (errors.Count > 0)
         {
             throw new InvalidDataException($"Błędny katalog Produktów ({path}):{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
@@ -50,7 +49,7 @@ public sealed partial class JsonProductCatalog : IProductCatalog
         return new JsonProductCatalog(products);
     }
 
-    private static IEnumerable<string> Validate(IReadOnlyList<Product> products, string imagesDirectory)
+    private static IEnumerable<string> Validate(IReadOnlyList<Product> products)
     {
         foreach (var duplicate in products.GroupBy(p => p.Slug).Where(g => g.Count() > 1))
         {
@@ -76,10 +75,9 @@ public sealed partial class JsonProductCatalog : IProductCatalog
                 yield return $"{at} pole formularza '{duplicate.Key}' występuje {duplicate.Count()} razy";
             }
 
-            if (product.Image is not null
-                && (Path.GetFileName(product.Image) != product.Image || !File.Exists(Path.Combine(imagesDirectory, product.Image))))
+            if (product.Image is not null && Path.GetFileName(product.Image) != product.Image)
             {
-                yield return $"{at} brak grafiki '{product.Image}' w {imagesDirectory}";
+                yield return $"{at} grafika '{product.Image}' ma być samą nazwą pliku z frontend/public/products";
             }
         }
     }

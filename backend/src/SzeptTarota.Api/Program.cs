@@ -2,11 +2,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.FileProviders;
 using SzeptTarota.Api.Catalog;
 using SzeptTarota.Application;
 using SzeptTarota.Infrastructure;
-using SzeptTarota.Infrastructure.Catalog;
 
 var builder = WebApplication.CreateBuilder(args);
 var catalogDirectory = Path.Combine(builder.Environment.ContentRootPath, "Catalog");
@@ -28,12 +26,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(Path.Combine(catalogDirectory, JsonProductCatalog.ImagesDirectoryName)),
-    RequestPath = CatalogImages.RequestPath,
-});
 
 var api = app.MapGroup("/api");
 
