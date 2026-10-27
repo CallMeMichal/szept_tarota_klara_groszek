@@ -24,3 +24,12 @@ export function isHomeSectionId(value: string): value is HomeSectionId {
 export function homeSectionPath(sectionId: HomeSectionId) {
   return sectionId === homeSections.start ? '/' : `/${sectionId}`
 }
+
+/** Sekcje w menu nagłówka i stopki, w kolejności na stronie. */
+export const homeNavItems: { id: HomeSectionId; label: string }[] = [
+  { id: homeSections.about, label: 'O mnie' },
+  { id: homeSections.offer, label: 'Oferta' },
+  { id: homeSections.testimonials, label: 'Opinie' },
+  { id: homeSections.faq, label: 'FAQ' },
+  { id: homeSections.contact, label: 'Kontakt' },
+]

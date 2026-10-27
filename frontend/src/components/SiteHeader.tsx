@@ -1,15 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import moonStar from '../assets/home/moon-star.svg'
-import { homeSectionPath, homeSections } from '../homeSections.ts'
-
-const navItems = [
-  { id: homeSections.about, label: 'O mnie' },
-  { id: homeSections.offer, label: 'Oferta' },
-  { id: homeSections.testimonials, label: 'Opinie' },
-  { id: homeSections.faq, label: 'FAQ' },
-  { id: homeSections.contact, label: 'Kontakt' },
-]
+import { homeNavItems, homeSectionPath } from '../homeSections.ts'
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -41,7 +33,7 @@ export function SiteHeader() {
           aria-label="Główna nawigacja"
         >
           <ul>
-            {navItems.map((item) => (
+            {homeNavItems.map((item) => (
               <li key={item.id}>
                 <Link to={homeSectionPath(item.id)} onClick={() => setMenuOpen(false)}>
                   {item.label}

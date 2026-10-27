@@ -3,7 +3,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SzeptTarota.Application.Catalog;
+using SzeptTarota.Application.Contact;
 using SzeptTarota.Infrastructure.Catalog;
+using SzeptTarota.Infrastructure.Contact;
 using SzeptTarota.Infrastructure.Persistence;
 
 namespace SzeptTarota.Infrastructure;
@@ -23,6 +25,9 @@ public static class DependencyInjection
 
         services.AddHealthChecks()
             .AddDbContextCheck<SzeptTarotaDbContext>("database");
+
+        services.Configure<ContactOptions>(configuration.GetSection(ContactOptions.SectionName));
+        services.AddSingleton<IContactMailer, SmtpContactMailer>();
 
         return services;
     }

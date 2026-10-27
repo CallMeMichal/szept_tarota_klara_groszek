@@ -40,6 +40,10 @@ Treści strony głównej są w `frontend/src/content/home.ts`.
 
 Produkty są treścią w repo: `backend/src/SzeptTarota.Api/Catalog/products.json`. Grafiki Produktów są tylko we frontendzie: `frontend/src/assets/products/<slug>.webp`; Produkt bez pliku dostaje księżyc marki. Backend wczytuje katalog przy starcie i nie wystartuje, jeśli jest błędny (np. powtórzony slug, Sesja bez długości). Slug jest adresem podstrony (`/oferta/<slug>`), więc raz opublikowanego nie zmieniamy. Ceny są w groszach. Startowa wersja to import oferty z naffy.io.
 
+### Formularz kontaktowy
+
+Formularz w sekcji Kontakt wysyła `POST /api/contact`, a backend przekazuje wiadomość mailem (SMTP, MailKit) na firmowy adres, z adresem piszącej osoby w Reply-To. Adres i serwer ustawia się w sekcji `Contact` (`RecipientEmail`, `Smtp:Host`, `Smtp:Port`, `Smtp:Username`, `Smtp:Password`, `Smtp:SenderEmail`); hasło trzymaj w user-secrets albo zmiennych środowiskowych (`Contact__Smtp__Password`), nie w repo. Dopóki `RecipientEmail` albo `Smtp:Host` są puste, endpoint odpowiada 503, a formularz prosi o kontakt przez Instagram. Na GitHub Pages nie ma backendu, więc formularz tam zawsze pokazuje ten komunikat.
+
 Connection string jest w `ConnectionStrings:Database` (`appsettings.Development.json`). Poza Development migracje stosuje się ręcznie albo przez `Database:ApplyMigrationsOnStartup=true`.
 
 ## Podgląd na GitHub Pages

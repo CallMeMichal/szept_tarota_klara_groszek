@@ -288,7 +288,8 @@ main {
   }
 
   @media (max-width: 640px) {
-    padding: 48px 20px 56px;
+    padding: 0 0 48px;
+    gap: 0;
   }
 }
 
@@ -349,6 +350,20 @@ main {
   flex-wrap: wrap;
   gap: 14px;
   padding-top: 6px;
+
+  @media (max-width: 640px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero__actions .button {
+    gap: 12px;
+    padding: 0 12px;
+  }
 }
 
 .hero__availability {
@@ -372,6 +387,12 @@ main {
   max-width: 624px;
   aspect-ratio: 624 / 628;
   margin: 0;
+
+  /* Na telefonie zdjęcie otwiera stronę, zamiast czekać pod tekstem. */
+  @media (max-width: 1100px) {
+    order: -1;
+  }
+
 }
 
 .hero__orbit {
@@ -431,6 +452,56 @@ main {
   width: 40px;
   height: 1px;
   background: var(--sand-500);
+}
+
+/* Telefon: zdjęcie na całą szerokość pod nagłówkiem, a tytuł wchodzi na
+   jego wygaszony dół. Orbita, sygnet i podpis zostają tylko na dużym ekranie. */
+@media (max-width: 640px) {
+  .hero__visual {
+    max-width: none;
+    aspect-ratio: 540 / 590;
+  }
+
+  .hero__orbit,
+  .hero__seal,
+  .hero__caption {
+    display: none;
+  }
+
+  .hero__arch {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .hero__arch::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(10, 16, 35, 0) 40%,
+      rgba(10, 16, 35, 0.75) 75%,
+      var(--ink-950) 100%
+    );
+  }
+
+  .hero__intro {
+    position: relative;
+    margin-top: -104px;
+    padding: 0 20px;
+    gap: 22px;
+  }
+
+  .hero__eyebrow {
+    text-shadow: 0 1px 8px rgba(10, 16, 35, 0.9);
+  }
+
+  .hero h1 {
+    font-size: 76px;
+    text-shadow: 0 2px 24px rgba(10, 16, 35, 0.6);
+  }
 }
 
 /* O mnie */
@@ -843,26 +914,91 @@ main {
   text-transform: uppercase;
 }
 
-/* FAQ */
+/* FAQ i Kontakt */
 
-.faq {
-  max-width: 44rem;
-  margin: 1rem auto 0;
-  text-align: left;
+.section-eyebrow {
+  margin: 0;
+  color: var(--sand-500);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.faq,
+.contact {
+  scroll-margin-top: var(--header-height);
+  background: var(--ink-950);
+}
+
+.faq h2,
+.contact h2 {
+  margin: 0;
+  font-size: clamp(40px, 9vw, 58px);
+  font-weight: 400;
+  line-height: 1.06;
+  color: var(--cream);
+}
+
+.faq h2 span,
+.contact h2 span {
+  display: block;
+}
+
+/* Na telefonie nagłówek Kontaktu łamie się naturalnie, nie na trzy krótkie linie. */
+@media (max-width: 640px) {
+  .contact h2 span {
+    display: inline;
+  }
+
+  .contact h2 span + span::before {
+    content: ' ';
+  }
+}
+
+.faq__inner {
+  max-width: calc(1264px + 2 * 20px);
+  margin: 0 auto;
+  padding: 96px 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+  align-items: start;
+  gap: 100px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+
+  @media (max-width: 640px) {
+    padding: 64px 20px;
+  }
+}
+
+.faq__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.faq__list {
+  border-top: 1px solid var(--hairline);
 }
 
 .faq details {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .faq summary {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1.1rem 0;
-  font-family: var(--serif);
-  font-size: 1.35rem;
-  color: var(--text-h);
+  gap: 26px;
+  min-height: 78px;
+  padding: 20px 0;
+  color: var(--cream);
+  font-size: 16px;
+  line-height: 1.5;
   cursor: pointer;
   list-style: none;
 }
@@ -871,41 +1007,400 @@ main {
   display: none;
 }
 
-.faq summary::after {
-  content: '+';
-  color: var(--gold-400);
+.faq summary img {
+  display: block;
+  flex-shrink: 0;
   transition: transform 0.2s ease;
 }
 
-.faq details[open] summary::after {
+.faq details[open] summary img {
   transform: rotate(45deg);
 }
 
 .faq details p {
-  color: var(--text-muted);
+  max-width: 640px;
+  margin: -4px 44px 24px 0;
+  color: var(--mist);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.contact {
+  padding: 0 20px 90px;
+  scroll-margin-top: calc(var(--header-height) + 24px);
+
+  @media (max-width: 640px) {
+    padding: 0 16px 56px;
+  }
+}
+
+.contact__card {
+  max-width: 1264px;
+  margin: 0 auto;
+  padding: 60px;
+  display: grid;
+  grid-template-columns: minmax(0, 650px) minmax(0, 1fr);
+  align-items: center;
+  gap: 65px;
+  background: var(--ink-900);
+  border: 1px solid var(--sand-border);
+  border-radius: 8px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 48px;
+  }
+
+  /* Telefon: nocne niebo z Figmy jako tło karty zamiast konstelacji. */
+  @media (max-width: 640px) {
+    padding: 200px 22px 36px;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(16, 26, 51, 0) 0%,
+        rgba(16, 26, 51, 0.45) 240px,
+        var(--ink-900) 470px
+      ),
+      url('./assets/home/contact-night-sky.jpg') center top / auto 480px no-repeat,
+      var(--ink-900);
+    overflow: hidden;
+  }
+}
+
+.contact__invite {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.contact__lead {
+  margin: 0;
+  color: var(--mist);
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+/* Konstelacja z projektu (429 × 350): orbity, gwiazdy, księżyc i myśl. */
+.contact__constellation {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  height: 350px;
+
+  /* Na telefonie zamiast konstelacji tło karty to nocne niebo. */
+  @media (max-width: 640px) {
+    display: none;
+  }
+}
+
+.contact__orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+}
+
+.contact__star {
+  position: absolute;
+  background: var(--sand-500);
+  rotate: 45deg;
+}
+
+.contact__star--large {
+  left: calc(50% - 184px);
+  top: 18.3%;
+  width: 8px;
+  height: 8px;
+}
+
+.contact__star--small {
+  left: calc(50% + 61px);
+  top: 72%;
+  width: 6px;
+  height: 6px;
+}
+
+.contact__moon {
+  position: relative;
+  display: block;
+}
+
+.contact__thought {
+  position: relative;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 25px;
+  font-style: italic;
+  line-height: 1.2;
+  color: var(--sand-400);
+}
+
+/* Formularz kontaktowy */
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  padding-top: 4px;
+}
+
+.contact-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.contact-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  color: var(--mist);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.contact-form__field input,
+.contact-form__field textarea {
+  width: 100%;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--cream);
+  background: var(--ink-950);
+  border: 1px solid var(--sand-border);
+  border-radius: 4px;
+  transition: border-color 0.2s ease;
+}
+
+.contact-form__field textarea {
+  resize: vertical;
+  min-height: 132px;
+}
+
+.contact-form__field input:hover,
+.contact-form__field textarea:hover {
+  border-color: rgba(199, 171, 114, 0.55);
+}
+
+.contact-form__field input:focus-visible,
+.contact-form__field textarea:focus-visible {
+  outline: none;
+  border-color: var(--sand-400);
+}
+
+.contact-form__trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Instagram po lewej, wysyłka po prawej; na telefonie wysyłka na górze. */
+.contact-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding-top: 6px;
+
+  @media (max-width: 640px) {
+    flex-direction: column-reverse;
+  }
+}
+
+@media (max-width: 640px) {
+  .contact-form__actions .button {
+    gap: 12px;
+    padding: 0 16px;
+    white-space: nowrap;
+  }
+}
+
+.contact-form .button:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.contact-form__status {
+  margin: 0;
+  color: var(--sand-400);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.contact-form__status:empty {
+  display: none;
 }
 
 /* Stopka */
 
 .site-footer {
-  padding: 2.5rem 1.25rem;
-  text-align: center;
-  border-top: 1px solid var(--border);
-  font-size: 0.9rem;
+  border-top: 1px solid var(--hairline);
+  background: var(--ink-950);
+}
+
+.site-footer__inner {
+  max-width: calc(1264px + 2 * 20px);
+  margin: 0 auto;
+  padding: 52px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 42px;
+
+  @media (max-width: 640px) {
+    padding: 44px 20px 28px;
+    gap: 32px;
+  }
 }
 
 .site-footer p {
-  margin: 0.25rem 0;
+  margin: 0;
+}
+
+.site-footer__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  padding-bottom: 42px;
+  border-bottom: 1px solid var(--hairline);
+
+  @media (max-width: 760px) {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-bottom: 32px;
+  }
 }
 
 .site-footer__brand {
-  font-family: var(--serif);
-  font-size: 1.25rem;
-  color: var(--text-h);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--mist);
+  font-size: 12px;
+  line-height: 1.2;
+
+  /* Na telefonie logo i podpis stoją na środku stopki. */
+  @media (max-width: 760px) {
+    align-items: center;
+    width: 100%;
+    text-align: center;
+  }
 }
 
-.site-footer__copy {
-  color: var(--text-muted);
+.site-footer__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--serif);
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--cream);
+  text-decoration: none;
+}
+
+.site-footer__logo:hover {
+  color: var(--cream);
+}
+
+.site-footer__logo img {
+  display: block;
+}
+
+/* Na telefonie menu stopki rozkłada się równo na całą szerokość. */
+.site-footer__top nav {
+  @media (max-width: 760px) {
+    width: 100%;
+  }
+}
+
+.site-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @media (max-width: 760px) {
+    justify-content: space-between;
+    gap: 12px 16px;
+  }
+}
+
+.site-footer__nav a,
+.site-footer__top-link {
+  color: var(--mist);
+  font-size: 13px;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.site-footer__nav a:hover,
+.site-footer__top-link:hover {
+  color: var(--cream);
+}
+
+.site-footer__bottom {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  color: var(--mist);
+  font-size: 12px;
+  line-height: 1.2;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+.site-footer__instagram {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--sand-400);
+  font-size: 12px;
+  text-decoration: none;
+
+  @media (max-width: 640px) {
+    grid-row: 1;
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+}
+
+.site-footer__instagram:hover {
+  color: var(--gold-300);
+}
+
+.site-footer__instagram img,
+.site-footer__top-link img {
+  display: block;
+}
+
+.site-footer__top-link {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
 }
 
 /* Brak strony */

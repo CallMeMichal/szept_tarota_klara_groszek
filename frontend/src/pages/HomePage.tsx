@@ -6,7 +6,12 @@ import arrowPrimary from '../assets/home/arrow-up-right-primary.svg'
 import globeIcon from '../assets/home/globe.svg'
 import heroTarot from '../assets/home/hero-tarot.jpg'
 import intuitionSeal from '../assets/home/intuition-seal.svg'
+import moonStarLarge from '../assets/home/moon-star-large.svg'
+import orbitInner from '../assets/home/orbit-inner.svg'
+import orbitOuter from '../assets/home/orbit-outer.svg'
 import orbit from '../assets/home/orbit.svg'
+import plusIcon from '../assets/home/plus.svg'
+import { ContactForm } from '../components/ContactForm.tsx'
 import { HomeSection } from '../components/HomeSection.tsx'
 import { OfferCatalog } from '../components/OfferCatalog.tsx'
 import {
@@ -164,30 +169,65 @@ export function HomePage({ section }: HomePageProps) {
         </ul>
       </HomeSection>
 
-      <HomeSection id={homeSections.faq} title={faq.title}>
-        <div className="faq">
-          {faq.items.map((item) => (
-            <details key={item.question}>
-              <summary>{item.question}</summary>
-              <p>{item.answer}</p>
-            </details>
-          ))}
+      <section id={homeSections.faq} className="faq" aria-labelledby="faq-title">
+        <div className="faq__inner">
+          <div className="faq__intro">
+            <p className="section-eyebrow">{faq.eyebrow}</p>
+            <h2 id="faq-title">
+              {faq.titleLines.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </h2>
+          </div>
+          <div className="faq__list">
+            {faq.items.map((item) => (
+              <details key={item.question}>
+                <summary>
+                  {item.question}
+                  <img src={plusIcon} width={18} height={18} alt="" />
+                </summary>
+                <p>{item.answer}</p>
+              </details>
+            ))}
+          </div>
         </div>
-      </HomeSection>
+      </section>
 
-      <HomeSection id={homeSections.contact} title={contact.title}>
-        <p className="section__lead">{contact.lead}</p>
-        <p>
-          <a
-            className="button button--primary"
-            href={instagram.url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Napisz na Instagramie @{instagram.handle}
-          </a>
-        </p>
-      </HomeSection>
+      <section id={homeSections.contact} className="contact" aria-labelledby="kontakt-title">
+        <div className="contact__card">
+          <div className="contact__invite">
+            <p className="section-eyebrow">{contact.eyebrow}</p>
+            <h2 id="kontakt-title">
+              {contact.titleLines.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </h2>
+            <p className="contact__lead">{contact.lead}</p>
+            <ContactForm
+              alternative={
+                <a
+                  className="button button--ghost"
+                  href={instagram.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Napisz na Instagramie @{instagram.handle}
+                  <img src={arrowGhost} width={16} height={16} alt="" />
+                </a>
+              }
+            />
+          </div>
+
+          <div className="contact__constellation" aria-hidden="true">
+            <img className="contact__orbit contact__orbit--outer" src={orbitOuter} width={340} height={340} alt="" />
+            <img className="contact__orbit contact__orbit--inner" src={orbitInner} width={274} height={274} alt="" />
+            <span className="contact__star contact__star--large" />
+            <span className="contact__star contact__star--small" />
+            <img className="contact__moon" src={moonStarLarge} width={86} height={86} alt="" />
+            <p className="contact__thought">{contact.closingThought}</p>
+          </div>
+        </div>
+      </section>
     </>
   )
 }

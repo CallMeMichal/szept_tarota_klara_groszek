@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Time.Testing;
+using SzeptTarota.Api.Tests.Fakes;
+using SzeptTarota.Application.Contact;
 using Testcontainers.PostgreSql;
 
 namespace SzeptTarota.Api.Tests.Infrastructure;
@@ -17,6 +19,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public FakeTimeProvider Time { get; } = new(new DateTimeOffset(2026, 1, 15, 9, 0, 0, TimeSpan.Zero));
 
+    public FakeContactMailer ContactMailer { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -26,6 +30,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.ConfigureTestServices(services =>
         {
             services.ReplaceWithFake<TimeProvider>(Time);
+            services.ReplaceWithFake<IContactMailer>(ContactMailer);
         });
     }
 

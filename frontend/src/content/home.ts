@@ -56,7 +56,8 @@ export const testimonials = {
 }
 
 export const faq = {
-  title: 'Najczęstsze pytania',
+  eyebrow: 'Warto wiedzieć',
+  titleLines: ['Najczęstsze', 'pytania'],
   items: [
     {
       question: 'Jak wygląda Sesja online?',
@@ -82,6 +83,8 @@ export const faq = {
 }
 
 export const contact = {
-  title: 'Kontakt',
-  lead: 'Masz pytanie, zanim coś wybierzesz? Napisz do mnie na Instagramie, odpowiadam na każdą wiadomość.',
+  eyebrow: 'Kontakt',
+  titleLines: ['Nie musisz wiedzieć', 'od czego zacząć.'],
+  lead: 'Masz pytanie, zanim coś wybierzesz? Napisz do mnie przez formularz albo na Instagramie, odpowiadam na każdą wiadomość.',
+  closingThought: 'Posłuchaj swojego szeptu.',
 }
