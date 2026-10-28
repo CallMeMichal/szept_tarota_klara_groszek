@@ -109,10 +109,6 @@ public sealed record Consent(string Key, string Text)
         "termsAndPrivacy",
         "Akceptuję regulamin i politykę prywatności.");
 
-    public static readonly Consent ServiceEarlyStart = new(
-        "serviceEarlyStart",
-        "Żądam rozpoczęcia wykonywania Usługi przed upływem 14 dni od zawarcia umowy i przyjmuję do wiadomości, że po jej pełnym wykonaniu tracę prawo do odstąpienia od umowy.");
-
     public static IReadOnlyList<Consent> RequiredFor(IReadOnlyCollection<Product> products)
     {
         if (products.Count == 0)
@@ -120,6 +116,7 @@ public sealed record Consent(string Key, string Text)
             return [];
         }
 
-        return products.Any(p => p.Kind != ProductKind.Ebook) ? [TermsAndPrivacy, ServiceEarlyStart] : [TermsAndPrivacy];
+        // Bez osobnej zgody na rozpoczęcie Usługi przed upływem 14 dni: przy każdym Koszyku wystarcza regulamin.
+        return [TermsAndPrivacy];
     }
 }

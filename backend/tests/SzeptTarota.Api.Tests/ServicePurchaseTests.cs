@@ -40,17 +40,14 @@ public class ServicePurchaseTests : IAsyncLifetime
     public Task DisposeAsync() => _api.DisposeAsync().AsTask();
 
     [Fact]
-    public async Task Without_the_consent_to_start_within_14_days_payment_for_a_Service_does_not_start()
+    public async Task Paying_for_a_Service_needs_only_the_terms_consent()
     {
         var response = await StartCheckout(
             [Service(new { name = "Anna", birthDate = "1990-04-12" })],
             consents: ["termsAndPrivacy"]);
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var problem = (await response.Content.ReadFromJsonAsync<ValidationProblemResponse>())!;
-        var error = Assert.Single(Assert.Single(problem.Errors, e => e.Key == "acceptedConsents").Value);
-        Assert.Contains("14 dni", error);
-        Assert.Empty(_factory.Payments.Sessions);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Single(_factory.Payments.Sessions);
     }
 
     [Fact]
@@ -86,7 +83,7 @@ public class ServicePurchaseTests : IAsyncLifetime
         Assert.Contains("Imię: Maria", toKlara);
         Assert.Contains("Data urodzenia: 1962-11-03", toKlara);
         Assert.DoesNotContain("pominięte", toKlara);
-        Assert.Contains("Żądam rozpoczęcia wykonywania Usługi przed upływem 14 dni", toKlara);
+        Assert.DoesNotContain("14 dni", toKlara);
         Assert.True(toKlara.IndexOf("Anna", StringComparison.Ordinal) < toKlara.IndexOf("Maria", StringComparison.Ordinal));
 
         var toKlient = Assert.Single(_factory.Emails.Sent, m => m.To == _email);
@@ -101,7 +98,7 @@ public class ServicePurchaseTests : IAsyncLifetime
             items,
             email = _email,
             name = "Anna Nowak",
-            acceptedConsents = consents ?? ["termsAndPrivacy", "serviceEarlyStart"],
+            acceptedConsents = consents ?? ["termsAndPrivacy"],
         });
 
     private Task<HttpResponseMessage> SendPaidWebhook(Guid orderId)
@@ -115,8 +112,6 @@ public class ServicePurchaseTests : IAsyncLifetime
         };
         return _api.CreateClient().SendAsync(request);
     }
-
-    private sealed record ValidationProblemResponse(Dictionary<string, string[]> Errors);
 
     private sealed record CartResponse(bool IsValid, List<CartLineResponse> Items);
 

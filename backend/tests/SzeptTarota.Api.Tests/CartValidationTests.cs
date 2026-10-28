@@ -112,7 +112,7 @@ public class CartValidationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_Service_with_its_form_filled_in_is_valid_and_needs_the_consent_to_start_within_14_days()
+    public async Task A_Service_with_its_form_filled_in_is_valid_and_needs_only_the_terms_consent()
     {
         var cart = await Validate(Service(new { name = "Anna", birthDate = "1990-04-12" }));
 
@@ -121,8 +121,7 @@ public class CartValidationTests : IAsyncLifetime
         Assert.Equal("service", line.Kind);
         Assert.Empty(line.Errors);
         Assert.Equal(34900, cart.Total);
-        Assert.Equal(["termsAndPrivacy", "serviceEarlyStart"], cart.RequiredConsents.Select(c => c.Key));
-        Assert.Contains("14 dni", cart.RequiredConsents[1].Text);
+        Assert.Equal(["termsAndPrivacy"], cart.RequiredConsents.Select(c => c.Key));
     }
 
     [Fact]
