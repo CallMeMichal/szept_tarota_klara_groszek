@@ -1832,7 +1832,8 @@ main {
 }
 
 .checkout-form__field input,
-.checkout-form__field textarea {
+.checkout-form__field textarea,
+.checkout-form__field select {
   width: 100%;
   padding: 14px 16px;
   font: inherit;
@@ -1855,7 +1856,8 @@ main {
 }
 
 .checkout-form__field input:focus-visible,
-.checkout-form__field textarea:focus-visible {
+.checkout-form__field textarea:focus-visible,
+.checkout-form__field select:focus-visible {
   outline: none;
   border-color: var(--sand-400);
 }
@@ -2189,6 +2191,50 @@ main {
   color: var(--mist);
   font-size: 0.95rem;
   line-height: 1.5;
+}
+
+/* Panel Klary */
+
+.panel-calendar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-top: 3rem;
+  text-align: left;
+}
+
+.panel-calendar h2 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.panel-calendar__status {
+  margin: 0;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+  color: var(--mist);
+}
+
+.panel-calendar__status--connected {
+  border-color: var(--sand-400);
+  color: var(--gold-300);
+}
+
+.panel-calendar__status--broken {
+  border-color: var(--sand-border);
+  color: var(--cream);
+}
+
+.panel-calendar__choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  width: 100%;
+  max-width: 28rem;
 }
 
 .my-orders {

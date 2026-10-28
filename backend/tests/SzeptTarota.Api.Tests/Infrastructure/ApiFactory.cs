@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 using SzeptTarota.Api.Tests.Fakes;
+using SzeptTarota.Application.Calendar;
 using SzeptTarota.Application.Contact;
 using SzeptTarota.Application.Ebooks;
 using SzeptTarota.Application.Email;
@@ -33,6 +34,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     public FakeEbookStorage Ebooks { get; } = new();
 
     public FakeGoogle Google { get; } = new();
+
+    public FakeGoogleCalendar GoogleCalendar { get; } = new();
 
     public const string SiteUrl = "https://szept-tarota.test";
 
@@ -63,6 +66,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             services.ReplaceWithFake<IPaymentGateway>(Payments);
             services.ReplaceWithFake<IEmailSender>(Emails);
             services.ReplaceWithFake<IEbookStorage>(Ebooks);
+            services.ReplaceWithFake<IGoogleCalendar>(GoogleCalendar);
         });
     }
 

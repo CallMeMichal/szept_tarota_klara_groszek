@@ -7,6 +7,7 @@ using SzeptTarota.Api.Cart;
 using SzeptTarota.Api.Catalog;
 using SzeptTarota.Api.Contact;
 using SzeptTarota.Api.Orders;
+using SzeptTarota.Api.Panel;
 using SzeptTarota.Application;
 using SzeptTarota.Infrastructure;
 
@@ -70,6 +71,7 @@ api.MapCartEndpoints();
 api.MapContactEndpoints();
 api.MapOrderEndpoints();
 api.MapAccountEndpoints();
+api.MapPanelEndpoints();
 
 app.Run();
 

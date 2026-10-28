@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router'
 import './App.css'
-import { accountPath, loginPath } from './account.ts'
+import { accountPath, loginPath, panelPath } from './account.ts'
 import { cartPath, orderPath } from './cart.ts'
 import { CartToast } from './components/CartToast.tsx'
 import { SiteFooter } from './components/SiteFooter.tsx'
@@ -12,6 +12,7 @@ import { HomePage } from './pages/HomePage.tsx'
 import { LoginPage } from './pages/LoginPage.tsx'
 import { NotFoundPage } from './pages/NotFoundPage.tsx'
 import { OrderPage } from './pages/OrderPage.tsx'
+import { PanelPage } from './pages/PanelPage.tsx'
 import { ProductPage } from './pages/ProductPage.tsx'
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
           <Route path={orderPath(':id')} element={<OrderPage />} />
           <Route path={loginPath} element={<LoginPage />} />
           <Route path={accountPath} element={<AccountPage />} />
+          <Route path={panelPath} element={<PanelPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

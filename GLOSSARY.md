@@ -38,6 +38,10 @@ _Avoid_: spotkanie, konsultacja, wizyta
 Konkretna data, godzina i długość Sesji, wybrane przez Klienta przy zakupie spośród wolnych godzin, które Klara udostępniła.
 _Avoid_: slot, rezerwacja, wizyta
 
+**Kalendarz Sesji**:
+Osobny kalendarz Google Klary, w którym wpisuje bloki „Dostępna”, czyli godziny, w których przyjmuje Sesje; wybiera go w panelu. Jej główny kalendarz jest odczytywany tylko jako zajętość.
+_Avoid_: kalendarz dostępności, grafik
+
 ## Sprzedaż
 
 **Klient**:

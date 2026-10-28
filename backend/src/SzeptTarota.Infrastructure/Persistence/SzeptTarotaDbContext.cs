@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SzeptTarota.Domain.Accounts;
 using SzeptTarota.Domain.Orders;
+using SzeptTarota.Infrastructure.Calendar;
 
 namespace SzeptTarota.Infrastructure.Persistence;
 
@@ -12,8 +13,18 @@ public sealed class SzeptTarotaDbContext(DbContextOptions<SzeptTarotaDbContext> 
 
     public DbSet<LoginCode> LoginCodes => Set<LoginCode>();
 
+    public DbSet<StoredCalendarConnection> CalendarConnections => Set<StoredCalendarConnection>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<StoredCalendarConnection>(connection =>
+        {
+            connection.ToTable("calendar_connections");
+            connection.HasKey(c => c.Id);
+            connection.Property(c => c.Id).ValueGeneratedNever();
+            connection.Property(c => c.SessionCalendarId).HasMaxLength(1024);
+        });
+
         modelBuilder.Entity<Account>(account =>
         {
             account.ToTable("accounts");

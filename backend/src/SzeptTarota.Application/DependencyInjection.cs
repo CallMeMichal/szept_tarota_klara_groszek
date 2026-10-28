@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SzeptTarota.Application.Accounts;
+using SzeptTarota.Application.Calendar;
 using SzeptTarota.Application.Cart;
 using SzeptTarota.Application.Orders;
 
@@ -13,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<CheckoutService>();
         services.AddScoped<PaymentWebhookHandler>();
         services.AddScoped<LoginService>();
+        services.AddScoped<CalendarConnectionService>();
 
         return services;
     }

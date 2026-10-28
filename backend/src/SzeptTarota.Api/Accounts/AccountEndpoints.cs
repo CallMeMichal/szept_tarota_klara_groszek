@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using SzeptTarota.Application;
 using SzeptTarota.Api.Orders;
+using SzeptTarota.Api.Panel;
 using SzeptTarota.Application.Accounts;
 using SzeptTarota.Application.Email;
 using SzeptTarota.Application.Orders;
@@ -54,6 +55,12 @@ public static class AccountEndpoints
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     return Task.CompletedTask;
                 };
+                // Zalogowany, ale bez dostępu (np. Klient w panelu Klary).
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
+                };
             });
 
         // Bez kluczy nie rejestrujemy Google wcale: handler z pustym ClientId psułby każde zapytanie.
@@ -82,7 +89,7 @@ public static class AccountEndpoints
             });
         }
 
-        services.AddAuthorization();
+        services.AddKlaraAuthorization();
         return services;
     }
 
@@ -193,6 +200,7 @@ public static class AccountEndpoints
         account.MapPost("/login", async Task<Results<Ok<AccountResponse>, UnauthorizedHttpResult>> (
                 LoginRequest request,
                 LoginService login,
+                IOptions<ShopOptions> shop,
                 HttpContext context,
                 CancellationToken cancellationToken) =>
             {
@@ -205,7 +213,7 @@ public static class AccountEndpoints
                     CookieAuthenticationDefaults.AuthenticationScheme,
                     Principal(loggedIn),
                     new AuthenticationProperties { IsPersistent = true });
-                return TypedResults.Ok(new AccountResponse(loggedIn.Email));
+                return TypedResults.Ok(AccountResponse.From(loggedIn, shop.Value));
             })
             .RequireRateLimiting(LoginRateLimitPolicy)
             .WithName("LogIn");
@@ -238,9 +246,10 @@ public static class AccountEndpoints
         account.MapGet("", async Task<Results<Ok<AccountResponse>, UnauthorizedHttpResult>> (
                 ClaimsPrincipal user,
                 IAccountStore accounts,
+                IOptions<ShopOptions> shop,
                 CancellationToken cancellationToken) =>
                 await accounts.FindAsync(user.AccountId(), cancellationToken) is { } found
-                    ? TypedResults.Ok(new AccountResponse(found.Email))
+                    ? TypedResults.Ok(AccountResponse.From(found, shop.Value))
                     : TypedResults.Unauthorized())
             .RequireAuthorization()
             .WithName("GetAccount");
@@ -269,7 +278,11 @@ public sealed record LoginCodeRequest(string? Email);
 /// <summary>Adres, na który przyszedł kod, i wpisany kod.</summary>
 public sealed record LoginRequest(string? Email, string? Code);
 
-public sealed record AccountResponse(string Email);
+/// <param name="IsKlara">Czy to Konto Klary, które ma dostęp do panelu.</param>
+public sealed record AccountResponse(string Email, bool IsKlara)
+{
+    public static AccountResponse From(Account account, ShopOptions shop) => new(account.Email, shop.IsKlara(account.Email));
+}
 
 /// <summary>Opłacone Zamówienie na liście „Moje Zamówienia”.</summary>
 public sealed record MyOrderResponse(Guid Id, DateTimeOffset PaidAt, IReadOnlyList<OrderLineResponse> Items, int Total)

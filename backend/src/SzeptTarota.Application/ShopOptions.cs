@@ -10,6 +10,13 @@ public sealed class ShopOptions
 
     /// <summary>Adres, na który przychodzą powiadomienia o nowych Zamówieniach.</summary>
     public string KlaraEmail { get; set; } = "";
+
+    /// <summary>
+    /// Czy Konto o adresie <paramref name="accountEmail"/> to Klara, czyli ma dostęp do panelu. Każde Konto ma adres
+    /// potwierdzony przy logowaniu (Kod logowania albo Google z <c>email_verified</c>, ADR 0003).
+    /// </summary>
+    public bool IsKlara(string accountEmail) =>
+        KlaraEmail.Trim() is { Length: > 0 } klara && string.Equals(accountEmail, klara, StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>Sklep nie może jeszcze przyjmować płatności: brakuje <c>Shop:SiteUrl</c> albo <c>Shop:KlaraEmail</c>.</summary>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router'
-import { accountPath, loginPathFor, logOut, useSession, type MyOrder } from '../account.ts'
+import { accountPath, loginPathFor, logOut, panelPath, useSession, type MyOrder } from '../account.ts'
 import { formatPrice, productPath } from '../catalog.ts'
 import { homeSectionPath, homeSections } from '../homeSections.ts'
 import { useApi } from '../useApi.ts'
@@ -30,6 +30,11 @@ export function AccountPage() {
       {session.status === 'logged-in' && (
         <>
           <p className="section__lead">Zalogowano na adres {session.email}.</p>
+          {session.isKlara && (
+            <Link className="button button--primary" to={panelPath}>
+              Panel Klary
+            </Link>
+          )}
           <LogOutButton />
           <MyOrders />
         </>

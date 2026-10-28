@@ -185,6 +185,27 @@ namespace SzeptTarota.Infrastructure.Persistence.Migrations
                     b.ToTable("orders", (string)null);
                 });
 
+            modelBuilder.Entity("SzeptTarota.Infrastructure.Calendar.StoredCalendarConnection", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("ConnectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ProtectedRefreshToken")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SessionCalendarId")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("calendar_connections", (string)null);
+                });
+
             modelBuilder.Entity("SzeptTarota.Domain.Orders.Order", b =>
                 {
                     b.HasOne("SzeptTarota.Domain.Accounts.Account", null)

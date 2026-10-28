@@ -8,13 +8,19 @@ import type { ProductKind } from './catalog.ts'
 
 export type Session =
   | { status: 'loading' }
-  | { status: 'logged-in'; email: string }
+  /** `isKlara`: Konto Klary, z dostępem do panelu. */
+  | { status: 'logged-in'; email: string; isKlara: boolean }
   | { status: 'logged-out' }
   /** API nie odpowiada (np. podgląd na GitHub Pages bez backendu). */
   | { status: 'unavailable' }
 
 export const loginPath = '/logowanie'
 export const accountPath = '/konto'
+export const panelPath = '/panel'
+
+type AccountResponse = { email: string; isKlara: boolean }
+
+const loggedIn = ({ email, isKlara }: AccountResponse): Session => ({ status: 'logged-in', email, isKlara })
 
 /** Ścieżka tej strony (np. `/koszyk`) albo `null`, gdy to adres innej strony, żeby `dalej` z adresu nie wyprowadził Klienta poza stronę. */
 export function localPathOrNull(path: string | null | undefined): string | null {
@@ -47,7 +53,7 @@ async function loadSession() {
     const response = await fetch('/api/account', { headers: { Accept: 'application/json' } })
     const isJson = response.headers.get('Content-Type')?.includes('json')
     if (response.status === 401) setSession({ status: 'logged-out' })
-    else if (response.ok && isJson) setSession({ status: 'logged-in', email: ((await response.json()) as { email: string }).email })
+    else if (response.ok && isJson) setSession(loggedIn((await response.json()) as AccountResponse))
     else setSession({ status: 'unavailable' })
   } catch {
     setSession({ status: 'unavailable' })
@@ -110,7 +116,7 @@ export async function logIn(email: string, code: string): Promise<LogInResult> {
     })
     if (response.status === 401) return 'invalid-code'
     if (!response.ok || !response.headers.get('Content-Type')?.includes('json')) return 'error'
-    setSession({ status: 'logged-in', email: ((await response.json()) as { email: string }).email })
+    setSession(loggedIn((await response.json()) as AccountResponse))
     return 'logged-in'
   } catch {
     return 'error'
