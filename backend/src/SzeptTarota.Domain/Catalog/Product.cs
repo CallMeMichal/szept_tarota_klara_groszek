@@ -1,6 +1,9 @@
 namespace SzeptTarota.Domain.Catalog;
 
-/// <summary>Wszystko, co można kupić na stronie: Ebook, Usługa albo Sesja (Sesja to Usługa z Terminem).</summary>
+/// <summary>
+/// Wszystko, co można kupić na stronie: Ebook, Usługa albo Sesja. Usługa i Sesja mają Termin, którego długość to
+/// <see cref="DurationMinutes"/>.
+/// </summary>
 public sealed record Product(
     string Slug,
     ProductKind Kind,
@@ -11,7 +14,11 @@ public sealed record Product(
     int Price,
     int? DurationMinutes,
     IReadOnlyList<FormField> Form,
-    string? EbookFileKey);
+    string? EbookFileKey)
+{
+    /// <summary>Klient wybiera przy zakupie Termin: przy każdej Usłudze i Sesji, nie przy Ebooku.</summary>
+    public bool RequiresAppointment => Kind != ProductKind.Ebook;
+}
 
 public enum ProductKind
 {

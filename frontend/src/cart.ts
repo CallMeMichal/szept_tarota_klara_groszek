@@ -1,10 +1,12 @@
 // Koszyk zapisany w pamięci przeglądarki (localStorage), więc przetrwa jej
-// zamknięcie. Trzymamy slug, cenę widzianą przy dodaniu, liczbę sztuk i
-// odpowiedzi z formularza Usługi: ceny, błędy i wymagane zgody liczy serwer
+// zamknięcie. Trzymamy slug, cenę widzianą przy dodaniu, liczbę sztuk,
+// odpowiedzi z formularza Usługi i wybrany Termin: ceny, błędy, zajętość
+// Terminów i wymagane zgody liczy serwer
 // (POST /api/cart/validate), a zapisana cena służy wyłącznie do pokazania
 // Klientowi, że od tamtej pory się zmieniła.
 
 import { useSyncExternalStore } from 'react'
+import type { Appointment } from './appointments.ts'
 import type { FormField, ProductKind } from './catalog.ts'
 import type { FormAnswers } from './serviceForm.ts'
 
@@ -20,6 +22,8 @@ export type CartItem = {
   quantity?: number
   /** Odpowiedzi z formularza Usługi po kluczach pól. */
   form?: FormAnswers
+  /** Termin Usługi albo Sesji. */
+  appointment?: Appointment
 }
 
 const storageKey = 'szept-tarota:koszyk'
@@ -54,7 +58,9 @@ function isCartItem(value: unknown): value is Omit<CartItem, 'id'> & { id?: stri
     (item.form === undefined ||
       (typeof item.form === 'object' &&
         item.form !== null &&
-        Object.values(item.form).every((answer) => typeof answer === 'string')))
+        Object.values(item.form).every((answer) => typeof answer === 'string'))) &&
+    (item.appointment === undefined ||
+      (typeof item.appointment?.start === 'string' && typeof item.appointment.end === 'string'))
   )
 }
 
@@ -97,7 +103,7 @@ export const quantityOf = (item: { quantity?: number }) => item.quantity ?? 1
 /** Dodaje sztukę Ebooka; kolejne sztuki tego samego Ebooka trafiają do jednej pozycji. */
 export function addEbookToCart(product: ProductInCart) {
   const items = readItems()
-  const existing = items.find((item) => item.slug === product.slug && !item.form)
+  const existing = items.find((item) => item.slug === product.slug && !item.form && !item.appointment)
   if (existing) {
     setCartItemQuantity(existing.id, quantityOf(existing) + 1)
     return
@@ -111,14 +117,17 @@ export function setCartItemQuantity(id: string, quantity: number) {
   writeItems(readItems().map((item) => (item.id === id ? { ...item, quantity: clamped } : item)))
 }
 
-/** Dodaje Usługę z wypełnionym formularzem; tę samą Usługę można dodać wiele razy. */
-export function addServiceToCart(product: ProductInCart, form: FormAnswers) {
-  writeItems([...readItems(), { id: newId(), slug: product.slug, name: product.name, price: product.price, form }])
+/** Dodaje Usługę albo Sesję z formularzem i Terminem; tę samą Usługę można dodać wiele razy. */
+export function addServiceToCart(product: ProductInCart, form: FormAnswers, appointment: Appointment) {
+  writeItems([
+    ...readItems(),
+    { id: newId(), slug: product.slug, name: product.name, price: product.price, form, appointment },
+  ])
 }
 
-/** Zapisuje poprawiony formularz Usługi w pozycji Koszyka. */
-export function updateCartItemForm(id: string, form: FormAnswers) {
-  writeItems(readItems().map((item) => (item.id === id ? { ...item, form } : item)))
+/** Zapisuje poprawiony formularz i Termin w pozycji Koszyka. */
+export function updateCartItem(id: string, form: FormAnswers, appointment: Appointment) {
+  writeItems(readItems().map((item) => (item.id === id ? { ...item, form, appointment } : item)))
 }
 
 /** Usuwa pozycję o danym miejscu w Koszyku. */
@@ -146,6 +155,10 @@ export type CartLine = {
   form: FormField[]
   /** Błędy formularza Usługi po kluczach pól. */
   formErrors: Record<string, string>
+  /** Wybrany Termin (także zajęty, żeby Klient widział, który zmienić). */
+  appointment: Appointment | null
+  /** Długość Terminu Usługi albo Sesji w minutach; brak dla Ebooka. */
+  durationMinutes: number | null
 }
 
 export type Consent = { key: string; text: string }
@@ -162,7 +175,13 @@ export async function validateCart(items: CartItem[], signal: AbortSignal): Prom
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({
-      items: items.map((item) => ({ slug: item.slug, price: item.price, quantity: quantityOf(item), form: item.form })),
+      items: items.map((item) => ({
+        slug: item.slug,
+        price: item.price,
+        quantity: quantityOf(item),
+        form: item.form,
+        appointmentStart: item.appointment?.start,
+      })),
     }),
     signal,
   })
@@ -180,8 +199,8 @@ export function clearCart() {
 // POST /api/checkout i GET /api/orders/{id} (OrderEndpoints.cs).
 
 export type CheckoutForm = {
-  /** Pozycje z cenami, które Klient widzi teraz w Koszyku, i formularzami Usług. */
-  items: { slug: string; price: number; quantity: number; form?: FormAnswers }[]
+  /** Pozycje z cenami, które Klient widzi teraz w Koszyku, formularzami Usług i początkami Terminów. */
+  items: { slug: string; price: number; quantity: number; form?: FormAnswers; appointmentStart?: string }[]
   /** Adres na potwierdzenie; domyślnie adres Konta. */
   email: string
   /** Imię i nazwisko Klienta. */

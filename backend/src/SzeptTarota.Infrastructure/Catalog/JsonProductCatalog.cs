@@ -63,8 +63,8 @@ public sealed partial class JsonProductCatalog : IProductCatalog
             if (string.IsNullOrWhiteSpace(product.Name)) yield return $"{at} brak nazwy";
             if (product.Price <= 0) yield return $"{at} cena musi być dodatnia (w groszach)";
 
-            if (product.Kind == ProductKind.Session && product.DurationMinutes is not > 0) yield return $"{at} Sesja musi mieć długość w minutach";
-            if (product.Kind != ProductKind.Session && product.DurationMinutes is not null) yield return $"{at} długość ma tylko Sesja";
+            if (product.RequiresAppointment && product.DurationMinutes is not > 0) yield return $"{at} Usługa i Sesja muszą mieć długość Terminu w minutach";
+            if (!product.RequiresAppointment && product.DurationMinutes is not null) yield return $"{at} Ebook nie ma długości";
 
             if (product.Kind == ProductKind.Ebook && string.IsNullOrWhiteSpace(product.EbookFileKey)) yield return $"{at} Ebook musi mieć klucz pliku";
             if (product.Kind != ProductKind.Ebook && product.EbookFileKey is not null) yield return $"{at} klucz pliku ma tylko Ebook";

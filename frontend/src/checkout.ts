@@ -33,6 +33,7 @@ export function useCheckout(onCartChanged: () => void) {
         price: line.price ?? 0,
         quantity: line.quantity,
         form: items[index]?.form,
+        appointmentStart: items[index]?.appointment?.start,
       })),
       email: text('email'),
       name: text('name'),

@@ -142,6 +142,10 @@ namespace SzeptTarota.Infrastructure.Persistence.Migrations
                         {
                             b1.IsRequired();
 
+                            b1.Property<DateTimeOffset?>("AppointmentEnd");
+
+                            b1.Property<DateTimeOffset?>("AppointmentStart");
+
                             b1.Property<string>("EbookFileKey");
 
                             b1.Property<int>("Kind");

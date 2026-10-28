@@ -41,11 +41,26 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
         }
     }
 
+    /// <summary>Wydarzenia po identyfikatorach kalendarzy.</summary>
+    private readonly ConcurrentDictionary<string, List<GoogleCalendarEvent>> _events = new();
+
+    /// <summary>Blok „Dostępna” w Kalendarzu Sesji.</summary>
+    public void AddAvailableBlock(DateTimeOffset start, DateTimeOffset end) =>
+        AddEvent(SessionsCalendar.Id, new GoogleCalendarEvent(start, end, Busy: false));
+
+    /// <summary>Wydarzenie w głównym kalendarzu Klary; <paramref name="busy"/> <c>false</c> to wydarzenie „Dostępna”.</summary>
+    public void AddMainCalendarEvent(DateTimeOffset start, DateTimeOffset end, bool busy = true) =>
+        AddEvent(MainCalendar.Id, new GoogleCalendarEvent(start, end, busy));
+
     public void Reset()
     {
         Calendars.Clear();
         Calendars.AddRange([MainCalendar, SessionsCalendar]);
+        _events.Clear();
     }
+
+    private void AddEvent(string calendarId, GoogleCalendarEvent calendarEvent) =>
+        _events.GetOrAdd(calendarId, _ => []).Add(calendarEvent);
 
     public Uri ConsentUrl(Uri redirectUri, string state) => new(QueryHelpers.AddQueryString(
         "https://accounts.google.com/o/oauth2/v2/auth",
@@ -68,7 +83,22 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
     }
 
     public Task<IReadOnlyList<GoogleCalendarInfo>> ListCalendarsAsync(string refreshToken, CancellationToken cancellationToken) =>
-        _tokens.TryGetValue(refreshToken, out var active) && active
+        IsActive(refreshToken)
             ? Task.FromResult<IReadOnlyList<GoogleCalendarInfo>>([.. Calendars])
             : throw new GoogleCalendarAccessLostException("invalid_grant");
+
+    public Task<IReadOnlyList<GoogleCalendarEvent>> ListEventsAsync(
+        string refreshToken, string calendarId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
+    {
+        if (!IsActive(refreshToken))
+        {
+            throw new GoogleCalendarAccessLostException("invalid_grant");
+        }
+
+        var id = calendarId == GoogleCalendarIds.Primary ? MainCalendar.Id : calendarId;
+        IReadOnlyList<GoogleCalendarEvent> events = [.. _events.GetValueOrDefault(id, []).Where(e => e.Start < to && e.End > from)];
+        return Task.FromResult(events);
+    }
+
+    private bool IsActive(string refreshToken) => _tokens.TryGetValue(refreshToken, out var active) && active;
 }

@@ -40,9 +40,9 @@ Lista kont, kluczy i ustawień potrzebnych do uruchomienia strony na kontach Kla
 
 ### Katalog Produktów
 
-Produkty są treścią w repo: `backend/src/SzeptTarota.Api/Catalog/products.json`. Grafiki Produktów są tylko we frontendzie: `frontend/src/assets/products/<slug>.webp`; Produkt bez pliku dostaje księżyc marki. Backend wczytuje katalog przy starcie i nie wystartuje, jeśli jest błędny (np. powtórzony slug, Sesja bez długości). Slug jest adresem podstrony (`/oferta/<slug>`), więc raz opublikowanego nie zmieniamy. Ceny są w groszach. Startowa wersja to import oferty z naffy.io.
+Produkty są treścią w repo: `backend/src/SzeptTarota.Api/Catalog/products.json`. Grafiki Produktów są tylko we frontendzie: `frontend/src/assets/products/<slug>.webp`; Produkt bez pliku dostaje księżyc marki. Backend wczytuje katalog przy starcie i nie wystartuje, jeśli jest błędny (np. powtórzony slug, Usługa albo Sesja bez długości). Slug jest adresem podstrony (`/oferta/<slug>`), więc raz opublikowanego nie zmieniamy. Ceny są w groszach. Startowa wersja to import oferty z naffy.io.
 
-Usługa ma formularz (`form`): listę pól z kluczem (`camelCase`, np. `birthDate`), etykietą, typem (`text`, `longText`, `date`, `email`) i `required`. Klient wypełnia go przy dodawaniu Usługi do Koszyka; tę samą Usługę można dodać wiele razy, każdą z własnym formularzem, i poprawić formularz w Koszyku. Serwer sprawdza formularze przy każdym sprawdzeniu Koszyka i przed płatnością, a odpowiedzi (z etykietami z chwili zakupu) zapisuje w Zamówieniu i pokazuje w mailu do Klary.
+Usługa ma formularz (`form`): listę pól z kluczem (`camelCase`, np. `birthDate`), etykietą, typem (`text`, `longText`, `date`, `email`) i `required`. Klient wypełnia go przy dodawaniu Usługi do Koszyka; tę samą Usługę można dodać wiele razy, każdą z własnym formularzem, i poprawić formularz w Koszyku. Każda Usługa i Sesja ma długość Terminu w minutach (`durationMinutes`, na razie wszędzie 60). Serwer sprawdza formularze przy każdym sprawdzeniu Koszyka i przed płatnością, a odpowiedzi (z etykietami z chwili zakupu) zapisuje w Zamówieniu i pokazuje w mailu do Klary.
 
 ### Formularz kontaktowy
 
@@ -71,6 +71,12 @@ Konfiguracja aplikacji Google (ten sam klient OAuth co logowanie przez Google, `
 3. Na ekranie zgody OAuth (Google Auth Platform → Data Access) dodaj zakresy `.../auth/calendar.calendarlist.readonly` i `.../auth/calendar.events`.
 4. **Opublikuj aplikację: stan „In production”, nie „Testing”.** W trybie „Testing” Google unieważnia refresh token po 7 dniach i panel zacznie pokazywać „Połączenie nie działa”. Zakresy kalendarza są „wrażliwe”, więc publiczna aplikacja wymaga weryfikacji Google (strona główna, polityka prywatności, uzasadnienie zakresów, nagranie przebiegu zgody). Do czasu weryfikacji Klara zobaczy ostrzeżenie „Google nie zweryfikował tej aplikacji” i może przejść dalej przez „Zaawansowane”; limit 100 użytkowników niezweryfikowanej aplikacji nie przeszkadza, bo z kalendarzem łączy się tylko ona. Logowanie Klientów przez Google (zakresy `openid email profile`) weryfikacji nie wymaga.
 5. Klara łączy się w panelu kontem Google, na którym ma Kalendarz Sesji i główny kalendarz.
+
+### Terminy
+
+Przy każdej Usłudze i Sesji Klient wybiera Termin w drugim kroku okienka „Dodaj do koszyka” (i zmienia go w Koszyku przez „Popraw dane”). `GET /api/products/<slug>/appointments?from=RRRR-MM-DD&to=RRRR-MM-DD` zwraca wolne Terminy zaczynające się w tych dniach czasu polskiego (zakres do 62 dni; kalendarz pobiera po miesiącu), z przesunięciem strefy Europe/Warsaw i długością Produktu. Dostępność ustala wyłącznie Klara: każde wydarzenie w Kalendarzu Sesji to blok „Dostępna” (stykające się bloki łączą się w jeden), a strona dzieli go od początku na kolejne Terminy o długości Produktu (blok 10:00–12:00 przy 60 minutach to 10:00 i 11:00). Odpadają Terminy, które nachodzą na zajęte wydarzenia z głównego kalendarza (te oznaczone w Google jako „Dostępny” i odrzucone zaproszenia nie zajmują czasu) albo na opłacone Terminy, oraz te, które już się zaczęły. Strona nie dokłada przerw ani granic: Termin może zacząć się dokładnie wtedy, gdy kończy się poprzedni.
+
+Koszyk wysyła początek Terminu każdej pozycji (`appointmentStart`), a serwer przy każdym sprawdzeniu i przed płatnością odrzuca brak Terminu (`appointmentMissing`), Termin zajęty, miniony albo spoza bloków (`appointmentUnavailable`, także gdy dwie pozycje Koszyka chcą tego samego czasu) i Termin, którego nie da się teraz sprawdzić, bo kalendarz nie odpowiada (`appointmentUnverifiable`). Bez działającego połączenia z kalendarzem i wybranego Kalendarza Sesji API wolnych Terminów odpowiada 503. Termin trafia do Zamówienia i do maila do Klary; od opłacenia nie jest już wolny.
 
 ### Zakup i płatności (Stripe Checkout)
 

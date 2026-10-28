@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SzeptTarota.Application.Appointments;
 using SzeptTarota.Application.Orders;
 using SzeptTarota.Domain.Orders;
 using SzeptTarota.Infrastructure.Persistence;
@@ -22,6 +23,19 @@ public sealed class EfOrderStore(SzeptTarotaDbContext db) : IOrderStore
             .Where(o => o.AccountId == accountId && o.Status == OrderStatus.Paid)
             .OrderByDescending(o => o.PaidAt)
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Appointment>> ListPaidAppointmentsAsync(
+        DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
+    {
+        // PostgreSQL przyjmuje tylko czas UTC.
+        var (fromUtc, toUtc) = (from.ToUniversalTime(), to.ToUniversalTime());
+        return await db.Orders.AsNoTracking()
+            .Where(o => o.Status == OrderStatus.Paid)
+            .SelectMany(o => o.Lines)
+            .Where(l => l.AppointmentStart < toUtc && l.AppointmentEnd > fromUtc)
+            .Select(l => new Appointment(l.AppointmentStart!.Value, l.AppointmentEnd!.Value))
+            .ToListAsync(cancellationToken);
+    }
 
     public Task<Order?> FindByPaymentSessionAsync(string paymentSessionId, CancellationToken cancellationToken) =>
         db.Orders.AsNoTracking().SingleOrDefaultAsync(o => o.PaymentSessionId == paymentSessionId, cancellationToken);

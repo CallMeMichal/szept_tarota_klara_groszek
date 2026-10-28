@@ -27,6 +27,10 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
     private const string ConsentEndpoint = "https://accounts.google.com/o/oauth2/v2/auth";
     private const string TokenEndpoint = "https://oauth2.googleapis.com/token";
     private const string CalendarListEndpoint = "https://www.googleapis.com/calendar/v3/users/me/calendarList";
+    private const string CalendarsEndpoint = "https://www.googleapis.com/calendar/v3/calendars";
+
+    /// <summary>Wydarzenia całodniowe trwają od północy do północy w tej strefie.</summary>
+    private static readonly TimeZoneInfo Warsaw = TimeZoneInfo.FindSystemTimeZoneById("Europe/Warsaw");
 
     /// <summary>
     /// Lista kalendarzy (wybór kalendarza Sesji) i wydarzenia we wszystkich kalendarzach: odczyt bloków „Dostępna”
@@ -117,6 +121,74 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
         return calendars;
     }
 
+    public async Task<IReadOnlyList<GoogleCalendarEvent>> ListEventsAsync(
+        string refreshToken, string calendarId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
+    {
+        var accessToken = await AccessTokenAsync(refreshToken, cancellationToken);
+        var events = new List<GoogleCalendarEvent>();
+        string? pageToken = null;
+        do
+        {
+            var query = new Dictionary<string, string?>
+            {
+                ["timeMin"] = from.ToUniversalTime().ToString("O"),
+                ["timeMax"] = to.ToUniversalTime().ToString("O"),
+                // Powtarzane wydarzenia rozwinięte w pojedyncze wystąpienia.
+                ["singleEvents"] = "true",
+                ["maxResults"] = "2500",
+                ["pageToken"] = pageToken,
+            };
+            var url = QueryHelpers.AddQueryString(
+                $"{CalendarsEndpoint}/{Uri.EscapeDataString(calendarId)}/events", query.Where(q => q.Value is not null));
+            using var request = new HttpRequestMessage(HttpMethod.Get, url)
+            {
+                Headers = { Authorization = new AuthenticationHeaderValue("Bearer", accessToken) },
+            };
+            using var response = await http.SendAsync(request, cancellationToken);
+            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            {
+                throw new GoogleCalendarAccessLostException(
+                    $"Google odmówił dostępu do wydarzeń ({(int)response.StatusCode}): {await response.Content.ReadAsStringAsync(cancellationToken)}");
+            }
+
+            response.EnsureSuccessStatusCode();
+            var page = await response.Content.ReadFromJsonAsync<EventsResponse>(cancellationToken);
+            events.AddRange((page?.Items ?? []).Where(e => e.Status != "cancelled").Select(ToEvent).OfType<GoogleCalendarEvent>());
+            pageToken = page?.NextPageToken;
+        }
+        while (pageToken is not null);
+
+        return events;
+    }
+
+    private static GoogleCalendarEvent? ToEvent(EventEntry entry)
+    {
+        if (Time(entry.Start) is not { } start || Time(entry.End) is not { } end)
+        {
+            return null;
+        }
+
+        var declined = entry.Attendees?.Any(a => a.Self && a.ResponseStatus == "declined") ?? false;
+        return new GoogleCalendarEvent(start, end, Busy: entry.Transparency != "transparent" && !declined);
+    }
+
+    /// <summary>Godzina wydarzenia albo północ czasu polskiego dla wydarzenia całodniowego.</summary>
+    private static DateTimeOffset? Time(EventTime? time)
+    {
+        if (time?.DateTime is { } dateTime)
+        {
+            return dateTime;
+        }
+
+        if (time?.Date is { } date)
+        {
+            var midnight = date.ToDateTime(TimeOnly.MinValue);
+            return new DateTimeOffset(midnight, Warsaw.GetUtcOffset(midnight));
+        }
+
+        return null;
+    }
+
     private async Task<string> AccessTokenAsync(string refreshToken, CancellationToken cancellationToken)
     {
         var (clientId, clientSecret) = Client();
@@ -155,6 +227,25 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
     private sealed record CalendarListResponse(
         [property: JsonPropertyName("items")] List<CalendarListEntry>? Items,
         [property: JsonPropertyName("nextPageToken")] string? NextPageToken);
+
+    private sealed record EventsResponse(
+        [property: JsonPropertyName("items")] List<EventEntry>? Items,
+        [property: JsonPropertyName("nextPageToken")] string? NextPageToken);
+
+    private sealed record EventEntry(
+        [property: JsonPropertyName("status")] string? Status,
+        [property: JsonPropertyName("start")] EventTime? Start,
+        [property: JsonPropertyName("end")] EventTime? End,
+        [property: JsonPropertyName("transparency")] string? Transparency,
+        [property: JsonPropertyName("attendees")] List<EventAttendee>? Attendees);
+
+    private sealed record EventTime(
+        [property: JsonPropertyName("dateTime")] DateTimeOffset? DateTime,
+        [property: JsonPropertyName("date")] DateOnly? Date);
+
+    private sealed record EventAttendee(
+        [property: JsonPropertyName("self")] bool Self,
+        [property: JsonPropertyName("responseStatus")] string? ResponseStatus);
 
     private sealed record CalendarListEntry(
         [property: JsonPropertyName("id")] string Id,

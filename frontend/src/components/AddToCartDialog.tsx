@@ -8,13 +8,14 @@ export function AddToCartDialog({ product }: { product: ProductDetails }) {
   return (
     <div className="product-buy__actions">
       <ServiceStepsDialog
+        slug={product.slug}
         productName={product.name}
         fields={product.form}
         triggerClassName="button button--primary product-buy__add"
         triggerContent="Dodaj do koszyka"
         finishLabel="Dodaj do koszyka"
-        onFinish={(answers) => {
-          addServiceToCart(product, answers)
+        onFinish={(answers, appointment) => {
+          addServiceToCart(product, answers, appointment)
           notifyAddedToCart(product.name)
         }}
       />

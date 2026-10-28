@@ -35,11 +35,11 @@ Usługa, która jest spotkaniem Klary z Klientem online przez Google Meet w wybr
 _Avoid_: spotkanie, konsultacja, wizyta
 
 **Termin**:
-Konkretna data, godzina i długość Sesji, wybrane przez Klienta przy zakupie spośród wolnych godzin, które Klara udostępniła.
+Konkretna data, godzina i długość spotkania online Klary z Klientem przy Usłudze albo Sesji, wybrane przez Klienta przy zakupie spośród wolnych godzin, które Klara udostępniła. Każda Usługa i Sesja ma Termin; jego długość wynika z Produktu (na razie 60 minut).
 _Avoid_: slot, rezerwacja, wizyta
 
 **Kalendarz Sesji**:
-Osobny kalendarz Google Klary, w którym wpisuje bloki „Dostępna”, czyli godziny, w których przyjmuje Sesje; wybiera go w panelu. Jej główny kalendarz jest odczytywany tylko jako zajętość.
+Osobny kalendarz Google Klary, w którym wpisuje bloki „Dostępna”, czyli godziny, w których przyjmuje Terminy Usług i Sesji; wybiera go w panelu. Jej główny kalendarz jest odczytywany tylko jako zajętość.
 _Avoid_: kalendarz dostępności, grafik
 
 ## Sprzedaż

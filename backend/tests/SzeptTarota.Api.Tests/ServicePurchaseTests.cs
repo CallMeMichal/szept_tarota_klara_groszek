@@ -30,9 +30,14 @@ public class ServicePurchaseTests : IAsyncLifetime
 
     private HttpClient _client = null!;
 
+    /// <summary>Wolne Terminy dla Usług w tych testach; każda Usługa w Koszyku bierze kolejny.</summary>
+    private DateTimeOffset[] _terminy = [];
+    private int _nextTermin;
+
     /// <summary>Klient płaci po zalogowaniu; mail z linkiem logowania nie liczy się do maili w testach.</summary>
     public async Task InitializeAsync()
     {
+        _terminy = await _factory.OfferTerminy();
         _client = await _api.LoggedInClient(_factory.Emails, _email);
         _factory.Emails.Reset();
     }
@@ -90,7 +95,8 @@ public class ServicePurchaseTests : IAsyncLifetime
         Assert.Contains("747,00 zł", toKlient.Html);
     }
 
-    private static object Service(object form) => new { slug = FakeProductCatalog.ServiceSlug, price = 34900, form };
+    private object Service(object form) =>
+        new { slug = FakeProductCatalog.ServiceSlug, price = 34900, form, appointmentStart = _terminy[_nextTermin++] };
 
     private Task<HttpResponseMessage> StartCheckout(object[] items, string[]? consents = null) =>
         _client.PostAsJsonAsync("/api/checkout", new

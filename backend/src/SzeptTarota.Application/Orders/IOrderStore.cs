@@ -1,3 +1,4 @@
+using SzeptTarota.Application.Appointments;
 using SzeptTarota.Domain.Orders;
 
 namespace SzeptTarota.Application.Orders;
@@ -14,6 +15,9 @@ public interface IOrderStore
 
     /// <summary>Opłacone Zamówienia Konta, od najnowszego.</summary>
     Task<IReadOnlyList<Order>> ListPaidAsync(Guid accountId, CancellationToken cancellationToken);
+
+    /// <summary>Terminy z opłaconych Zamówień, które nachodzą na okres od <paramref name="from"/> do <paramref name="to"/>.</summary>
+    Task<IReadOnlyList<Appointment>> ListPaidAppointmentsAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken);
 
     Task<Order?> FindByPaymentSessionAsync(string paymentSessionId, CancellationToken cancellationToken);
 

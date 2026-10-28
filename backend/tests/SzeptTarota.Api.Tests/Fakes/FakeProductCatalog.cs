@@ -19,7 +19,7 @@ public sealed class FakeProductCatalog : IProductCatalog
         Ebook(EbookSlug, "Tarot dla początkujących", 4900),
         Ebook(OtherEbookSlug, "Rytuały Księżyca", 3900),
         new(ServiceSlug, ProductKind.Service, ProductCategory.Analyses, "Mapa Duszy", "Odkryj swoją ścieżkę",
-            [], 34900, null,
+            [], 34900, 90,
             [
                 new FormField("name", "Imię", FormFieldType.Text, true),
                 new FormField("birthDate", "Data urodzenia", FormFieldType.Date, true),

@@ -24,10 +24,32 @@ public interface IGoogleCalendar
     /// <exception cref="GoogleCalendarAccessLostException">Gdy refresh token już nie działa (cofnięta zgoda, wygasł).</exception>
     /// <exception cref="GoogleCalendarNotConfiguredException">Gdy brakuje kluczy klienta OAuth.</exception>
     Task<IReadOnlyList<GoogleCalendarInfo>> ListCalendarsAsync(string refreshToken, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Wydarzenia kalendarza <paramref name="calendarId"/> (<see cref="GoogleCalendarIds.Primary"/> to główny kalendarz Klary),
+    /// które nachodzą na okres od <paramref name="from"/> do <paramref name="to"/>; powtarzane rozwinięte w pojedyncze,
+    /// bez odwołanych. Wydarzenia całodniowe trwają od północy do północy czasu polskiego.
+    /// </summary>
+    /// <exception cref="GoogleCalendarAccessLostException">Gdy refresh token już nie działa (cofnięta zgoda, wygasł).</exception>
+    /// <exception cref="GoogleCalendarNotConfiguredException">Gdy brakuje kluczy klienta OAuth.</exception>
+    Task<IReadOnlyList<GoogleCalendarEvent>> ListEventsAsync(
+        string refreshToken, string calendarId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken);
+}
+
+public static class GoogleCalendarIds
+{
+    /// <summary>Identyfikator, pod którym Google rozpoznaje główny kalendarz konta.</summary>
+    public const string Primary = "primary";
 }
 
 /// <summary>Kalendarz na koncie Google Klary; <see cref="Primary"/> to jej główny kalendarz.</summary>
 public sealed record GoogleCalendarInfo(string Id, string Name, bool Primary);
+
+/// <summary>
+/// Wydarzenie w kalendarzu Klary. <see cref="Busy"/> mówi, czy zajmuje jej czas: nie zajmuje, gdy w Google ma
+/// pokazywać „Dostępna” (przezroczyste) albo Klara odrzuciła zaproszenie.
+/// </summary>
+public sealed record GoogleCalendarEvent(DateTimeOffset Start, DateTimeOffset End, bool Busy);
 
 public sealed class GoogleCalendarNotConfiguredException()
     : InvalidOperationException("Brak konfiguracji 'Google:ClientId' albo 'Google:ClientSecret'.");

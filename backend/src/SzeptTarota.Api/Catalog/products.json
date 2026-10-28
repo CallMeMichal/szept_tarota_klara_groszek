@@ -141,7 +141,8 @@
           "type": "longText",
           "required": false
         }
-      ]
+      ],
+      "durationMinutes": 60
     },
     {
       "slug": "mapa-duszy",
@@ -223,7 +224,8 @@
           "type": "longText",
           "required": false
         }
-      ]
+      ],
+      "durationMinutes": 60
     },
     {
       "slug": "analiza-partnerska",
@@ -332,7 +334,8 @@
           "type": "longText",
           "required": false
         }
-      ]
+      ],
+      "durationMinutes": 60
     },
     {
       "slug": "lustro-cienia",
@@ -442,7 +445,8 @@
           "type": "longText",
           "required": false
         }
-      ]
+      ],
+      "durationMinutes": 60
     },
     {
       "slug": "tarot-3-miesiace",
@@ -528,7 +532,8 @@
           "type": "longText",
           "required": false
         }
-      ]
+      ],
+      "durationMinutes": 60
     },
     {
       "slug": "tarot-6-miesiecy",
@@ -622,7 +627,8 @@
           "type": "longText",
           "required": false
         }
-      ]
+      ],
+      "durationMinutes": 60
     },
     {
       "slug": "tarot-premium-12-miesiecy",
@@ -720,7 +726,8 @@
           "type": "longText",
           "required": false
         }
-      ]
+      ],
+      "durationMinutes": 60
     },
     {
       "slug": "analiza-pola-energetycznego",
@@ -789,7 +796,8 @@
           "type": "longText",
           "required": false
         }
-      ]
+      ],
+      "durationMinutes": 60
     },
     {
       "slug": "rytual-na-przyciagniecie-milosci",
@@ -851,7 +859,8 @@
           "type": "longText",
           "required": false
         }
-      ]
+      ],
+      "durationMinutes": 60
     },
     {
       "slug": "rytual-na-przyciagniecie-obfitosci-finansowej",
@@ -913,7 +922,8 @@
           "type": "longText",
           "required": false
         }
-      ]
+      ],
+      "durationMinutes": 60
     },
     {
       "slug": "rytual-odciecia-energetycznego",
@@ -979,7 +989,8 @@
           "type": "longText",
           "required": false
         }
-      ]
+      ],
+      "durationMinutes": 60
     },
     {
       "slug": "sesja-reiki-czakroterapia",

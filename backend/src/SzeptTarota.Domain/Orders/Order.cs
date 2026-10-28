@@ -82,12 +82,18 @@ public enum OrderStatus
 }
 
 /// <summary>
-/// Pozycja Zamówienia: Produkt z nazwą i ceną jednej sztuki (w groszach) z chwili zakupu, liczbą sztuk
-/// oraz odpowiedziami z formularza Usługi (z etykietami pól z chwili zakupu).
+/// Pozycja Zamówienia: Produkt z nazwą i ceną jednej sztuki (w groszach) z chwili zakupu, liczbą sztuk,
+/// odpowiedziami z formularza Usługi (z etykietami pól z chwili zakupu) i Terminem Usługi albo Sesji.
 /// </summary>
 public sealed record OrderLine(string Slug, ProductKind Kind, string Name, int Price, string? EbookFileKey)
 {
     public int Quantity { get; init; } = 1;
+
+    /// <summary>Początek Terminu; brak przy Ebooku i w Zamówieniach sprzed Terminów.</summary>
+    public DateTimeOffset? AppointmentStart { get; init; }
+
+    /// <summary>Koniec Terminu (początek plus długość Usługi albo Sesji z chwili zakupu).</summary>
+    public DateTimeOffset? AppointmentEnd { get; init; }
 
     // Poza konstruktorem, bo EF Core nie wiąże kolekcji przez parametry konstruktora.
     public List<FormAnswer> FormAnswers { get; init; } = [];

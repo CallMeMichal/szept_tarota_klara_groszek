@@ -9,7 +9,7 @@ import {
   quantityOf,
   removeFromCart,
   setCartItemQuantity,
-  updateCartItemForm,
+  updateCartItem,
   useCart,
   validateCart,
   type CartItem,
@@ -23,6 +23,7 @@ import { formatPrice, kindLabels, productPath, type FormField } from '../catalog
 import { homeSectionPath, homeSections } from '../homeSections.ts'
 import { usePageTitle } from '../usePageTitle.ts'
 import { formatAnswer, type FormAnswers } from '../serviceForm.ts'
+import { formatAppointment } from '../appointments.ts'
 
 type Validation =
   | { status: 'loading' }
@@ -247,7 +248,7 @@ function CheckedCartLines({ cart, items }: { cart: CartValidation; items: CartIt
             )}
             <RemoveButton index={index} name={line.name ?? line.slug} />
           </div>
-          {line.form.length > 0 && items[index] && (
+          {line.kind && line.kind !== 'ebook' && items[index] && (
             <CartLineForm
               item={items[index]}
               name={line.name ?? line.slug}
@@ -270,9 +271,9 @@ type CartLineFormProps = {
 }
 
 /**
- * Dane z formularza Usługi w pozycji Koszyka. „Popraw dane” otwiera to samo
- * okienko z krokami co dodawanie do Koszyka, z wpisanymi danymi i błędami
- * z ostatniego sprawdzenia Koszyka.
+ * Termin i dane z formularza Usługi albo Sesji w pozycji Koszyka. „Popraw
+ * dane” otwiera to samo okienko z krokami co dodawanie do Koszyka, z wpisanymi
+ * danymi, wybranym Terminem i błędami z ostatniego sprawdzenia Koszyka.
  */
 function CartLineForm({ item, name, fields, serverErrors }: CartLineFormProps) {
   const answers: FormAnswers = item.form ?? {}
@@ -280,8 +281,14 @@ function CartLineForm({ item, name, fields, serverErrors }: CartLineFormProps) {
 
   return (
     <div className="cart-line__form">
-      {filled.length > 0 && (
+      {(item.appointment || filled.length > 0) && (
         <dl className="cart-line__answers">
+          {item.appointment && (
+            <div>
+              <dt>Termin</dt>
+              <dd>{formatAppointment(item.appointment)}</dd>
+            </div>
+          )}
           {filled.map((field) => (
             <div key={field.key}>
               <dt>{field.label}</dt>
@@ -291,19 +298,21 @@ function CartLineForm({ item, name, fields, serverErrors }: CartLineFormProps) {
         </dl>
       )}
       <ServiceStepsDialog
+        slug={item.slug}
         productName={name}
         fields={fields}
         initialAnswers={answers}
+        initialAppointment={item.appointment}
         initialErrors={serverErrors}
         triggerClassName="cart-line__edit"
         triggerContent={
           <>
-            {filled.length > 0 ? 'Popraw dane' : 'Uzupełnij dane'}
+            {!item.appointment ? 'Wybierz Termin' : 'Popraw dane'}
             <span className="visually-hidden"> {name}</span>
           </>
         }
         finishLabel="Zapisz zmiany"
-        onFinish={(corrected) => updateCartItemForm(item.id, corrected)}
+        onFinish={(corrected, appointment) => updateCartItem(item.id, corrected, appointment)}
       />
     </div>
   )

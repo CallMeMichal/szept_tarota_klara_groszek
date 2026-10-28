@@ -53,6 +53,11 @@ public static class OrderEmails
         {
             var quantity = line.Quantity > 1 ? $"{line.Quantity} × " : "";
             html.Append($"<tr><td>{quantity}{HtmlEncode(line.Name)}</td><td>{FormatPrice(line.Price * line.Quantity)}</td></tr>");
+            if (line is { AppointmentStart: { } start, AppointmentEnd: { } end })
+            {
+                html.Append($"<tr><td colspan=\"2\">Termin: {FormatTime(start)}–{TimeZoneInfo.ConvertTime(end, Warsaw):HH:mm}</td></tr>");
+            }
+
             if (withFormAnswers && line.FormAnswers.Count > 0)
             {
                 html.Append("<tr><td colspan=\"2\"><ul>");

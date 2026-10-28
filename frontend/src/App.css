@@ -2035,15 +2035,122 @@ main {
   margin-top: 0.5rem;
 }
 
-.add-dialog__calendar {
-  display: grid;
-  place-items: center;
-  min-height: 14rem;
-  padding: 1.5rem;
-  color: var(--text-muted);
-  text-align: center;
-  border: 1px dashed var(--sand-border);
+.add-dialog__chosen {
+  margin: 1rem 0 0;
+  color: var(--cream);
+  font-size: 0.95rem;
+}
+
+/* Kalendarz wolnych Terminów w drugim kroku okienka */
+
+.appointment-picker {
+  padding: 1rem;
+  border: 1px solid var(--sand-border);
   border-radius: 0.5rem;
+}
+
+.appointment-picker__month {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.appointment-picker__month h3 {
+  margin: 0;
+  font-size: 1.35rem;
+  text-transform: capitalize;
+}
+
+.appointment-picker__nav {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  color: var(--cream);
+  background: none;
+  border: 1px solid var(--sand-border);
+  border-radius: 4px;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.appointment-picker__nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.appointment-picker__days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.appointment-picker__weekday {
+  padding-bottom: 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.appointment-picker__day {
+  aspect-ratio: 1;
+  min-height: 2.25rem;
+  padding: 0;
+  color: var(--cream);
+  background: rgba(199, 171, 114, 0.12);
+  border: 1px solid var(--sand-border);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.appointment-picker__day:hover:not(:disabled) {
+  border-color: var(--sand-400);
+}
+
+.appointment-picker__day:disabled {
+  color: var(--slate);
+  background: none;
+  border-color: transparent;
+  cursor: default;
+}
+
+.appointment-picker__day[aria-pressed='true'],
+.appointment-picker__time[aria-pressed='true'] {
+  color: var(--ink-950);
+  background: var(--sand-400);
+  border-color: var(--sand-400);
+}
+
+.appointment-picker__note {
+  margin: 0.9rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.appointment-picker__times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.appointment-picker__time {
+  padding: 0.45rem 0.8rem;
+  color: var(--cream);
+  background: none;
+  border: 1px solid var(--sand-border);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.appointment-picker__time:hover {
+  border-color: var(--sand-400);
 }
 
 /* Powiadomienie o dodaniu do Koszyka */

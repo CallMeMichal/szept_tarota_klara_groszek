@@ -11,16 +11,22 @@ namespace SzeptTarota.Api.Tests;
 [Collection(ApiCollection.Name)]
 public class CartValidationTests : IAsyncLifetime
 {
+    private readonly ApiFactory _factory;
     private readonly FakeProductCatalog _catalog = new();
     private readonly WebApplicationFactory<Program> _api;
 
+    /// <summary>Wolne Terminy dla Usług w tych testach; każda Usługa w Koszyku bierze kolejny.</summary>
+    private DateTimeOffset[] _terminy = [];
+    private int _nextTermin;
+
     public CartValidationTests(ApiFactory factory)
     {
+        _factory = factory;
         _api = factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services => services.ReplaceWithFake<IProductCatalog>(_catalog)));
     }
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    public async Task InitializeAsync() => _terminy = await _factory.OfferTerminy();
 
     public Task DisposeAsync() => _api.DisposeAsync().AsTask();
 
@@ -73,7 +79,7 @@ public class CartValidationTests : IAsyncLifetime
         var cart = await Validate(
             new { slug = FakeProductCatalog.EbookSlug, price = 4900, quantity = 0 },
             new { slug = FakeProductCatalog.EbookSlug, price = 4900, quantity = 100 },
-            new { slug = FakeProductCatalog.ServiceSlug, price = 34900, quantity = 2, form = new { name = "Anna", birthDate = "1990-04-12" } });
+            new { slug = FakeProductCatalog.ServiceSlug, price = 34900, quantity = 2, form = new { name = "Anna", birthDate = "1990-04-12" }, appointmentStart = _terminy[0] });
 
         Assert.False(cart.IsValid);
         Assert.All(cart.Items, line => Assert.Equal("invalidQuantity", Assert.Single(line.Errors).Code));
@@ -163,17 +169,6 @@ public class CartValidationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_Session_cannot_be_in_the_cart_yet()
-    {
-        var cart = await Validate(new { slug = FakeProductCatalog.SessionSlug, price = 24900 });
-
-        Assert.False(cart.IsValid);
-        Assert.Equal("kindNotInCartYet", Assert.Single(Assert.Single(cart.Items).Errors).Code);
-        Assert.Equal(0, cart.Total);
-        Assert.Empty(cart.RequiredConsents);
-    }
-
-    [Fact]
     public async Task An_empty_cart_is_not_valid_and_needs_no_consents()
     {
         var cart = await Validate();
@@ -199,7 +194,8 @@ public class CartValidationTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.BadRequest, tooBig.StatusCode);
     }
 
-    private static object Service(object form) => new { slug = FakeProductCatalog.ServiceSlug, price = 34900, form };
+    private object Service(object form) =>
+        new { slug = FakeProductCatalog.ServiceSlug, price = 34900, form, appointmentStart = _terminy[_nextTermin++] };
 
     private async Task<CartResponse> Validate(params object[] items)
     {

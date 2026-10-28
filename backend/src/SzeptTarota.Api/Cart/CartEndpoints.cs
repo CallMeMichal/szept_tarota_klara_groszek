@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using SzeptTarota.Application.Appointments;
 using SzeptTarota.Application.Cart;
 using SzeptTarota.Domain.Catalog;
 
@@ -11,7 +12,8 @@ public static class CartEndpoints
 
     public static IEndpointRouteBuilder MapCartEndpoints(this IEndpointRouteBuilder api)
     {
-        api.MapPost("/cart/validate", Results<Ok<CartResponse>, ValidationProblem> (CartRequest request, CartValidator validator) =>
+        api.MapPost("/cart/validate", async Task<Results<Ok<CartResponse>, ValidationProblem>> (
+                CartRequest request, CartValidator validator, CancellationToken cancellationToken) =>
             {
                 if (request.Items is null || request.Items.Count > MaxItems
                     || request.Items.Any(i => string.IsNullOrWhiteSpace(i?.Slug)))
@@ -22,7 +24,7 @@ public static class CartEndpoints
                     });
                 }
 
-                var validation = validator.Validate(request.Items.Select(i => i!.ToCartItem()).ToList());
+                var validation = await validator.ValidateAsync(request.Items.Select(i => i!.ToCartItem()).ToList(), cancellationToken);
                 return TypedResults.Ok(CartResponse.From(validation));
             })
             .WithName("ValidateCart");
@@ -36,11 +38,12 @@ public sealed record CartRequest(IReadOnlyList<CartItemRequest?>? Items);
 
 /// <summary>
 /// Pozycja Koszyka: slug Produktu, cena jednej sztuki widziana przy dodaniu (w groszach), liczba sztuk
-/// (domyślnie 1) i odpowiedzi z formularza Usługi.
+/// (domyślnie 1), odpowiedzi z formularza Usługi i początek wybranego Terminu.
 /// </summary>
-public sealed record CartItemRequest(string? Slug, int? Price, int? Quantity, Dictionary<string, string?>? Form)
+public sealed record CartItemRequest(
+    string? Slug, int? Price, int? Quantity, Dictionary<string, string?>? Form, DateTimeOffset? AppointmentStart)
 {
-    public CartItem ToCartItem() => new(Slug!, Price, Quantity ?? 1, Form);
+    public CartItem ToCartItem() => new(Slug!, Price, Quantity ?? 1, Form, AppointmentStart);
 }
 
 /// <summary>Sprawdzony Koszyk: pozycje w kolejności z zapytania, suma poprawnych pozycji i wymagane zgody.</summary>
@@ -60,7 +63,8 @@ public sealed record CartResponse(
 /// <summary>
 /// Pozycja Koszyka z liczbą sztuk i aktualną ceną jednej sztuki. <see cref="PreviousPrice"/> to cena widziana przy dodaniu, gdy od tamtej
 /// pory się zmieniła. Dla nieznanego Produktu znany jest tylko slug. <see cref="Form"/> to definicja formularza
-/// Usługi (do poprawienia go w Koszyku), a <see cref="FormErrors"/> to jego błędy po kluczach pól.
+/// Usługi (do poprawienia go w Koszyku), a <see cref="FormErrors"/> to jego błędy po kluczach pól. <see cref="Appointment"/>
+/// to wybrany Termin w czasie polskim, a <see cref="DurationMinutes"/> to długość Terminu Produktu.
 /// </summary>
 public sealed record CartLineResponse(
     string Slug,
@@ -71,7 +75,9 @@ public sealed record CartLineResponse(
     int? PreviousPrice,
     IReadOnlyList<CartError> Errors,
     IReadOnlyList<FormField> Form,
-    IReadOnlyDictionary<string, string> FormErrors)
+    IReadOnlyDictionary<string, string> FormErrors,
+    Appointment? Appointment,
+    int? DurationMinutes)
 {
     public static CartLineResponse From(CartLine line) => new(
         line.Slug,
@@ -82,5 +88,7 @@ public sealed record CartLineResponse(
         line.Product?.PreviousPrice,
         line.Errors,
         line.Product?.Product.Form ?? [],
-        line.FormErrors);
+        line.FormErrors,
+        line.Product?.Appointment is { } appointment ? AvailabilityService.InWarsaw(appointment) : null,
+        line.Product?.Product.DurationMinutes);
 }

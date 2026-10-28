@@ -42,7 +42,7 @@ public class ProductCatalogTests(ApiFactory factory)
     }
 
     [Fact]
-    public async Task Details_of_a_Service_have_no_Session_length()
+    public async Task Details_of_a_Service_have_the_length_of_its_Termin()
     {
         var client = factory.CreateClient();
 
@@ -51,7 +51,7 @@ public class ProductCatalogTests(ApiFactory factory)
         Assert.Equal("service", ritual!.Kind);
         Assert.Equal("rituals", ritual.Category);
         Assert.Equal(33300, ritual.Price);
-        Assert.Null(ritual.DurationMinutes);
+        Assert.Equal(60, ritual.DurationMinutes);
         Assert.NotEmpty(ritual.Description);
     }
 

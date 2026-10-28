@@ -1,3 +1,4 @@
+using SzeptTarota.Application.Appointments;
 using SzeptTarota.Application.Catalog;
 using SzeptTarota.Domain.Catalog;
 using SzeptTarota.Domain.Orders;
@@ -5,20 +6,21 @@ using SzeptTarota.Domain.Orders;
 namespace SzeptTarota.Application.Cart;
 
 /// <summary>
-/// Sprawdza Koszyk przysłany z przeglądarki: przelicza ceny z katalogu, wskazuje błędne pozycje
-/// i podaje zgody, które Klient musi zaakceptować przed płatnością. Przeglądarka nigdy nie jest
-/// źródłem prawdy o cenie: cena z Koszyka służy tylko do pokazania, że się zmieniła.
+/// Sprawdza Koszyk przysłany z przeglądarki: przelicza ceny z katalogu, sprawdza Terminy w kalendarzu Klary,
+/// wskazuje błędne pozycje i podaje zgody, które Klient musi zaakceptować przed płatnością. Przeglądarka nigdy nie
+/// jest źródłem prawdy o cenie ani dostępności: cena z Koszyka służy tylko do pokazania, że się zmieniła.
 /// </summary>
-public sealed class CartValidator(IProductCatalog catalog)
+public sealed class CartValidator(IProductCatalog catalog, AvailabilityService availabilityService)
 {
     /// <summary>Najwięcej sztuk Ebooka w jednej pozycji; chroni przed literówkami i absurdalnymi kwotami.</summary>
     public const int MaxQuantity = 99;
 
     private static readonly IReadOnlyDictionary<string, string> NoFormErrors = new Dictionary<string, string>();
 
-    public CartValidation Validate(IReadOnlyList<CartItem> items)
+    public async Task<CartValidation> ValidateAsync(IReadOnlyList<CartItem> items, CancellationToken cancellationToken)
     {
         var lines = new List<CartLine>(items.Count);
+        var availability = await LoadAvailabilityAsync(items, cancellationToken);
 
         foreach (var item in items)
         {
@@ -30,14 +32,25 @@ public sealed class CartValidator(IProductCatalog catalog)
             }
 
             var errors = new List<CartError>();
-            if (product.Kind == ProductKind.Session)
+            if (item.Quantity is < 1 or > MaxQuantity || (product.Kind != ProductKind.Ebook && item.Quantity != 1))
             {
-                errors.Add(CartError.KindNotInCartYet);
-            }
-            else if (item.Quantity is < 1 or > MaxQuantity || (product.Kind != ProductKind.Ebook && item.Quantity != 1))
-            {
-                // Każda Usługa ma własny formularz, więc kolejna sztuka to kolejna pozycja.
+                // Każda Usługa ma własny formularz i Termin, więc kolejna sztuka to kolejna pozycja.
                 errors.Add(CartError.InvalidQuantity);
+            }
+
+            Appointment? appointment = null;
+            if (product.RequiresAppointment)
+            {
+                appointment = item.AppointmentStart is { } start ? AvailabilityService.AppointmentAt(product, start) : null;
+                if (AppointmentError(appointment, availability) is { } error)
+                {
+                    errors.Add(error);
+                }
+                else
+                {
+                    // Kolejne pozycje tego Koszyka nie mogą zająć tego samego czasu.
+                    availability!.Occupy(appointment!);
+                }
             }
 
             var form = ServiceForm.Check(product.Form, item.Form);
@@ -47,7 +60,7 @@ public sealed class CartValidator(IProductCatalog catalog)
             }
 
             var previousPrice = item.Price is { } seen && seen != product.Price ? seen : (int?)null;
-            lines.Add(new CartLine(item.Slug, item.Quantity, new CartProduct(product, product.Price, previousPrice, form.Answers), errors, form.Errors));
+            lines.Add(new CartLine(item.Slug, item.Quantity, new CartProduct(product, product.Price, previousPrice, form.Answers, appointment), errors, form.Errors));
         }
 
         // Suma i zgody dotyczą tylko pozycji, które da się kupić.
@@ -57,13 +70,37 @@ public sealed class CartValidator(IProductCatalog catalog)
             Total: purchasable.Sum(l => l.Product!.Price * l.Quantity),
             RequiredConsents: Consent.RequiredFor(purchasable.Select(l => l.Product!.Product).ToList()));
     }
+
+    /// <summary>Dostępność Klary w okresie wybranych Terminów; <c>null</c>, gdy nie ma Terminów albo kalendarza nie da się odczytać.</summary>
+    private async Task<Availability?> LoadAvailabilityAsync(IReadOnlyList<CartItem> items, CancellationToken cancellationToken)
+    {
+        var starts = items
+            .Where(i => i.AppointmentStart is not null && catalog.FindBySlug(i.Slug) is { RequiresAppointment: true })
+            .Select(i => i.AppointmentStart!.Value)
+            .ToList();
+        return starts.Count == 0
+            ? null
+            : await availabilityService.LoadAsync(starts.Min(), starts.Max().AddTicks(1), cancellationToken);
+    }
+
+    private static CartError? AppointmentError(Appointment? appointment, Availability? availability) =>
+        appointment is null ? CartError.AppointmentMissing
+        : availability is null ? CartError.AppointmentUnverifiable
+        : !availability.IsFree(appointment) ? CartError.AppointmentUnavailable
+        : null;
 }
 
 /// <summary>
 /// Pozycja Koszyka zapisana w przeglądarce; <see cref="Price"/> to cena jednej sztuki widziana przy dodaniu,
-/// <see cref="Quantity"/> to liczba sztuk (Ebooka), a <see cref="Form"/> to odpowiedzi z formularza Usługi po kluczach pól.
+/// <see cref="Quantity"/> to liczba sztuk (Ebooka), <see cref="Form"/> to odpowiedzi z formularza Usługi po kluczach pól,
+/// a <see cref="AppointmentStart"/> to początek wybranego Terminu Usługi albo Sesji.
 /// </summary>
-public sealed record CartItem(string Slug, int? Price, int Quantity = 1, IReadOnlyDictionary<string, string?>? Form = null);
+public sealed record CartItem(
+    string Slug,
+    int? Price,
+    int Quantity = 1,
+    IReadOnlyDictionary<string, string?>? Form = null,
+    DateTimeOffset? AppointmentStart = null);
 
 public sealed record CartValidation(IReadOnlyList<CartLine> Lines, int Total, IReadOnlyList<Consent> RequiredConsents)
 {
@@ -83,9 +120,15 @@ public sealed record CartLine(
 
 /// <summary>
 /// Produkt w Koszyku z aktualną ceną jednej sztuki; <see cref="PreviousPrice"/> to inna cena, którą Klient widział przy dodaniu,
-/// a <see cref="FormAnswers"/> to poprawne odpowiedzi z formularza Usługi.
+/// <see cref="FormAnswers"/> to poprawne odpowiedzi z formularza Usługi, a <see cref="Appointment"/> to wybrany Termin
+/// (także zajęty, żeby Klient widział, który zmienić).
 /// </summary>
-public sealed record CartProduct(Product Product, int Price, int? PreviousPrice, IReadOnlyList<FormAnswer> FormAnswers);
+public sealed record CartProduct(
+    Product Product,
+    int Price,
+    int? PreviousPrice,
+    IReadOnlyList<FormAnswer> FormAnswers,
+    Appointment? Appointment);
 
 public sealed record CartError(string Code, string Message)
 {
@@ -98,8 +141,14 @@ public sealed record CartError(string Code, string Message)
     public static readonly CartError FormInvalid =
         new("formInvalid", "Uzupełnij formularz tej Usługi: popraw zaznaczone pola.");
 
-    public static readonly CartError KindNotInCartYet =
-        new("kindNotInCartYet", "Ten Produkt nie może jeszcze trafić do Koszyka.");
+    public static readonly CartError AppointmentMissing =
+        new("appointmentMissing", "Wybierz Termin.");
+
+    public static readonly CartError AppointmentUnavailable =
+        new("appointmentUnavailable", "Ten Termin jest już zajęty albo niedostępny. Wybierz inny.");
+
+    public static readonly CartError AppointmentUnverifiable =
+        new("appointmentUnverifiable", "Nie udało się teraz sprawdzić Terminu w kalendarzu. Spróbuj ponownie za chwilę.");
 }
 
 /// <summary>Zgoda, którą Klient zaznacza przed płatnością, zależnie od Produktów w Koszyku.</summary>

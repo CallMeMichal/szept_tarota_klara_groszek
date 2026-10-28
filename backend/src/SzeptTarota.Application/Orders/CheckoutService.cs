@@ -33,7 +33,7 @@ public sealed class CheckoutService(
         }
 
         // Klient płaci dokładnie tyle, ile widział: każda zmiana ceny od ostatniego sprawdzenia wraca do Koszyka.
-        var cart = cartValidator.Validate(command.Items);
+        var cart = await cartValidator.ValidateAsync(command.Items, cancellationToken);
         if (!cart.IsValid || cart.Lines.Any(l => l.Product!.PreviousPrice is not null))
         {
             return new CheckoutResult.CartChanged(cart);
@@ -59,6 +59,9 @@ public sealed class CheckoutService(
             {
                 Quantity = l.Quantity,
                 FormAnswers = l.Product.FormAnswers.ToList(),
+                // PostgreSQL przechowuje czas w UTC.
+                AppointmentStart = l.Product.Appointment?.Start.ToUniversalTime(),
+                AppointmentEnd = l.Product.Appointment?.End.ToUniversalTime(),
             })
             .ToList();
 
