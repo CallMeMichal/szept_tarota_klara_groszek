@@ -310,6 +310,9 @@ main {
 .button--ghost {
   color: var(--cream);
   border-color: var(--sand-border);
+  /* Bez tego <button> dostaje szare tło przeglądarki (linki go nie mają). */
+  background: transparent;
+  cursor: pointer;
 }
 
 .button--ghost:hover {

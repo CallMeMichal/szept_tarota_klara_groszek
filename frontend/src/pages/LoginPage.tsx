@@ -90,7 +90,8 @@ export function LoginPage() {
           {state.resent ? 'Wysłałam nowy kod' : 'Wysłałam kod'} na adres {state.email}. Kod ma 6 cyfr i działa przez
           15 minut. Jeśli nie widzisz maila, zajrzyj do spamu.
         </p>
-        <form className="checkout-form login-form" onSubmit={(event) => void submitCode(event)}>
+        {/* Osobne klucze formularzy, żeby React nie przeniósł wpisanego adresu do pola kodu. */}
+        <form key="code" className="checkout-form login-form" onSubmit={(event) => void submitCode(event)}>
           <label className="checkout-form__field">
             <span>Kod logowania</span>
             <input
@@ -148,7 +149,7 @@ export function LoginPage() {
         Podaj swój adres email, a wyślę Ci kod do logowania. Bez hasła: jeśli logujesz się pierwszy raz, Konto założy
         się samo.
       </p>
-      <form className="checkout-form login-form" onSubmit={(event) => void submitEmail(event)}>
+      <form key="email" className="checkout-form login-form" onSubmit={(event) => void submitEmail(event)}>
         <label className="checkout-form__field">
           <span>Email</span>
           <input name="email" type="email" autoComplete="email" required maxLength={200} />
