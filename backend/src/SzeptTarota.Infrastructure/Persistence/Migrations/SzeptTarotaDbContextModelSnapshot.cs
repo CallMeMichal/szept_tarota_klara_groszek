@@ -96,6 +96,20 @@ namespace SzeptTarota.Infrastructure.Persistence.Migrations
                             b1.Property<string>("Slug")
                                 .IsRequired();
 
+                            b1.ComplexCollection(typeof(List<Dictionary<string, object>>), "FormAnswers", "SzeptTarota.Domain.Orders.Order.Lines#OrderLine.FormAnswers#FormAnswer", b2 =>
+                                {
+                                    b2.IsRequired();
+
+                                    b2.Property<string>("Key")
+                                        .IsRequired();
+
+                                    b2.Property<string>("Label")
+                                        .IsRequired();
+
+                                    b2.Property<string>("Value")
+                                        .IsRequired();
+                                });
+
                             b1
                                 .ToJson("Lines")
                                 .HasColumnType("jsonb");

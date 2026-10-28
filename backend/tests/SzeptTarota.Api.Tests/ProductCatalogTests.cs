@@ -56,6 +56,23 @@ public class ProductCatalogTests(ApiFactory factory)
     }
 
     [Fact]
+    public async Task Every_Service_has_a_form_asking_at_least_for_the_name_and_date_of_birth()
+    {
+        var client = factory.CreateClient();
+        var services = (await client.GetFromJsonAsync<List<ProductResponse>>("/api/products"))!.Where(p => p.Kind == "service");
+
+        foreach (var service in services)
+        {
+            var details = await client.GetFromJsonAsync<ProductDetailsResponse>($"/api/products/{service.Slug}");
+            Assert.Contains(details!.Form, f => f is { Key: "name", Type: "text", Required: true });
+            Assert.Contains(details.Form, f => f is { Key: "birthDate", Type: "date", Required: true });
+        }
+
+        var partnerska = await client.GetFromJsonAsync<ProductDetailsResponse>("/api/products/analiza-partnerska");
+        Assert.Contains(partnerska!.Form, f => f is { Key: "partnerBirthDate", Type: "date", Required: true });
+    }
+
+    [Fact]
     public async Task Details_of_an_unknown_slug_return_not_found()
     {
         var client = factory.CreateClient();

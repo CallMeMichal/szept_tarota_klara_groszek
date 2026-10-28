@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
 import { ProductImage } from '../components/ProductImage.tsx'
-import { addEbookToCart, cartPath, useCart } from '../cart.ts'
+import { ServiceFormFields } from '../components/ServiceFormFields.tsx'
+import { addEbookToCart, addServiceToCart, useCart } from '../cart.ts'
 import {
   categoryLabels,
   deliveryNotes,
@@ -11,7 +12,9 @@ import {
   type DescriptionBlock,
   type ProductDetails,
 } from '../catalog.ts'
+import { notifyAddedToCart } from '../cartNotice.ts'
 import { homeSectionPath, homeSections } from '../homeSections.ts'
+import { submitServiceForm } from '../serviceForm.ts'
 import { useApi } from '../useApi.ts'
 import { NotFoundPage } from './NotFoundPage.tsx'
 
@@ -81,6 +84,7 @@ function ProductContent({ product }: { product: ProductDetails }) {
           </dl>
           <p className="product-page__kind-note">{deliveryNotes[product.kind]}</p>
           {product.kind === 'ebook' && <AddEbookToCart product={product} />}
+          {product.kind === 'service' && <AddServiceToCart key={product.slug} product={product} />}
         </div>
       </header>
 
@@ -96,21 +100,55 @@ function ProductContent({ product }: { product: ProductDetails }) {
 function AddEbookToCart({ product }: { product: ProductDetails }) {
   const inCart = useCart().some((item) => item.slug === product.slug)
 
-  // Ebook może być w Koszyku najwyżej raz, więc po dodaniu zamiast przycisku
-  // prowadzimy do Koszyka.
-  return inCart ? (
+  // Ebook może być w Koszyku najwyżej raz, więc po dodaniu przycisk jest nieaktywny.
+  return (
     <p className="product-page__cart">
-      <span>Ten Ebook jest już w Koszyku.</span>
-      <Link className="button button--ghost" to={cartPath}>
-        Przejdź do Koszyka
-      </Link>
-    </p>
-  ) : (
-    <p className="product-page__cart">
-      <button type="button" className="button button--primary" onClick={() => addEbookToCart(product)}>
-        Dodaj do koszyka
+      <button
+        type="button"
+        className="button button--primary"
+        disabled={inCart}
+        onClick={() => {
+          addEbookToCart(product)
+          notifyAddedToCart(product.name)
+        }}
+      >
+        {inCart ? 'Już w Koszyku' : 'Dodaj do koszyka'}
       </button>
     </p>
+  )
+}
+
+/**
+ * Formularz Usługi z przyciskiem dodania do Koszyka. Po dodaniu wyskakuje
+ * powiadomienie, a formularz się czyści, więc tę samą Usługę można od razu
+ * dodać dla kolejnej osoby.
+ */
+function AddServiceToCart({ product }: { product: ProductDetails }) {
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    const { answers, errors, valid } = submitServiceForm(event, product.form)
+    setErrors(errors)
+    if (!valid) return
+
+    addServiceToCart(product, answers)
+    notifyAddedToCart(product.name)
+    event.currentTarget.reset()
+  }
+
+  return (
+    <form className="service-form" onSubmit={onSubmit} noValidate aria-labelledby="service-form-title">
+      <h2 id="service-form-title">Formularz do Usługi</h2>
+      {product.form.length > 0 && (
+        <p className="service-form__lead">
+          Tych informacji potrzebuję, żeby przygotować Usługę. Pola z gwiazdką są wymagane.
+        </p>
+      )}
+      <ServiceFormFields idPrefix="usluga" fields={product.form} errors={errors} />
+      <button type="submit" className="button button--primary">
+        Dodaj do koszyka
+      </button>
+    </form>
   )
 }
 

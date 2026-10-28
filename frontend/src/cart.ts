@@ -1,17 +1,23 @@
 // Koszyk zapisany w pamięci przeglądarki (localStorage), więc przetrwa jej
-// zamknięcie. Trzymamy tylko slug i cenę widzianą przy dodaniu: ceny, błędy i
-// wymagane zgody liczy serwer (POST /api/cart/validate), a zapisana cena służy
-// wyłącznie do pokazania Klientowi, że od tamtej pory się zmieniła.
+// zamknięcie. Trzymamy slug, cenę widzianą przy dodaniu i odpowiedzi z
+// formularza Usługi: ceny, błędy i wymagane zgody liczy serwer
+// (POST /api/cart/validate), a zapisana cena służy wyłącznie do pokazania
+// Klientowi, że od tamtej pory się zmieniła.
 
 import { useSyncExternalStore } from 'react'
-import type { ProductKind } from './catalog.ts'
+import type { FormField, ProductKind } from './catalog.ts'
+import type { FormAnswers } from './serviceForm.ts'
 
 export type CartItem = {
+  /** Stały identyfikator pozycji: ta sama Usługa może być w Koszyku wiele razy. */
+  id: string
   slug: string
   /** Nazwa z chwili dodania; pokazujemy ją, gdy serwer jest niedostępny. */
   name: string
   /** Cena w groszach widziana przy dodaniu. */
   price: number
+  /** Odpowiedzi z formularza Usługi po kluczach pól. */
+  form?: FormAnswers
 }
 
 const storageKey = 'szept-tarota:koszyk'
@@ -26,7 +32,8 @@ function readItems(): CartItem[] {
   let items: CartItem[] = []
   try {
     const parsed: unknown = raw ? JSON.parse(raw) : []
-    if (Array.isArray(parsed)) items = parsed.filter(isCartItem)
+    // Pozycje zapisane, zanim Koszyk nadawał identyfikatory, dostają je przy odczycie.
+    if (Array.isArray(parsed)) items = parsed.filter(isCartItem).map((item) => ({ ...item, id: item.id ?? newId() }))
   } catch {
     // Uszkodzony zapis traktujemy jak pusty Koszyk.
   }
@@ -34,11 +41,24 @@ function readItems(): CartItem[] {
   return items
 }
 
-function isCartItem(value: unknown): value is CartItem {
-  const item = value as CartItem | null
+function isCartItem(value: unknown): value is Omit<CartItem, 'id'> & { id?: string } {
+  const item = value as Partial<CartItem> | null
   return (
-    typeof item?.slug === 'string' && typeof item.name === 'string' && typeof item.price === 'number'
+    typeof item?.slug === 'string' &&
+    typeof item.name === 'string' &&
+    typeof item.price === 'number' &&
+    (item.id === undefined || typeof item.id === 'string') &&
+    (item.form === undefined ||
+      (typeof item.form === 'object' &&
+        item.form !== null &&
+        Object.values(item.form).every((answer) => typeof answer === 'string')))
   )
+}
+
+function newId() {
+  // randomUUID działa tylko w bezpiecznym kontekście (https, localhost); np. przy
+  // testach przez sieć lokalną po http wystarczy identyfikator losowy.
+  return crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
 }
 
 function writeItems(items: CartItem[]) {
@@ -63,11 +83,23 @@ export function useCart(): CartItem[] {
   return useSyncExternalStore(subscribe, readItems)
 }
 
+type ProductInCart = { slug: string; name: string; price: number }
+
 /** Dodaje Ebook do Koszyka; Ebook może być w Koszyku najwyżej raz. */
-export function addEbookToCart(product: { slug: string; name: string; price: number }) {
+export function addEbookToCart(product: ProductInCart) {
   const items = readItems()
   if (items.some((item) => item.slug === product.slug)) return
-  writeItems([...items, { slug: product.slug, name: product.name, price: product.price }])
+  writeItems([...items, { id: newId(), slug: product.slug, name: product.name, price: product.price }])
+}
+
+/** Dodaje Usługę z wypełnionym formularzem; tę samą Usługę można dodać wiele razy. */
+export function addServiceToCart(product: ProductInCart, form: FormAnswers) {
+  writeItems([...readItems(), { id: newId(), slug: product.slug, name: product.name, price: product.price, form }])
+}
+
+/** Zapisuje poprawiony formularz Usługi w pozycji Koszyka. */
+export function updateCartItemForm(id: string, form: FormAnswers) {
+  writeItems(readItems().map((item) => (item.id === id ? { ...item, form } : item)))
 }
 
 /** Usuwa pozycję o danym miejscu w Koszyku. */
@@ -90,6 +122,10 @@ export type CartLine = {
   /** Cena widziana przy dodaniu, gdy od tamtej pory się zmieniła. */
   previousPrice: number | null
   errors: CartError[]
+  /** Formularz Usługi (pusty dla Ebooka i Produktu spoza katalogu). */
+  form: FormField[]
+  /** Błędy formularza Usługi po kluczach pól. */
+  formErrors: Record<string, string>
 }
 
 export type Consent = { key: string; text: string }
@@ -105,7 +141,7 @@ export async function validateCart(items: CartItem[], signal: AbortSignal): Prom
   const response = await fetch('/api/cart/validate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ items: items.map(({ slug, price }) => ({ slug, price })) }),
+    body: JSON.stringify({ items: items.map(({ slug, price, form }) => ({ slug, price, form })) }),
     signal,
   })
   if (!response.ok || !response.headers.get('Content-Type')?.includes('json')) {
@@ -122,8 +158,8 @@ export function clearCart() {
 // POST /api/checkout i GET /api/orders/{id} (OrderEndpoints.cs).
 
 export type CheckoutForm = {
-  /** Pozycje z cenami, które Klient widzi teraz w Koszyku. */
-  items: { slug: string; price: number }[]
+  /** Pozycje z cenami, które Klient widzi teraz w Koszyku, i formularzami Usług. */
+  items: { slug: string; price: number; form?: FormAnswers }[]
   email: string
   /** Imię i nazwisko Klienta. */
   name: string

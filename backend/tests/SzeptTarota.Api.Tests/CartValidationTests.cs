@@ -99,9 +99,61 @@ public class CartValidationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_Service_cannot_be_in_the_cart_yet()
+    public async Task A_Service_with_its_form_filled_in_is_valid_and_needs_the_consent_to_start_within_14_days()
     {
-        var cart = await Validate(new { slug = FakeProductCatalog.ServiceSlug, price = 34900 });
+        var cart = await Validate(Service(new { name = "Anna", birthDate = "1990-04-12" }));
+
+        Assert.True(cart.IsValid);
+        var line = Assert.Single(cart.Items);
+        Assert.Equal("service", line.Kind);
+        Assert.Empty(line.Errors);
+        Assert.Equal(34900, cart.Total);
+        Assert.Equal(["termsAndPrivacy", "serviceEarlyStart"], cart.RequiredConsents.Select(c => c.Key));
+        Assert.Contains("14 dni", cart.RequiredConsents[1].Text);
+    }
+
+    [Fact]
+    public async Task Missing_required_fields_and_badly_formatted_answers_are_errors_on_their_fields()
+    {
+        var cart = await Validate(
+            Service(new { name = " ", birthDate = "12.04.1990", partnerEmail = "nie-email" }),
+            Service(new { name = "Anna", birthDate = "1990-02-30" }));
+
+        Assert.False(cart.IsValid);
+        var first = cart.Items[0];
+        Assert.Equal("formInvalid", Assert.Single(first.Errors).Code);
+        Assert.Equal(["birthDate", "name", "partnerEmail"], first.FormErrors.Keys.Order());
+        Assert.All(first.FormErrors.Values, message => Assert.False(string.IsNullOrWhiteSpace(message)));
+        Assert.Equal(["birthDate"], cart.Items[1].FormErrors.Keys);
+        Assert.Equal(0, cart.Total);
+    }
+
+    [Fact]
+    public async Task The_same_Service_can_be_in_the_cart_many_times_each_with_its_own_form()
+    {
+        var cart = await Validate(
+            Service(new { name = "Anna", birthDate = "1990-04-12" }),
+            Service(new { name = "Maria", birthDate = "1962-11-03", question = "Co mnie czeka?" }));
+
+        Assert.True(cart.IsValid);
+        Assert.All(cart.Items, line => Assert.Empty(line.FormErrors));
+        Assert.Equal(69800, cart.Total);
+    }
+
+    [Fact]
+    public async Task A_cart_line_shows_the_Services_form_so_the_Klient_can_correct_it()
+    {
+        var line = Assert.Single((await Validate(Service(new { name = "Anna", birthDate = "1990-04-12" }))).Items);
+
+        Assert.Equal(
+            [("name", "Imię", "text", true), ("birthDate", "Data urodzenia", "date", true), ("question", "Pytanie do kart", "longText", false), ("partnerEmail", "Email partnera", "email", false)],
+            line.Form.Select(f => (f.Key, f.Label, f.Type, f.Required)));
+    }
+
+    [Fact]
+    public async Task A_Session_cannot_be_in_the_cart_yet()
+    {
+        var cart = await Validate(new { slug = FakeProductCatalog.SessionSlug, price = 24900 });
 
         Assert.False(cart.IsValid);
         Assert.Equal("kindNotInCartYet", Assert.Single(Assert.Single(cart.Items).Errors).Code);
@@ -135,6 +187,8 @@ public class CartValidationTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.BadRequest, tooBig.StatusCode);
     }
 
+    private static object Service(object form) => new { slug = FakeProductCatalog.ServiceSlug, price = 34900, form };
+
     private async Task<CartResponse> Validate(params object[] items)
     {
         var response = await _api.CreateClient().PostAsJsonAsync("/api/cart/validate", new { items });
@@ -144,7 +198,17 @@ public class CartValidationTests : IAsyncLifetime
 
     private sealed record CartResponse(bool IsValid, List<LineResponse> Items, int Total, List<ConsentResponse> RequiredConsents);
 
-    private sealed record LineResponse(string Slug, string? Name, string? Kind, int? Price, int? PreviousPrice, List<ErrorResponse> Errors);
+    private sealed record LineResponse(
+        string Slug,
+        string? Name,
+        string? Kind,
+        int? Price,
+        int? PreviousPrice,
+        List<ErrorResponse> Errors,
+        List<FormFieldResponse> Form,
+        Dictionary<string, string> FormErrors);
+
+    private sealed record FormFieldResponse(string Key, string Label, string Type, bool Required);
 
     private sealed record ErrorResponse(string Code, string Message);
 

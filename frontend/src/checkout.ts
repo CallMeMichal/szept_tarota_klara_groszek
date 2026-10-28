@@ -3,7 +3,7 @@
 // stan płatności żyje w CartPage i trafia do obu przez ten hook.
 
 import { useState, type FormEvent } from 'react'
-import { startCheckout, type CartValidation } from './cart.ts'
+import { startCheckout, type CartItem, type CartValidation } from './cart.ts'
 
 export type CheckoutStatus =
   | { state: 'idle' }
@@ -19,14 +19,19 @@ export type CheckoutStatus =
 export function useCheckout(onCartChanged: () => void) {
   const [status, setStatus] = useState<CheckoutStatus>({ state: 'idle' })
 
-  async function submit(event: FormEvent<HTMLFormElement>, cart: CartValidation) {
+  /** `items` to Koszyk z przeglądarki, z którego powstał `cart` (te same pozycje w tej samej kolejności). */
+  async function submit(event: FormEvent<HTMLFormElement>, cart: CartValidation, items: CartItem[]) {
     event.preventDefault()
     const data = new FormData(event.currentTarget)
     const text = (name: string) => String(data.get(name) ?? '').trim()
     setStatus({ state: 'sending' })
 
     const result = await startCheckout({
-      items: cart.items.map((line) => ({ slug: line.slug, price: line.price ?? 0 })),
+      items: cart.items.map((line, index) => ({
+        slug: line.slug,
+        price: line.price ?? 0,
+        form: items[index]?.form,
+      })),
       email: text('email'),
       name: text('name'),
       acceptedConsents: data.getAll('consent').map(String),

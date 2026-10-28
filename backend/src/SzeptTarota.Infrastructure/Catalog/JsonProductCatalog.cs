@@ -74,11 +74,20 @@ public sealed partial class JsonProductCatalog : IProductCatalog
             {
                 yield return $"{at} pole formularza '{duplicate.Key}' występuje {duplicate.Count()} razy";
             }
+
+            foreach (var field in product.Form)
+            {
+                if (!FieldKeyPattern().IsMatch(field.Key)) yield return $"{at} klucz pola formularza '{field.Key}' może mieć tylko litery a-z i A-Z oraz cyfry, zaczynając od małej litery";
+                if (string.IsNullOrWhiteSpace(field.Label)) yield return $"{at} pole formularza '{field.Key}' nie ma etykiety";
+            }
         }
     }
 
     [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*$")]
     private static partial Regex SlugPattern();
+
+    [GeneratedRegex("^[a-z][a-zA-Z0-9]*$")]
+    private static partial Regex FieldKeyPattern();
 
     private sealed record CatalogFile(IReadOnlyList<ProductEntry> Products);
 

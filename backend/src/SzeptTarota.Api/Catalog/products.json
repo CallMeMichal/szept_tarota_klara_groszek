@@ -122,7 +122,26 @@
         }
       ],
       "price": 44400,
-      "form": []
+      "form": [
+        {
+          "key": "name",
+          "label": "Imię",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "birthDate",
+          "label": "Data urodzenia",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "question",
+          "label": "Twoje pytanie lub sytuacja, na której mam się skupić",
+          "type": "longText",
+          "required": false
+        }
+      ]
     },
     {
       "slug": "mapa-duszy",
@@ -185,7 +204,26 @@
         }
       ],
       "price": 34900,
-      "form": []
+      "form": [
+        {
+          "key": "name",
+          "label": "Imię",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "birthDate",
+          "label": "Data urodzenia",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "question",
+          "label": "Twoje pytanie lub sytuacja, na której mam się skupić",
+          "type": "longText",
+          "required": false
+        }
+      ]
     },
     {
       "slug": "analiza-partnerska",
@@ -263,7 +301,38 @@
         }
       ],
       "price": 12900,
-      "form": []
+      "form": [
+        {
+          "key": "name",
+          "label": "Imię",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "birthDate",
+          "label": "Data urodzenia",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "partnerName",
+          "label": "Imię partnera",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "partnerBirthDate",
+          "label": "Data urodzenia partnera",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "situation",
+          "label": "Wasza obecna sytuacja",
+          "type": "longText",
+          "required": false
+        }
+      ]
     },
     {
       "slug": "lustro-cienia",
@@ -354,7 +423,26 @@
         }
       ],
       "price": 14900,
-      "form": []
+      "form": [
+        {
+          "key": "name",
+          "label": "Imię",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "birthDate",
+          "label": "Data urodzenia",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "question",
+          "label": "Twoje pytanie lub sytuacja, na której mam się skupić",
+          "type": "longText",
+          "required": false
+        }
+      ]
     },
     {
       "slug": "tarot-3-miesiace",
@@ -421,7 +509,26 @@
         }
       ],
       "price": 14900,
-      "form": []
+      "form": [
+        {
+          "key": "name",
+          "label": "Imię",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "birthDate",
+          "label": "Data urodzenia",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "focus",
+          "label": "Na czym mam się skupić w kolejnych miesiącach",
+          "type": "longText",
+          "required": false
+        }
+      ]
     },
     {
       "slug": "tarot-6-miesiecy",
@@ -496,7 +603,26 @@
         }
       ],
       "price": 24900,
-      "form": []
+      "form": [
+        {
+          "key": "name",
+          "label": "Imię",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "birthDate",
+          "label": "Data urodzenia",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "focus",
+          "label": "Na czym mam się skupić w kolejnych miesiącach",
+          "type": "longText",
+          "required": false
+        }
+      ]
     },
     {
       "slug": "tarot-premium-12-miesiecy",
@@ -575,7 +701,26 @@
         }
       ],
       "price": 39900,
-      "form": []
+      "form": [
+        {
+          "key": "name",
+          "label": "Imię",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "birthDate",
+          "label": "Data urodzenia",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "focus",
+          "label": "Na czym mam się skupić w kolejnych miesiącach",
+          "type": "longText",
+          "required": false
+        }
+      ]
     },
     {
       "slug": "analiza-pola-energetycznego",
@@ -625,7 +770,26 @@
         }
       ],
       "price": 11100,
-      "form": []
+      "form": [
+        {
+          "key": "name",
+          "label": "Imię",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "birthDate",
+          "label": "Data urodzenia",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "question",
+          "label": "Twoje pytanie lub sytuacja, na której mam się skupić",
+          "type": "longText",
+          "required": false
+        }
+      ]
     },
     {
       "slug": "rytual-na-przyciagniecie-milosci",
@@ -668,7 +832,26 @@
         }
       ],
       "price": 33300,
-      "form": []
+      "form": [
+        {
+          "key": "name",
+          "label": "Imię",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "birthDate",
+          "label": "Data urodzenia",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "intention",
+          "label": "Twoja intencja",
+          "type": "longText",
+          "required": true
+        }
+      ]
     },
     {
       "slug": "rytual-na-przyciagniecie-obfitosci-finansowej",
@@ -711,7 +894,26 @@
         }
       ],
       "price": 33300,
-      "form": []
+      "form": [
+        {
+          "key": "name",
+          "label": "Imię",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "birthDate",
+          "label": "Data urodzenia",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "intention",
+          "label": "Twoja intencja",
+          "type": "longText",
+          "required": true
+        }
+      ]
     },
     {
       "slug": "rytual-odciecia-energetycznego",
@@ -758,7 +960,26 @@
         }
       ],
       "price": 33300,
-      "form": []
+      "form": [
+        {
+          "key": "name",
+          "label": "Imię",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "birthDate",
+          "label": "Data urodzenia",
+          "type": "date",
+          "required": true
+        },
+        {
+          "key": "intention",
+          "label": "Od kogo lub czego chcesz się odciąć",
+          "type": "longText",
+          "required": true
+        }
+      ]
     },
     {
       "slug": "sesja-reiki-czakroterapia",

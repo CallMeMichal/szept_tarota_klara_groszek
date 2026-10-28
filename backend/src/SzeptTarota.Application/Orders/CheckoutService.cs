@@ -48,7 +48,10 @@ public sealed class CheckoutService(
         var email = command.Email!.Trim();
         var lines = cart.Lines
             .Select(l => l.Product!)
-            .Select(p => new OrderLine(p.Product.Slug, p.Product.Kind, p.Product.Name, p.Price, p.Product.EbookFileKey))
+            .Select(p => new OrderLine(p.Product.Slug, p.Product.Kind, p.Product.Name, p.Price, p.Product.EbookFileKey)
+            {
+                FormAnswers = p.FormAnswers.ToList(),
+            })
             .ToList();
 
         // Bez adresu strony Stripe nie ma dokąd odesłać Klienta, a bez adresu Klary nie dowie się o Zamówieniu.

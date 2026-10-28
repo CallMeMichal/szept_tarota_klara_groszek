@@ -28,7 +28,7 @@ public static class OrderEndpoints
                 }
 
                 var command = new CheckoutCommand(
-                    request.Items.Select(i => new CartItem(i!.Slug!, i.Price)).ToList(),
+                    request.Items.Select(i => i!.ToCartItem()).ToList(),
                     request.Email,
                     request.Name,
                     (request.AcceptedConsents ?? []).OfType<string>().ToHashSet());

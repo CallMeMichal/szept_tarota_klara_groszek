@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import arrowPrimary from '../assets/home/arrow-up-right-primary.svg'
 import {
   interruptedPaymentParam,
   removeFromCart,
+  updateCartItemForm,
   useCart,
   validateCart,
   type CartItem,
@@ -12,8 +13,10 @@ import {
 import { checkoutStatusMessage, useCheckout } from '../checkout.ts'
 import { CheckoutForm } from '../components/CheckoutForm.tsx'
 import { ProductImage } from '../components/ProductImage.tsx'
-import { formatPrice, kindLabels, productPath } from '../catalog.ts'
+import { ServiceFormFields } from '../components/ServiceFormFields.tsx'
+import { formatPrice, kindLabels, productPath, type FormField } from '../catalog.ts'
 import { homeSectionPath, homeSections } from '../homeSections.ts'
+import { formatAnswer, submitServiceForm, type FormAnswers } from '../serviceForm.ts'
 
 type Validation =
   | { status: 'loading' }
@@ -83,14 +86,14 @@ export function CartPage() {
         <div className="cart-layout__main">
           <div className="cart-panel">
             <h2 className="cart-panel__title">Produkty</h2>
-            {cart ? <CheckedCartLines cart={cart} /> : <UncheckedCartLines items={items} />}
+            {cart ? <CheckedCartLines cart={cart} items={items} /> : <UncheckedCartLines items={items} />}
           </div>
           {cart?.isValid && (
             <CheckoutForm
               id={checkoutFormId}
               consents={cart.requiredConsents}
               status={checkout.status}
-              onSubmit={(event) => void checkout.submit(event, cart)}
+              onSubmit={(event) => void checkout.submit(event, cart, items)}
             />
           )}
         </div>
@@ -106,7 +109,7 @@ export function CartPage() {
               : validation.status === 'error'
                 ? 'Nie udało się sprawdzić aktualnych cen. Pokazuję ceny z chwili dodania; sprawdzę je ponownie przed płatnością.'
                 : !validation.data.isValid
-                  ? 'Usuń z Koszyka pozycje z błędami, żeby przejść do płatności.'
+                  ? 'Popraw albo usuń z Koszyka pozycje z błędami, żeby przejść do płatności.'
                   : checkoutStatusMessage(checkout.status)
           }
         />
@@ -183,11 +186,12 @@ function CartSummary({ count, total, payable, sending, message }: CartSummaryPro
   )
 }
 
-function CheckedCartLines({ cart }: { cart: CartValidation }) {
+/** Pozycje sprawdzone na serwerze; `items` to Koszyk z przeglądarki, z którego powstał `cart`. */
+function CheckedCartLines({ cart, items }: { cart: CartValidation; items: CartItem[] }) {
   return (
     <ul className="cart-lines">
       {cart.items.map((line, index) => (
-        <li key={index} className="cart-line">
+        <li key={items[index]?.id ?? index} className="cart-line">
           <CartLineImage slug={line.slug} linked={line.name !== null} />
           <div className="cart-line__product">
             {line.name ? <Link to={productPath(line.slug)}>{line.name}</Link> : <span>Produkt niedostępny</span>}
@@ -210,9 +214,95 @@ function CheckedCartLines({ cart }: { cart: CartValidation }) {
             {line.price !== null && <strong>{formatPrice(line.price)}</strong>}
           </div>
           <RemoveButton index={index} name={line.name ?? line.slug} />
+          {line.form.length > 0 && items[index] && (
+            <CartLineForm
+              item={items[index]}
+              name={line.name ?? line.slug}
+              fields={line.form}
+              serverErrors={line.formErrors}
+            />
+          )}
         </li>
       ))}
     </ul>
+  )
+}
+
+type CartLineFormProps = {
+  item: CartItem
+  name: string
+  fields: FormField[]
+  /** Błędy formularza z ostatniego sprawdzenia Koszyka na serwerze. */
+  serverErrors: Record<string, string>
+}
+
+/**
+ * Odpowiedzi z formularza Usługi w pozycji Koszyka i ich poprawianie. Formularz
+ * z błędami z serwera jest od razu otwarty do poprawy.
+ */
+function CartLineForm({ item, name, fields, serverErrors }: CartLineFormProps) {
+  const hasServerErrors = Object.keys(serverErrors).length > 0
+  const [editing, setEditing] = useState(hasServerErrors)
+  const [errors, setErrors] = useState<Record<string, string> | null>(null)
+  const answers: FormAnswers = item.form ?? {}
+  const idPrefix = `pozycja-${item.id}`
+
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    const { answers: corrected, errors: formErrors, valid } = submitServiceForm(event, fields)
+    setErrors(formErrors)
+    if (!valid) return
+
+    updateCartItemForm(item.id, corrected)
+    setErrors(null)
+    setEditing(false)
+  }
+
+  if (editing || hasServerErrors) {
+    return (
+      <form
+        className="cart-line__form service-form"
+        onSubmit={onSubmit}
+        noValidate
+        aria-label={`Formularz: ${name}`}
+      >
+        <ServiceFormFields idPrefix={idPrefix} fields={fields} values={answers} errors={errors ?? serverErrors} />
+        <div className="cart-line__form-actions">
+          <button type="submit" className="button button--primary">
+            Zapisz formularz
+          </button>
+          {!hasServerErrors && (
+            <button
+              type="button"
+              className="button button--ghost"
+              onClick={() => {
+                setErrors(null)
+                setEditing(false)
+              }}
+            >
+              Anuluj
+            </button>
+          )}
+        </div>
+      </form>
+    )
+  }
+
+  return (
+    <div className="cart-line__form">
+      <dl className="cart-line__answers">
+        {fields
+          .filter((field) => answers[field.key])
+          .map((field) => (
+            <div key={field.key}>
+              <dt>{field.label}</dt>
+              <dd>{formatAnswer(field, answers[field.key])}</dd>
+            </div>
+          ))}
+      </dl>
+      <button type="button" className="cart-line__edit" onClick={() => setEditing(true)}>
+        Popraw formularz<span className="visually-hidden"> {name}</span>
+      </button>
+    </div>
   )
 }
 
@@ -221,7 +311,7 @@ function UncheckedCartLines({ items }: { items: CartItem[] }) {
   return (
     <ul className="cart-lines">
       {items.map((item, index) => (
-        <li key={index} className="cart-line">
+        <li key={item.id} className="cart-line">
           <CartLineImage slug={item.slug} linked />
           <div className="cart-line__product">
             <Link to={productPath(item.slug)}>{item.name}</Link>

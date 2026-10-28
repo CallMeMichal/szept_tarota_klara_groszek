@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router'
 import './App.css'
 import { cartPath, orderPath } from './cart.ts'
+import { CartToast } from './components/CartToast.tsx'
 import { SiteFooter } from './components/SiteFooter.tsx'
 import { SiteHeader } from './components/SiteHeader.tsx'
 import { homeSections, linkedSectionIds } from './homeSections.ts'
@@ -28,6 +29,7 @@ function App() {
         </Routes>
       </main>
       <SiteFooter />
+      <CartToast />
     </>
   )
 }

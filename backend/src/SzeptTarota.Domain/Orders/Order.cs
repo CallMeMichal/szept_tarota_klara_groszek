@@ -75,8 +75,18 @@ public enum OrderStatus
     Expired,
 }
 
-/// <summary>Pozycja Zamówienia: Produkt z nazwą i ceną (w groszach) z chwili zakupu.</summary>
-public sealed record OrderLine(string Slug, ProductKind Kind, string Name, int Price, string? EbookFileKey);
+/// <summary>
+/// Pozycja Zamówienia: Produkt z nazwą i ceną (w groszach) z chwili zakupu oraz odpowiedziami z formularza Usługi
+/// (z etykietami pól z chwili zakupu).
+/// </summary>
+public sealed record OrderLine(string Slug, ProductKind Kind, string Name, int Price, string? EbookFileKey)
+{
+    // Poza konstruktorem, bo EF Core nie wiąże kolekcji przez parametry konstruktora.
+    public List<FormAnswer> FormAnswers { get; init; } = [];
+}
+
+/// <summary>Odpowiedź z formularza Usługi: klucz pola, jego etykieta i wartość wpisana przez Klienta.</summary>
+public sealed record FormAnswer(string Key, string Label, string Value);
 
 /// <summary>Zgoda zaakceptowana przed płatnością: jej klucz, treść widziana przez Klienta i czas akceptacji.</summary>
 public sealed record AcceptedConsent(string Key, string Text, DateTimeOffset AcceptedAt);
