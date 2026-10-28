@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { dayKey, formatTime, todayKey } from '../appointments.ts'
 import {
   addAvailabilityBlock,
@@ -15,7 +15,7 @@ const slotsPerDay = (24 * 60) / slotMinutes
 /** Godzina, do której siatka przewija się po otwarciu. */
 const firstVisibleHour = 7
 
-const weekdayFormat = new Intl.DateTimeFormat('pl-PL', { timeZone: 'UTC', weekday: 'short', day: 'numeric' })
+const weekdayFormat = new Intl.DateTimeFormat('pl-PL', { timeZone: 'UTC', weekday: 'short' })
 const dayFormat = new Intl.DateTimeFormat('pl-PL', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' })
 const rangeFormat = new Intl.DateTimeFormat('pl-PL', { timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -31,9 +31,9 @@ type Week =
  * przeciąga po kratkach dnia; palcem (i klawiaturą) dotyka początku,
  * a potem końca. Każde zaznaczenie to blok „Dostępna” w jej Kalendarzu
  * Sesji w Google. Godziny zajęte w głównym kalendarzu są wyszarzone.
- * Na telefonie widać jeden dzień, wybierany nad siatką.
+ * Na telefonie widać jeden dzień, wybierany nad siatką. `actions` stoją po prawej w wierszu z tygodniem.
  */
-export function AvailabilityEditor() {
+export function AvailabilityEditor({ actions }: { actions?: ReactNode }) {
   const today = todayKey()
   const [weekStart, setWeekStart] = useState(() => mondayOf(today))
   const [selectedDay, setSelectedDay] = useState(today)
@@ -68,6 +68,12 @@ export function AvailabilityEditor() {
     const start = addDays(weekStart, 7 * by)
     setWeekStart(start)
     setSelectedDay(start)
+    setPending(null)
+  }
+
+  function goToToday() {
+    setWeekStart(mondayOf(today))
+    setSelectedDay(today)
     setPending(null)
   }
 
@@ -116,33 +122,58 @@ export function AvailabilityEditor() {
   const blocks = week.status === 'ok' ? week.week.blocks : []
   const busy = week.status === 'ok' ? week.week.busy : []
   const selection = drag ?? pending
+  const availableMinutes = (day: string) => segmentsOn(day, blocks).reduce((sum, s) => sum + s.to - s.from, 0)
 
   return (
     <div className="availability-editor">
       <div className="availability-editor__toolbar">
-        <button type="button" className="appointment-picker__nav" onClick={() => changeWeek(-1)}>
-          <span aria-hidden="true">‹</span>
-          <span className="visually-hidden">Poprzedni tydzień</span>
-        </button>
-        <h3 aria-live="polite">
-          {rangeFormat.formatRange(utcDate(days[0]), utcDate(days[6]))}
-        </h3>
-        <button type="button" className="appointment-picker__nav" onClick={() => changeWeek(1)}>
-          <span aria-hidden="true">›</span>
-          <span className="visually-hidden">Następny tydzień</span>
-        </button>
+        <div className="availability-editor__week">
+          <button type="button" className="availability-editor__nav" onClick={() => changeWeek(-1)}>
+            <span aria-hidden="true">‹</span>
+            <span className="visually-hidden">Poprzedni tydzień</span>
+          </button>
+          <button
+            type="button"
+            className="availability-editor__today"
+            onClick={goToToday}
+            disabled={weekStart === mondayOf(today)}
+          >
+            Dziś
+          </button>
+          <button type="button" className="availability-editor__nav" onClick={() => changeWeek(1)}>
+            <span aria-hidden="true">›</span>
+            <span className="visually-hidden">Następny tydzień</span>
+          </button>
+          <h3 aria-live="polite">{rangeFormat.formatRange(utcDate(days[0]), utcDate(days[6]))}</h3>
+        </div>
+        {actions}
       </div>
+
+      <p className="availability-editor__hint">
+        <span className="availability-editor__hint--mouse">
+          Przeciągnij po godzinach, żeby dodać dostępność. Krzyżyk na bloku ją usuwa.
+        </span>
+        <span className="availability-editor__hint--touch">
+          Dotknij godziny początku, a potem końca. Krzyżyk na bloku usuwa dostępność.
+        </span>
+      </p>
 
       <div className="availability-editor__days" role="group" aria-label="Dzień">
         {days.map((day) => (
           <button
             key={day}
             type="button"
-            className="availability-editor__day-tab"
+            className={`availability-editor__day-tab${day === today ? ' is-today' : ''}`}
             aria-pressed={day === selectedDay}
+            aria-label={dayFormat.format(utcDate(day))}
             onClick={() => setSelectedDay(day)}
           >
-            {weekdayFormat.format(utcDate(day))}
+            <span className="availability-editor__weekday">{weekdayFormat.format(utcDate(day))}</span>
+            <span className="availability-editor__date">{Number(day.slice(8))}</span>
+            <span
+              className={`availability-editor__dot${availableMinutes(day) > 0 ? ' is-on' : ''}`}
+              aria-hidden="true"
+            />
           </button>
         ))}
       </div>
@@ -177,12 +208,21 @@ export function AvailabilityEditor() {
           {days.map((day) => (
             <div
               key={day}
-              className={`availability-editor__column${day === selectedDay ? ' is-selected' : ''}`}
+              className={[
+                'availability-editor__column',
+                day === selectedDay && 'is-selected',
+                day === today && 'is-today',
+                day < today && 'is-past',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               role="group"
               aria-label={dayFormat.format(utcDate(day))}
             >
               <span className="availability-editor__column-title" aria-hidden="true">
-                {weekdayFormat.format(utcDate(day))}
+                <span className="availability-editor__weekday">{weekdayFormat.format(utcDate(day))}</span>
+                <span className="availability-editor__date">{Number(day.slice(8))}</span>
+                <span className="availability-editor__total">{formatHours(availableMinutes(day))}</span>
               </span>
               <div className="availability-editor__slots">
                 {Array.from({ length: slotsPerDay }, (_, slot) => {
@@ -295,6 +335,12 @@ function localTime(day: string, slot: number) {
   const minutes = slot * slotMinutes
   if (minutes >= 24 * 60) return `${addDays(day, 1)}T00:00`
   return `${day}T${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+}
+
+/** Ile godzin dnia Klara przyjmuje, np. „4 godz.” albo „2,5 godz.”; pusto, gdy nic. */
+function formatHours(minutes: number) {
+  if (minutes === 0) return ''
+  return `${(minutes / 60).toLocaleString('pl-PL', { maximumFractionDigits: 1 })} godz.`
 }
 
 function slotLabel(slot: number) {

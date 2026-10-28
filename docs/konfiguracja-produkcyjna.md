@@ -54,7 +54,7 @@ Jeden projekt w Google Cloud Console, najlepiej na koncie Google Klary, i jeden 
 
 ## Po wdrożeniu (Klara)
 
-1. Klara loguje się na stronie adresem z `Shop:KlaraEmail` (kodem z maila albo przez Google) i wchodzi w Konto → „Panel Klary”.
+1. Klara loguje się na stronie adresem z `Shop:KlaraEmail` (kodem z maila albo przez Google) i trafia od razu do panelu (`/panel`).
 2. W Google Calendar zakłada osobny kalendarz (np. „Sesje”), w którym będzie wpisywać bloki „Dostępna”.
 3. W panelu klika „Połącz z Google Calendar”, wybiera swoje konto Google, zaznacza wszystkie dostępy i wybiera ten kalendarz jako Kalendarz Sesji. Jej główny kalendarz strona odczytuje jako zajętość.
 4. Panel powinien pokazać „Połączono”. Jeśli kiedyś pokaże „Połączenie nie działa”, wystarczy kliknąć „Połącz ponownie”.

@@ -16,6 +16,8 @@ export function AccountPage() {
   }, [])
 
   if (session.status === 'logged-out') return <Navigate to={loginPathFor(accountPath)} replace />
+  // Klara nie kupuje jak Klient, więc zamiast Konta ma panel.
+  if (session.status === 'logged-in' && session.isKlara) return <Navigate to={panelPath} replace />
 
   return (
     <section className="section account-page" aria-labelledby="account-title" aria-busy={session.status === 'loading'}>
@@ -24,11 +26,6 @@ export function AccountPage() {
       {session.status === 'logged-in' && (
         <>
           <p className="section__lead">Zalogowano na adres {session.email}.</p>
-          {session.isKlara && (
-            <Link className="button button--primary" to={panelPath}>
-              Panel Klary
-            </Link>
-          )}
           <LogOutButton />
           <MyOrders />
         </>

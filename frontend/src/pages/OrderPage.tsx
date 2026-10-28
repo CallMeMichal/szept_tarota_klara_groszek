@@ -86,17 +86,28 @@ function OrderContent({ order, gaveUpWaiting }: { order: OrderSummary; gaveUpWai
     )
   }
 
-  const paid = order.status === 'paid'
+  // Po zapłacie wystarczy podziękowanie: szczegóły Zamówienia (i Ebooki) przychodzą mailem.
+  if (order.status === 'paid') {
+    return (
+      <>
+        <p className="eyebrow">Zamówienie opłacone</p>
+        <h1 id="order-title">Dziękuję za zakup!</h1>
+        <p className="section__lead" role="status">
+          Na Twój adres email przyjdzie potwierdzenie z podsumowaniem Zamówienia. Jeśli nie widzisz maila, zajrzyj do
+          spamu.
+        </p>
+      </>
+    )
+  }
+
   return (
     <>
-      <p className="eyebrow">{paid ? 'Zamówienie opłacone' : 'Zamówienie'}</p>
-      <h1 id="order-title">{paid ? 'Dziękuję za zakup!' : 'Czekam na potwierdzenie płatności'}</h1>
+      <p className="eyebrow">Zamówienie</p>
+      <h1 id="order-title">Czekam na potwierdzenie płatności</h1>
       <p className="section__lead" role="status">
-        {paid
-          ? 'Potwierdzenie i zakupione Ebooki wysłałam na Twój adres email. Jeśli nie widzisz maila, zajrzyj do spamu.'
-          : gaveUpWaiting
-            ? 'Potwierdzenie płatności jeszcze nie dotarło. Gdy tylko dotrze, dostaniesz maila z Ebookami.'
-            : 'To zwykle trwa kilka sekund. Nie zamykaj tej strony.'}
+        {gaveUpWaiting
+          ? 'Potwierdzenie płatności jeszcze nie dotarło. Gdy tylko dotrze, dostaniesz maila z potwierdzeniem.'
+          : 'To zwykle trwa kilka sekund. Nie zamykaj tej strony.'}
       </p>
 
       <ul className="order-lines">

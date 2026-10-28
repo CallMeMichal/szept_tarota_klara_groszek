@@ -32,6 +32,9 @@ public static class AccountEndpoints
     /// <summary>Czy Google potwierdził adres; bez tego logowanie przez Google nie wchodzi na Konto.</summary>
     private const string EmailVerifiedClaim = "email_verified";
 
+    /// <summary>Adres zdjęcia profilu z Google; jak imię i nazwisko trzymamy je tylko w sesji, nie w Koncie.</summary>
+    private const string PictureClaim = "picture";
+
     /// <summary>
     /// Sesja Klienta w ciasteczku (frontend i API pod jednym originem). Endpointy wymagające logowania
     /// odpowiadają 401 zamiast przekierowania na stronę logowania, bo pytają je zapytania z frontendu.
@@ -78,6 +81,8 @@ public static class AccountEndpoints
                     user.TryGetProperty("email_verified", out var verified) && verified.ValueKind == JsonValueKind.True
                         ? "true"
                         : null);
+                // Imię i nazwisko („name”) handler mapuje sam na ClaimTypes.Name.
+                options.ClaimActions.MapJsonKey(PictureClaim, "picture");
                 options.Events.OnTicketReceived = LogInWithGoogleAsync;
                 options.Events.OnRemoteFailure = context =>
                 {
@@ -131,7 +136,10 @@ public static class AccountEndpoints
             return;
         }
 
-        context.Principal = Principal(account);
+        context.Principal = Principal(
+            account,
+            context.Principal?.FindFirstValue(ClaimTypes.Name),
+            context.Principal?.FindFirstValue(PictureClaim));
     }
 
     /// <summary>Strona logowania z komunikatem o nieudanym logowaniu przez Google i tym samym powrotem.</summary>
@@ -213,7 +221,7 @@ public static class AccountEndpoints
                     CookieAuthenticationDefaults.AuthenticationScheme,
                     Principal(loggedIn),
                     new AuthenticationProperties { IsPersistent = true });
-                return TypedResults.Ok(AccountResponse.From(loggedIn, shop.Value));
+                return TypedResults.Ok(AccountResponse.From(loggedIn, shop.Value, name: null, pictureUrl: null));
             })
             .RequireRateLimiting(LoginRateLimitPolicy)
             .WithName("LogIn");
@@ -249,7 +257,8 @@ public static class AccountEndpoints
                 IOptions<ShopOptions> shop,
                 CancellationToken cancellationToken) =>
                 await accounts.FindAsync(user.AccountId(), cancellationToken) is { } found
-                    ? TypedResults.Ok(AccountResponse.From(found, shop.Value))
+                    ? TypedResults.Ok(AccountResponse.From(
+                        found, shop.Value, user.FindFirstValue(ClaimTypes.Name), user.FindFirstValue(PictureClaim)))
                     : TypedResults.Unauthorized())
             .RequireAuthorization()
             .WithName("GetAccount");
@@ -267,9 +276,25 @@ public static class AccountEndpoints
         Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? throw new InvalidOperationException("Brak Konta w sesji; endpoint musi wymagać logowania."));
 
-    private static ClaimsPrincipal Principal(Account account) => new(new ClaimsIdentity(
-        [new Claim(ClaimTypes.NameIdentifier, account.Id.ToString())],
-        CookieAuthenticationDefaults.AuthenticationScheme));
+    /// <summary>
+    /// Sesja Konta. Imię i nazwisko i zdjęcie profilu są tylko po logowaniu przez Google (Kod logowania ich nie zna);
+    /// zdjęcie tylko z adresu HTTPS, bo trafia do <c>img</c> na stronie.
+    /// </summary>
+    private static ClaimsPrincipal Principal(Account account, string? name = null, string? pictureUrl = null)
+    {
+        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, account.Id.ToString()) };
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            claims.Add(new Claim(ClaimTypes.Name, name.Trim()));
+        }
+
+        if (Uri.TryCreate(pictureUrl, UriKind.Absolute, out var picture) && picture.Scheme == Uri.UriSchemeHttps)
+        {
+            claims.Add(new Claim(PictureClaim, picture.AbsoluteUri));
+        }
+
+        return new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
+    }
 }
 
 /// <summary>Prośba o kod logowania na adres e-mail.</summary>
@@ -279,9 +304,12 @@ public sealed record LoginCodeRequest(string? Email);
 public sealed record LoginRequest(string? Email, string? Code);
 
 /// <param name="IsKlara">Czy to Konto Klary, które ma dostęp do panelu.</param>
-public sealed record AccountResponse(string Email, bool IsKlara)
+/// <param name="Name">Imię i nazwisko z Google; brak po logowaniu Kodem logowania.</param>
+/// <param name="PictureUrl">Zdjęcie profilu z Google; brak po logowaniu Kodem logowania.</param>
+public sealed record AccountResponse(string Email, bool IsKlara, string? Name, string? PictureUrl)
 {
-    public static AccountResponse From(Account account, ShopOptions shop) => new(account.Email, shop.IsKlara(account.Email));
+    public static AccountResponse From(Account account, ShopOptions shop, string? name, string? pictureUrl) =>
+        new(account.Email, shop.IsKlara(account.Email), name, pictureUrl);
 }
 
 /// <summary>Opłacone Zamówienie na liście „Moje Zamówienia”.</summary>

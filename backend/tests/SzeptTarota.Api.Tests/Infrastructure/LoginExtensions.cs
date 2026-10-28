@@ -31,7 +31,8 @@ public static partial class LoginExtensions
     /// API na ten powrót (przekierowanie na stronę); ciasteczka zostają w kliencie.
     /// </summary>
     public static async Task<HttpResponseMessage> LogInWithGoogle(
-        this HttpClient client, FakeGoogle google, string email, bool emailVerified = true, string? returnUrl = null)
+        this HttpClient client, FakeGoogle google, string email, bool emailVerified = true, string? returnUrl = null,
+        string? name = null, string? picture = null)
     {
         var challenge = await client.GetAsync(
             returnUrl is null ? "/api/account/google" : $"/api/account/google?returnUrl={Uri.EscapeDataString(returnUrl)}");
@@ -41,7 +42,7 @@ public static partial class LoginExtensions
 
         var query = QueryHelpers.ParseQuery(googlePage.Query);
         var callback = new Uri(query["redirect_uri"].ToString());
-        var code = google.SignIn(email, emailVerified);
+        var code = google.SignIn(email, emailVerified, name, picture);
         return await client.GetAsync(
             $"{callback.AbsolutePath}?code={Uri.EscapeDataString(code)}&state={Uri.EscapeDataString(query["state"].ToString())}");
     }

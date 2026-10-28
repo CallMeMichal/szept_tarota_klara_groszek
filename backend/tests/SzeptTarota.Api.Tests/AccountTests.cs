@@ -25,6 +25,9 @@ public class AccountTests
 
         var account = await client.GetFromJsonAsync<AccountResponse>("/api/account");
         Assert.Equal(email, account!.Email);
+        // Kod logowania nie mówi nic o imieniu ani zdjęciu; te są tylko po logowaniu przez Google.
+        Assert.Null(account.Name);
+        Assert.Null(account.PictureUrl);
     }
 
     [Fact]
@@ -260,7 +263,7 @@ public class AccountTests
 
     private static string NewEmail() => $"klient-{Guid.NewGuid():N}@example.com";
 
-    private sealed record AccountResponse(string Email);
+    private sealed record AccountResponse(string Email, string? Name, string? PictureUrl);
 
     private sealed record ValidationProblemResponse(Dictionary<string, string[]> Errors);
 }

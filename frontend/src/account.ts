@@ -8,8 +8,11 @@ import type { ProductKind } from './catalog.ts'
 
 export type Session =
   | { status: 'loading' }
-  /** `isKlara`: Konto Klary, z dostępem do panelu. */
-  | { status: 'logged-in'; email: string; isKlara: boolean }
+  /**
+   * `isKlara`: Konto Klary, z dostępem do panelu. `name` i `pictureUrl` (imię i nazwisko i zdjęcie profilu)
+   * są tylko po logowaniu przez Google.
+   */
+  | { status: 'logged-in'; email: string; isKlara: boolean; name: string | null; pictureUrl: string | null }
   | { status: 'logged-out' }
   /** API nie odpowiada (np. podgląd na GitHub Pages bez backendu). */
   | { status: 'unavailable' }
@@ -18,9 +21,15 @@ export const loginPath = '/logowanie'
 export const accountPath = '/konto'
 export const panelPath = '/panel'
 
-type AccountResponse = { email: string; isKlara: boolean }
+type AccountResponse = { email: string; isKlara: boolean; name: string | null; pictureUrl: string | null }
 
-const loggedIn = ({ email, isKlara }: AccountResponse): Session => ({ status: 'logged-in', email, isKlara })
+const loggedIn = ({ email, isKlara, name, pictureUrl }: AccountResponse): Session => ({
+  status: 'logged-in',
+  email,
+  isKlara,
+  name,
+  pictureUrl,
+})
 
 /** Ścieżka tej strony (np. `/koszyk`) albo `null`, gdy to adres innej strony, żeby `dalej` z adresu nie wyprowadził Klienta poza stronę. */
 export function localPathOrNull(path: string | null | undefined): string | null {

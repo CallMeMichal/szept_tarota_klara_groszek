@@ -3,6 +3,10 @@
 import type { Appointment } from './appointments.ts'
 import type { ProductKind } from './catalog.ts'
 
+/** Sekcje panelu (menu po lewej). */
+export const panelOrdersPath = '/panel/zamowienia'
+export const panelAvailabilityPath = '/panel/dostepnosc'
+
 /** Przycisk „Połącz z Google Calendar” to zwykłe przejście pod ten adres: API odsyła do zgody w Google, a po powrocie na `/panel?kalendarz=…`. */
 export const connectCalendarUrl = '/api/panel/calendar/connect'
 
@@ -132,7 +136,7 @@ export function panelOrdersUrl({ from, to, product }: OrderFilter) {
 }
 
 /** Strona szczegółów Zamówienia w panelu. */
-export const panelOrderPath = (id: string) => `/panel/zamowienia/${id}`
+export const panelOrderPath = (id: string) => `${panelOrdersPath}/${id}`
 
 /** Opłacone Zamówienie na liście; `email` to adres podany przy płatności, `price` to cena jednej sztuki. */
 export type PanelOrder = {

@@ -29,6 +29,19 @@ public class GoogleLoginTests
     }
 
     [Fact]
+    public async Task The_Konto_shows_the_name_and_profile_picture_from_Google()
+    {
+        var client = _factory.CreateBrowser();
+
+        await client.LogInWithGoogle(
+            _factory.Google, NewEmail(), name: "Klara Groszek", picture: "https://lh3.googleusercontent.com/a/klara=s96-c");
+
+        var account = await client.GetFromJsonAsync<AccountResponse>("/api/account");
+        Assert.Equal("Klara Groszek", account!.Name);
+        Assert.Equal("https://lh3.googleusercontent.com/a/klara=s96-c", account.PictureUrl);
+    }
+
+    [Fact]
     public async Task Google_sends_the_Klient_back_to_the_site_address_not_to_the_API_behind_it()
     {
         var challenge = await _factory.CreateBrowser().GetAsync("/api/account/google");
@@ -107,5 +120,5 @@ public class GoogleLoginTests
 
     private static string NewEmail() => $"klient-{Guid.NewGuid():N}@gmail.com";
 
-    private sealed record AccountResponse(string Email);
+    private sealed record AccountResponse(string Email, string? Name = null, string? PictureUrl = null);
 }

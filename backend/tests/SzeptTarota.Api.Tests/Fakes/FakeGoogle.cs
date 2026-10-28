@@ -14,11 +14,14 @@ public sealed class FakeGoogle : HttpMessageHandler
 {
     private readonly ConcurrentDictionary<string, GoogleUser> _users = new();
 
-    /// <summary>Kod autoryzacji, jaki Google wyda po zalogowaniu się na konto Google z adresem <paramref name="email"/>.</summary>
-    public string SignIn(string email, bool emailVerified = true)
+    /// <summary>
+    /// Kod autoryzacji, jaki Google wyda po zalogowaniu się na konto Google z adresem <paramref name="email"/>,
+    /// imieniem i nazwiskiem <paramref name="name"/> i zdjęciem profilu pod <paramref name="picture"/>.
+    /// </summary>
+    public string SignIn(string email, bool emailVerified = true, string? name = null, string? picture = null)
     {
         var code = $"google-code-{Guid.NewGuid():N}";
-        _users[code] = new GoogleUser($"google-{Guid.NewGuid():N}", email, emailVerified);
+        _users[code] = new GoogleUser($"google-{Guid.NewGuid():N}", email, emailVerified, name, picture);
         return code;
     }
 
@@ -34,7 +37,7 @@ public sealed class FakeGoogle : HttpMessageHandler
 
             case "/oauth2/v3/userinfo":
                 return request.Headers.Authorization?.Parameter is { } token && _users.TryGetValue(token, out var user)
-                    ? Json(new { sub = user.Subject, email = user.Email, email_verified = user.EmailVerified })
+                    ? Json(new { sub = user.Subject, email = user.Email, email_verified = user.EmailVerified, name = user.Name, picture = user.Picture })
                     : new HttpResponseMessage(HttpStatusCode.Unauthorized);
 
             default:
@@ -44,5 +47,5 @@ public sealed class FakeGoogle : HttpMessageHandler
 
     private static HttpResponseMessage Json(object body) => new(HttpStatusCode.OK) { Content = JsonContent.Create(body) };
 
-    private sealed record GoogleUser(string Subject, string Email, bool EmailVerified);
+    private sealed record GoogleUser(string Subject, string Email, bool EmailVerified, string? Name, string? Picture);
 }

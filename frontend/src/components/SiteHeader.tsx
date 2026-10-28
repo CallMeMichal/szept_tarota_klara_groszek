@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { accountPath, loginPath, useSession } from '../account.ts'
+import { accountPath, loginPath, panelPath, useSession } from '../account.ts'
 import moonStar from '../assets/home/moon-star.svg'
 import { cartPath, quantityOf, useCart } from '../cart.ts'
 import { homeNavItems, homeSectionPath } from '../homeSections.ts'
@@ -8,7 +8,10 @@ import { homeNavItems, homeSectionPath } from '../homeSections.ts'
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const cartCount = useCart().reduce((sum, item) => sum + quantityOf(item), 0)
-  const loggedIn = useSession().status === 'logged-in'
+  const session = useSession()
+  const loggedIn = session.status === 'logged-in'
+  // Klara nie ma Konta Klienta, tylko panel.
+  const isKlara = session.status === 'logged-in' && session.isKlara
 
   return (
     <header className="site-header">
@@ -48,7 +51,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="header-actions">
-          <Link to={loggedIn ? accountPath : loginPath} className="account-link" onClick={() => setMenuOpen(false)}>
+          <Link to={isKlara ? panelPath : loggedIn ? accountPath : loginPath} className="account-link" onClick={() => setMenuOpen(false)}>
             <svg
               className="account-link__icon"
               viewBox="0 0 24 24"
@@ -64,7 +67,7 @@ export function SiteHeader() {
               <circle cx="12" cy="8.5" r="3.75" />
               <path d="M4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5" />
             </svg>
-            <span className="visually-hidden">{loggedIn ? 'Moje Konto' : 'Zaloguj się'}</span>
+            <span className="visually-hidden">{isKlara ? 'Panel' : loggedIn ? 'Moje Konto' : 'Zaloguj się'}</span>
           </Link>
 
           <Link to={cartPath} className="cart-link" onClick={() => setMenuOpen(false)}>

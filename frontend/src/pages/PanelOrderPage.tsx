@@ -1,89 +1,70 @@
-import { useEffect } from 'react'
-import { Link, Navigate, useParams } from 'react-router'
-import { formatPaidAt, loginPathFor, panelPath, useSession } from '../account.ts'
+import { Link, useLocation, useParams } from 'react-router'
+import { formatPaidAt } from '../account.ts'
 import { formatAppointment } from '../appointments.ts'
 import { formatPrice, kindLabels } from '../catalog.ts'
-import { panelOrderPath, type PanelOrderDetails } from '../panel.ts'
+import { panelOrdersPath, type PanelOrderDetails as OrderDetails } from '../panel.ts'
 import { useApi } from '../useApi.ts'
-import { usePageTitle } from '../usePageTitle.ts'
 
 /** Szczegóły opłaconego Zamówienia w panelu Klary: Klient, Produkty, Terminy i odpowiedzi z formularzy Usług. */
-export function PanelOrderPage() {
-  usePageTitle('Zamówienie')
+export function PanelOrderDetails() {
   const { id = '' } = useParams()
-  const session = useSession()
+  // Lista przekazuje swoje filtry, żeby powrót do niej ich nie gubił.
+  const listSearch = (useLocation().state as { listSearch?: string } | null)?.listSearch
+  const backTo = listSearch ? `${panelOrdersPath}?${listSearch}` : panelOrdersPath
+  const order = useApi<OrderDetails>(`/api/panel/orders/${encodeURIComponent(id)}`)
 
-  useEffect(() => {
-    window.scrollTo({ top: 0 })
-  }, [])
-
-  if (session.status === 'logged-out') return <Navigate to={loginPathFor(panelOrderPath(id))} replace />
-
-  return (
-    <section className="section account-page" aria-labelledby="panel-order-title" aria-busy={session.status === 'loading'}>
-      <p className="eyebrow">
-        <Link to={panelPath}>Panel</Link> · Zamówienie
-      </p>
-      {session.status === 'logged-in' && session.isKlara && <OrderDetails id={id} />}
-      {session.status === 'logged-in' && !session.isKlara && (
-        <>
-          <h1 id="panel-order-title">Panel Klary</h1>
-          <p className="section__lead">Ta strona jest dostępna tylko dla Klary.</p>
-        </>
-      )}
-      {session.status === 'unavailable' && (
-        <p className="section__lead">Nie udało się otworzyć panelu. Spróbuj ponownie za chwilę.</p>
-      )}
-    </section>
+  const back = (
+    <Link className="panel-order-details__back" to={backTo}>
+      <span aria-hidden="true">‹</span> Zamówienia
+    </Link>
   )
-}
-
-function OrderDetails({ id }: { id: string }) {
-  const order = useApi<PanelOrderDetails>(`/api/panel/orders/${encodeURIComponent(id)}`)
 
   if (order.status !== 'ok') {
     return (
-      <>
-        <h1 id="panel-order-title">
+      <div className="panel-order-details">
+        {back}
+        <h2>
           {order.status === 'loading'
             ? 'Wczytuję Zamówienie…'
             : order.status === 'not-found'
               ? 'Nie ma takiego opłaconego Zamówienia'
               : 'Nie udało się wczytać Zamówienia'}
-        </h1>
-        {order.status !== 'loading' && (
-          <Link className="button button--ghost" to={panelPath}>
-            Wróć do panelu
-          </Link>
-        )}
-      </>
+        </h2>
+      </div>
     )
   }
 
   const { customerName, email, paidAt, items, total } = order.data
   return (
-    <>
-      <h1 id="panel-order-title">{customerName}</h1>
-      <p className="section__lead">
-        <a href={`mailto:${email}`}>{email}</a> · zapłacone {formatPaidAt(paidAt)}
-      </p>
+    <div className="panel-order-details">
+      {back}
+      <header className="panel-order-details__header">
+        <h2>{customerName}</h2>
+        <p>
+          <a href={`mailto:${email}`}>{email}</a>
+          <span>Zapłacone {formatPaidAt(paidAt)}</span>
+        </p>
+      </header>
 
-      <ul className="order-lines">
+      <ul className="panel-order-details__lines">
         {items.map((line, index) => (
-          <li key={index} className="panel-order-line">
-            <div className="order-line">
-              <span className="order-line__product">
-                <span>
-                  {line.quantity > 1 && `${line.quantity} × `}
-                  {line.name}
-                </span>
-                <span className="cart-line__kind">{kindLabels[line.kind]}</span>
+          <li key={index} className="panel-order-item">
+            <div className="panel-order-item__header">
+              <span className="panel-order-item__name">
+                {line.quantity > 1 && `${line.quantity} × `}
+                {line.name}
               </span>
-              <strong>{formatPrice(line.price * line.quantity)}</strong>
+              <span className="panel-order-item__kind">{kindLabels[line.kind]}</span>
+              <strong className="panel-order-item__price">{formatPrice(line.price * line.quantity)}</strong>
             </div>
-            {line.appointment && <p className="panel-order-line__appointment">Termin: {formatAppointment(line.appointment)}</p>}
+            {line.appointment && (
+              <p className="panel-order-item__appointment">
+                <span>Termin</span>
+                {formatAppointment(line.appointment)}
+              </p>
+            )}
             {line.formAnswers.length > 0 && (
-              <dl className="panel-order-line__answers">
+              <dl className="panel-order-item__answers">
                 {line.formAnswers.map((answer) => (
                   <div key={answer.key}>
                     <dt>{answer.label}</dt>
@@ -95,13 +76,11 @@ function OrderDetails({ id }: { id: string }) {
           </li>
         ))}
       </ul>
-      <p className="cart-total">
-        <span>Suma</span>
+
+      <p className="panel-order-details__total">
+        <span>Razem</span>
         <strong>{formatPrice(total)}</strong>
       </p>
-      <Link className="button button--ghost" to={panelPath}>
-        Wróć do listy Zamówień
-      </Link>
-    </>
+    </div>
   )
 }
