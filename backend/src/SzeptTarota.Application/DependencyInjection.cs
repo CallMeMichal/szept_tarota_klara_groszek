@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SzeptTarota.Application.Accounts;
 using SzeptTarota.Application.Cart;
 using SzeptTarota.Application.Orders;
 
@@ -11,6 +12,7 @@ public static class DependencyInjection
         services.AddSingleton<CartValidator>();
         services.AddScoped<CheckoutService>();
         services.AddScoped<PaymentWebhookHandler>();
+        services.AddScoped<LoginService>();
 
         return services;
     }

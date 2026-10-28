@@ -3,14 +3,15 @@ using SzeptTarota.Domain.Catalog;
 namespace SzeptTarota.Domain.Orders;
 
 /// <summary>
-/// Jeden zakup jednego lub kilku Produktów, opłacany jedną płatnością. Powstaje jako oczekujące na płatność
-/// i trzyma kopię nazw i cen z chwili zakupu, imię i nazwisko Klienta i zaakceptowane zgody, więc późniejsze zmiany
-/// katalogu go nie zmieniają.
+/// Jeden zakup jednego lub kilku Produktów, opłacany jedną płatnością. Powstaje jako oczekujące na płatność,
+/// należy do Konta Klienta i ma kopię nazw i cen z chwili zakupu, imię i nazwisko Klienta i zaakceptowane zgody, więc
+/// późniejsze zmiany katalogu go nie zmieniają.
 /// </summary>
 public sealed class Order
 {
     public Order(
         Guid id,
+        Guid accountId,
         string email,
         string customerName,
         IReadOnlyList<OrderLine> lines,
@@ -19,6 +20,7 @@ public sealed class Order
         DateTimeOffset createdAt)
     {
         Id = id;
+        AccountId = accountId;
         Email = email;
         CustomerName = customerName;
         Lines = lines.ToList();
@@ -43,6 +45,10 @@ public sealed class Order
 
     public OrderStatus Status { get; private set; }
 
+    /// <summary>Konto Klienta, który złożył Zamówienie; brak tylko w Zamówieniach sprzed Kont.</summary>
+    public Guid? AccountId { get; private set; }
+
+    /// <summary>Adres Konta z chwili zakupu; na niego idzie potwierdzenie.</summary>
     public string Email { get; private set; }
 
     /// <summary>Imię i nazwisko Klienta.</summary>

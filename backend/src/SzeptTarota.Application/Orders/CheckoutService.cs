@@ -1,5 +1,5 @@
-using System.Net.Mail;
 using Microsoft.Extensions.Options;
+using SzeptTarota.Application.Accounts;
 using SzeptTarota.Application.Cart;
 using SzeptTarota.Application.Payments;
 using SzeptTarota.Domain.Orders;
@@ -7,23 +7,28 @@ using SzeptTarota.Domain.Orders;
 namespace SzeptTarota.Application.Orders;
 
 /// <summary>
-/// Rozpoczęcie płatności: ponownie sprawdza Koszyk, dane Klienta i zgody, tworzy Zamówienie
-/// oczekujące na płatność i zakłada dla niego sesję płatności w bramce.
+/// Rozpoczęcie płatności przez zalogowanego Klienta: ponownie sprawdza Koszyk, dane Klienta i zgody, tworzy
+/// Zamówienie na jego Konto, oczekujące na płatność, i zakłada dla niego sesję płatności w bramce.
 /// </summary>
 /// <exception cref="ShopNotConfiguredException">Gdy brakuje konfiguracji sekcji <c>Shop</c>.</exception>
 /// <exception cref="PaymentGatewayNotConfiguredException">Gdy brakuje kluczy bramki płatności.</exception>
 public sealed class CheckoutService(
     CartValidator cartValidator,
+    IAccountStore accounts,
     IPaymentGateway paymentGateway,
     IOrderStore orders,
     TimeProvider time,
     IOptions<ShopOptions> shopOptions)
 {
-    private const int MaxEmailLength = 200;
     private const int MaxNameLength = 200;
 
     public async Task<CheckoutResult> StartAsync(CheckoutCommand command, CancellationToken cancellationToken)
     {
+        if (await accounts.FindAsync(command.AccountId, cancellationToken) is not { } account)
+        {
+            return new CheckoutResult.NotLoggedIn();
+        }
+
         // Klient płaci dokładnie tyle, ile widział: każda zmiana ceny od ostatniego sprawdzenia wraca do Koszyka.
         var cart = cartValidator.Validate(command.Items);
         if (!cart.IsValid || cart.Lines.Any(l => l.Product!.PreviousPrice is not null))
@@ -45,7 +50,6 @@ public sealed class CheckoutService(
 
         var now = time.GetUtcNow();
         var orderId = Guid.NewGuid();
-        var email = command.Email!.Trim();
         var lines = cart.Lines
             .Select(l => new OrderLine(l.Product!.Product.Slug, l.Product.Product.Kind, l.Product.Product.Name, l.Product.Price, l.Product.Product.EbookFileKey)
             {
@@ -65,7 +69,7 @@ public sealed class CheckoutService(
         var session = await paymentGateway.CreateCheckoutAsync(
             new PaymentSessionRequest(
                 orderId,
-                email,
+                account.Email,
                 lines.Select(l => new CheckoutLine(l.Name, l.Price, l.Quantity)).ToList(),
                 SuccessUrl: new Uri($"{siteUrl}/zamowienie/{orderId}"),
                 CancelUrl: new Uri($"{siteUrl}/koszyk?platnosc=przerwana")),
@@ -73,7 +77,8 @@ public sealed class CheckoutService(
 
         var order = new Order(
             orderId,
-            email,
+            account.Id,
+            account.Email,
             command.Name!.Trim(),
             lines,
             cart.RequiredConsents.Select(c => new AcceptedConsent(c.Key, c.Text, now)).ToList(),
@@ -88,13 +93,6 @@ public sealed class CheckoutService(
     {
         var errors = new Dictionary<string, string[]>();
 
-        var email = command.Email?.Trim();
-        if (string.IsNullOrEmpty(email) || email.Length > MaxEmailLength
-            || !MailAddress.TryCreate(email, out var address) || address.Address != email)
-        {
-            errors["email"] = ["Podaj poprawny adres email."];
-        }
-
         // Imię trafia do maila Klary, więc bez znaków sterujących.
         var name = command.Name;
         if (string.IsNullOrWhiteSpace(name) || name.Trim().Length > MaxNameLength || name.Any(char.IsControl))
@@ -106,10 +104,10 @@ public sealed class CheckoutService(
     }
 }
 
-/// <summary>Dane z formularza płatności: Koszyk z cenami, które Klient widział, imię i nazwisko, e-mail i zgody.</summary>
+/// <summary>Dane z formularza płatności zalogowanego Klienta: Koszyk z cenami, które widział, imię i nazwisko i zgody.</summary>
 public sealed record CheckoutCommand(
     IReadOnlyList<CartItem> Items,
-    string? Email,
+    Guid AccountId,
     string? Name,
     IReadOnlyCollection<string> AcceptedConsents);
 
@@ -120,6 +118,9 @@ public abstract record CheckoutResult
 
     /// <summary>Koszyk ma błędy albo zmieniły się ceny; Klient musi go zobaczyć ponownie.</summary>
     public sealed record CartChanged(CartValidation Cart) : CheckoutResult;
+
+    /// <summary>Konta z sesji już nie ma; Klient musi zalogować się ponownie.</summary>
+    public sealed record NotLoggedIn : CheckoutResult;
 
     /// <summary>Błędy w danych Klienta albo brak wymaganych zgód, po kluczach pól.</summary>
     public sealed record Invalid(Dictionary<string, string[]> Errors) : CheckoutResult;

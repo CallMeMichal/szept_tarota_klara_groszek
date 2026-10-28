@@ -27,7 +27,7 @@ public sealed class ResendEmailSender(HttpClient http, IOptions<ResendOptions> o
         var resend = options.Value;
         if (string.IsNullOrWhiteSpace(resend.ApiKey))
         {
-            throw new InvalidOperationException("Brak konfiguracji 'Resend:ApiKey'.");
+            throw new EmailSenderNotConfiguredException();
         }
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "emails")

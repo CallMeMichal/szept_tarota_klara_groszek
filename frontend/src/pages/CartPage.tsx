@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { loginPathFor, useSession } from '../account.ts'
 import arrowPrimary from '../assets/home/arrow-up-right-primary.svg'
 import {
+  cartPath,
   interruptedPaymentParam,
   maxQuantity,
   quantityOf,
@@ -19,6 +21,7 @@ import { ProductImage } from '../components/ProductImage.tsx'
 import { ServiceStepsDialog } from '../components/ServiceStepsDialog.tsx'
 import { formatPrice, kindLabels, productPath, type FormField } from '../catalog.ts'
 import { homeSectionPath, homeSections } from '../homeSections.ts'
+import { usePageTitle } from '../usePageTitle.ts'
 import { formatAnswer, type FormAnswers } from '../serviceForm.ts'
 
 type Validation =
@@ -30,6 +33,7 @@ type Validation =
 const checkoutFormId = 'dane-zamowienia'
 
 export function CartPage() {
+  usePageTitle('Koszyk')
   const items = useCart()
   // Zwiększenie wymusza ponowne sprawdzenie Koszyka, gdy serwer odrzuci płatność, bo coś się zmieniło.
   const [revision, setRevision] = useState(0)
@@ -42,15 +46,11 @@ export function CartPage() {
   const [searchParams] = useSearchParams()
   const paymentInterrupted = searchParams.get(interruptedPaymentParam) === 'przerwana'
   const cart = validation.status === 'ok' ? validation.data : null
+  // Płacić można tylko po zalogowaniu; Koszyk w przeglądarce czeka na powrót z logowania.
+  const session = useSession()
+  const loggedIn = session.status === 'logged-in'
 
-  useEffect(() => {
-    window.scrollTo({ top: 0 })
-    const siteTitle = document.title
-    document.title = 'Koszyk · Szept Tarota'
-    return () => {
-      document.title = siteTitle
-    }
-  }, [])
+  useEffect(() => window.scrollTo({ top: 0 }), [])
 
   if (items.length === 0) {
     return (
@@ -91,20 +91,22 @@ export function CartPage() {
             <h2 className="cart-panel__title">Produkty</h2>
             {cart ? <CheckedCartLines cart={cart} items={items} /> : <UncheckedCartLines items={items} />}
           </div>
-          {cart?.isValid && (
+          {cart?.isValid && session.status === 'logged-in' && (
             <CheckoutForm
               id={checkoutFormId}
               consents={cart.requiredConsents}
+              email={session.email}
               status={checkout.status}
               onSubmit={(event) => void checkout.submit(event, cart, items)}
             />
           )}
+          {cart?.isValid && (session.status === 'logged-out' || session.status === 'unavailable') && <LoginPrompt />}
         </div>
 
         <CartSummary
           count={items.reduce((sum, item) => sum + quantityOf(item), 0)}
           total={cart ? cart.total : items.reduce((sum, item) => sum + item.price * quantityOf(item), 0)}
-          payable={cart?.isValid ?? false}
+          payable={(cart?.isValid ?? false) && loggedIn}
           sending={checkout.status.state === 'sending'}
           message={
             validation.status === 'loading'
@@ -113,11 +115,29 @@ export function CartPage() {
                 ? 'Nie udało się sprawdzić aktualnych cen. Pokazuję ceny z chwili dodania; sprawdzę je ponownie przed płatnością.'
                 : !validation.data.isValid
                   ? 'Popraw albo usuń z Koszyka pozycje z błędami, żeby przejść do płatności.'
-                  : checkoutStatusMessage(checkout.status)
+                  : !loggedIn && session.status !== 'loading'
+                    ? 'Zaloguj się, żeby przejść do płatności.'
+                    : checkoutStatusMessage(checkout.status)
           }
         />
       </div>
     </section>
+  )
+}
+
+/** Zaproszenie do logowania w miejscu danych do zamówienia; po zalogowaniu Klient wraca do Koszyka. */
+function LoginPrompt() {
+  return (
+    <div className="checkout-form" aria-labelledby="login-prompt-title">
+      <h2 id="login-prompt-title">Zaloguj się, żeby zapłacić</h2>
+      <p className="checkout-form__note">
+        Zamówienia trafiają na Twoje Konto. Wystarczy adres email: wyślę na niego link logowania, bez hasła. Koszyk
+        poczeka.
+      </p>
+      <Link className="button button--primary" to={loginPathFor(cartPath)}>
+        Zaloguj się
+      </Link>
+    </div>
   )
 }
 

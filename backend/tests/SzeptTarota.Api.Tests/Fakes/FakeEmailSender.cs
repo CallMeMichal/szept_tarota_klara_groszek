@@ -12,6 +12,9 @@ public sealed class FakeEmailSender : IEmailSender
 
     public IReadOnlyList<EmailMessage> Sent => _sent;
 
+    /// <summary>Udaje brak klucza Resend w konfiguracji.</summary>
+    public bool Configured { get; set; } = true;
+
     /// <summary>Udaje awarię wysyłki (np. niedostępny Resend).</summary>
     public bool Failing { get; set; }
 
@@ -20,6 +23,11 @@ public sealed class FakeEmailSender : IEmailSender
 
     public Task SendAsync(EmailMessage message, CancellationToken cancellationToken)
     {
+        if (!Configured)
+        {
+            throw new EmailSenderNotConfiguredException();
+        }
+
         if (Failing || message.To == FailingRecipient)
         {
             throw new HttpRequestException("Resend jest niedostępny.");
@@ -39,6 +47,7 @@ public sealed class FakeEmailSender : IEmailSender
     public void Reset()
     {
         _sent.Clear();
+        Configured = true;
         Failing = false;
         FailingRecipient = null;
     }

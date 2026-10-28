@@ -6,6 +6,10 @@
 # dotenv files
 .env
 
+# Lokalne sekrety backendu (appsettings.Local.json, wczytywany tylko w Development)
+appsettings.Local.json
+appsettings.*.Local.json
+
 # User-specific files
 *.rsuser
 *.suo

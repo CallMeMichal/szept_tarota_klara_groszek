@@ -21,6 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Lokalne sekrety (w .gitignore) nie trafiają do paczki wdrożenia. -->
+    <Content Update="appsettings.Local.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SzeptTarota.Application\SzeptTarota.Application.csproj" />
     <ProjectReference Include="..\SzeptTarota.Infrastructure\SzeptTarota.Infrastructure.csproj" />
   </ItemGroup>

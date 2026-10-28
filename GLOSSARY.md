@@ -45,8 +45,12 @@ Osoba z Kontem na stronie, która kupuje Produkty.
 _Avoid_: kupujący, użytkownik, klientka (w kodzie i dokumentach; w tekstach na stronie wolno)
 
 **Konto**:
-Tożsamość Klienta na stronie, pod którą widzi swoje Zamówienia i zakupione Ebooki.
-_Avoid_: profil, użytkownik
+Tożsamość Klienta na stronie, pod którą widzi swoje Zamówienia i zakupione Ebooki. Nie ma hasła: Klient loguje się linkiem logowania albo przez Google, a Konto zakłada się przy pierwszym logowaniu.
+_Avoid_: profil, użytkownik, rejestracja
+
+**Link logowania**:
+Jednorazowy link wysłany na adres e-mail Klienta, ważny 15 minut, który loguje go do Konta.
+_Avoid_: magic link (w tekstach na stronie), link aktywacyjny
 
 **Koszyk**:
 Produkty wybrane przez Klienta przed zapłatą, razem z danymi z formularzy Usług i wybranymi Terminami.

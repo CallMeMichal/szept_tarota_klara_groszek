@@ -3,6 +3,7 @@
 // stan płatności żyje w CartPage i trafia do obu przez ten hook.
 
 import { useState, type FormEvent } from 'react'
+import { sessionExpired } from './account.ts'
 import { startCheckout, type CartItem, type CartValidation } from './cart.ts'
 
 export type CheckoutStatus =
@@ -33,7 +34,6 @@ export function useCheckout(onCartChanged: () => void) {
         quantity: line.quantity,
         form: items[index]?.form,
       })),
-      email: text('email'),
       name: text('name'),
       acceptedConsents: data.getAll('consent').map(String),
     })
@@ -49,6 +49,11 @@ export function useCheckout(onCartChanged: () => void) {
         return
       case 'invalid':
         setStatus({ state: 'invalid', errors: result.errors })
+        return
+      case 'logged-out':
+        // Koszyk zamiast formularza pokaże wtedy zaproszenie do logowania.
+        setStatus({ state: 'idle' })
+        sessionExpired()
         return
       default:
         setStatus({ state: result.status })

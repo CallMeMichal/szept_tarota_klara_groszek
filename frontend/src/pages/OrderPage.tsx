@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { cartPath, clearCart, type OrderSummary } from '../cart.ts'
+import { loginPathFor, sessionExpired } from '../account.ts'
+import { cartPath, clearCart, orderPath, type OrderSummary } from '../cart.ts'
 import { formatPrice, kindLabels, productPath } from '../catalog.ts'
 import { homeSectionPath, homeSections } from '../homeSections.ts'
+import { usePageTitle } from '../usePageTitle.ts'
 
 /** Co ile i ile razy pytamy o Zamówienie, zanim potwierdzenie płatności dotrze ze Stripe. */
 const pollIntervalMs = 2000
@@ -12,6 +14,8 @@ type State =
   | { status: 'loading' }
   | { status: 'ok'; order: OrderSummary; polls: number }
   | { status: 'not-found' }
+  /** Zamówienie widzi tylko zalogowane Konto, które je złożyło. */
+  | { status: 'logged-out' }
   | { status: 'error' }
 
 /**
@@ -19,18 +23,12 @@ type State =
  * chwilę po powrocie, więc dopóki Zamówienie czeka na płatność, pytamy o nie ponownie.
  */
 export function OrderPage() {
+  usePageTitle('Zamówienie')
   const { id = '' } = useParams()
   const state = useOrder(id)
   const paid = state.status === 'ok' && state.order.status === 'paid'
 
-  useEffect(() => {
-    window.scrollTo({ top: 0 })
-    const siteTitle = document.title
-    document.title = 'Zamówienie · Szept Tarota'
-    return () => {
-      document.title = siteTitle
-    }
-  }, [])
+  useEffect(() => window.scrollTo({ top: 0 }), [])
 
   // Kupione Produkty nie powinny czekać w Koszyku na drugą płatność.
   useEffect(() => {
@@ -45,14 +43,23 @@ export function OrderPage() {
         <>
           <p className="eyebrow">Zamówienie</p>
           <h1 id="order-title">
-            {state.status === 'loading' ? 'Sprawdzam Zamówienie…' : 'Nie znalazłam tego Zamówienia'}
+            {state.status === 'loading'
+              ? 'Sprawdzam Zamówienie…'
+              : state.status === 'logged-out'
+                ? 'Zaloguj się, żeby zobaczyć Zamówienie'
+                : 'Nie znalazłam tego Zamówienia'}
           </h1>
           {state.status === 'error' && (
             <p className="section__lead">
               Nie udało się sprawdzić Zamówienia. Jeśli zapłaciłaś lub zapłaciłeś, potwierdzenie przyjdzie mailem.
             </p>
           )}
-          {state.status !== 'loading' && (
+          {state.status === 'logged-out' && (
+            <Link className="button button--primary" to={loginPathFor(orderPath(id))}>
+              Zaloguj się
+            </Link>
+          )}
+          {(state.status === 'not-found' || state.status === 'error') && (
             <Link className="button button--primary" to={homeSectionPath(homeSections.offer)}>
               Zobacz ofertę
             </Link>
@@ -128,6 +135,10 @@ function useOrder(id: string): State {
         .then(async (response): Promise<State> => {
           const isJson = response.headers.get('Content-Type')?.includes('json')
           if (response.status === 404) return { status: 'not-found' }
+          if (response.status === 401) {
+            sessionExpired()
+            return { status: 'logged-out' }
+          }
           if (!response.ok || !isJson) return { status: 'error' }
           return { status: 'ok', order: (await response.json()) as OrderSummary, polls }
         })

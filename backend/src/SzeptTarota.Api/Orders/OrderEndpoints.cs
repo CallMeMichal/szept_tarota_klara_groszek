@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
+using SzeptTarota.Api.Accounts;
 using SzeptTarota.Api.Cart;
 using SzeptTarota.Application;
 using SzeptTarota.Application.Cart;
@@ -13,8 +15,9 @@ public static class OrderEndpoints
 {
     public static IEndpointRouteBuilder MapOrderEndpoints(this IEndpointRouteBuilder api)
     {
-        api.MapPost("/checkout", async Task<Results<Ok<CheckoutStartedResponse>, ValidationProblem, Conflict<CartResponse>, ProblemHttpResult>> (
+        api.MapPost("/checkout", async Task<Results<Ok<CheckoutStartedResponse>, ValidationProblem, Conflict<CartResponse>, UnauthorizedHttpResult, ProblemHttpResult>> (
                 CheckoutRequest request,
+                ClaimsPrincipal user,
                 CheckoutService checkout,
                 CancellationToken cancellationToken) =>
             {
@@ -29,7 +32,7 @@ public static class OrderEndpoints
 
                 var command = new CheckoutCommand(
                     request.Items.Select(i => i!.ToCartItem()).ToList(),
-                    request.Email,
+                    user.AccountId(),
                     request.Name,
                     (request.AcceptedConsents ?? []).OfType<string>().ToHashSet());
 
@@ -40,6 +43,7 @@ public static class OrderEndpoints
                         CheckoutResult.Started started => TypedResults.Ok(new CheckoutStartedResponse(started.OrderId, started.RedirectUrl)),
                         CheckoutResult.CartChanged changed => TypedResults.Conflict(CartResponse.From(changed.Cart)),
                         CheckoutResult.Invalid invalid => TypedResults.ValidationProblem(invalid.Errors),
+                        CheckoutResult.NotLoggedIn => TypedResults.Unauthorized(),
                         _ => throw new InvalidOperationException("Nieznany wynik rozpoczęcia płatności."),
                     };
                 }
@@ -50,15 +54,19 @@ public static class OrderEndpoints
                         statusCode: StatusCodes.Status503ServiceUnavailable);
                 }
             })
+            .RequireAuthorization()
             .WithName("StartCheckout");
 
+        // Cudze Zamówienie wygląda jak nieistniejące, żeby nie zdradzać, że taki identyfikator jest.
         api.MapGet("/orders/{id:guid}", async Task<Results<Ok<OrderSummaryResponse>, NotFound>> (
                 Guid id,
+                ClaimsPrincipal user,
                 IOrderStore orders,
                 CancellationToken cancellationToken) =>
-                await orders.FindAsync(id, cancellationToken) is { } order
+                await orders.FindAsync(id, cancellationToken) is { } order && order.AccountId == user.AccountId()
                     ? TypedResults.Ok(OrderSummaryResponse.From(order))
                     : TypedResults.NotFound())
+            .RequireAuthorization()
             .WithName("GetOrder");
 
         // Stripe podpisuje surową treść żądania, więc czytamy ją jako tekst, zanim cokolwiek ją sparsuje.
@@ -98,10 +106,12 @@ public static class OrderEndpoints
     }
 }
 
-/// <summary>Formularz płatności: Koszyk z cenami, które Klient widział, e-mail, imię i nazwisko i klucze zaakceptowanych zgód.</summary>
+/// <summary>
+/// Formularz płatności zalogowanego Klienta: Koszyk z cenami, które widział, imię i nazwisko i klucze zaakceptowanych
+/// zgód. E-mail Zamówienia to adres Konta.
+/// </summary>
 public sealed record CheckoutRequest(
     IReadOnlyList<CartItemRequest?>? Items,
-    string? Email,
     string? Name,
     IReadOnlyList<string?>? AcceptedConsents);
 
@@ -109,17 +119,20 @@ public sealed record CheckoutRequest(
 public sealed record CheckoutStartedResponse(Guid OrderId, Uri RedirectUrl);
 
 /// <summary>
-/// Podsumowanie Zamówienia na stronie z podziękowaniem. Identyfikator Zamówienia jest losowy i zna go tylko
-/// Klient (z adresu powrotu ze Stripe), a podsumowanie nie zawiera danych osobowych.
+/// Podsumowanie Zamówienia na stronie z podziękowaniem (adres powrotu ze Stripe), widoczne tylko dla Konta,
+/// które je złożyło.
 /// </summary>
 public sealed record OrderSummaryResponse(Guid Id, OrderStatus Status, IReadOnlyList<OrderLineResponse> Items, int Total)
 {
     public static OrderSummaryResponse From(Order order) => new(
         order.Id,
         order.Status,
-        order.Lines.Select(l => new OrderLineResponse(l.Slug, l.Name, l.Kind, l.Quantity, l.Price)).ToList(),
+        order.Lines.Select(OrderLineResponse.From).ToList(),
         order.Total);
 }
 
 /// <summary>Pozycja Zamówienia: <see cref="Price"/> to cena jednej sztuki w groszach.</summary>
-public sealed record OrderLineResponse(string Slug, string Name, ProductKind Kind, int Quantity, int Price);
+public sealed record OrderLineResponse(string Slug, string Name, ProductKind Kind, int Quantity, int Price)
+{
+    public static OrderLineResponse From(OrderLine line) => new(line.Slug, line.Name, line.Kind, line.Quantity, line.Price);
+}

@@ -46,13 +46,21 @@ Usługa ma formularz (`form`): listę pól z kluczem (`camelCase`, np. `birthDat
 
 Formularz w sekcji Kontakt wysyła `POST /api/contact`, a backend przekazuje wiadomość mailem (SMTP, MailKit) na firmowy adres, z adresem piszącej osoby w Reply-To. Adres i serwer ustawia się w sekcji `Contact` (`RecipientEmail`, `Smtp:Host`, `Smtp:Port`, `Smtp:Username`, `Smtp:Password`, `Smtp:SenderEmail`); hasło trzymaj w user-secrets albo zmiennych środowiskowych (`Contact__Smtp__Password`), nie w repo. Połączenie z serwerem poczty musi być szyfrowane (port 465: TLS od razu, inne porty: STARTTLS), inaczej wysyłka się nie uda. Jeden adres IP może wysłać 5 wiadomości na 10 minut (`Contact:RateLimit:PermitLimit`, `Contact:RateLimit:WindowMinutes`); za reverse proxy trzeba włączyć forwarded headers, żeby limit liczył prawdziwe IP. Dopóki `RecipientEmail` albo `Smtp:Host` są puste, endpoint odpowiada 503, a formularz prosi o kontakt przez Instagram. Na GitHub Pages nie ma backendu, więc formularz tam zawsze pokazuje ten komunikat.
 
+### Konto i logowanie
+
+Konto nie ma hasła (ADR 0003). Na `/logowanie` Klient podaje e-mail, a `POST /api/account/login-link` wysyła na niego Link logowania: `<Shop:SiteUrl>/logowanie/link?token=…` (opcjonalnie `&dalej=<ścieżka>`, np. powrót do Koszyka), jednorazowy i ważny 15 minut. W bazie leży tylko skrót tokenu. Strona pod linkiem wysyła token do `POST /api/account/login`: przy pierwszym logowaniu zakłada się Konto na ten adres (małymi literami), a API ustawia ciasteczko sesji (`szept-tarota-konto`, HttpOnly, SameSite=Lax, 30 dni, przedłużane). `GET /api/account` zwraca adres zalogowanego Klienta, `GET /api/account/orders` jego opłacone Zamówienia od najnowszego (Moje Zamówienia, `/konto`), `POST /api/account/logout` wylogowuje. Endpointy wymagające logowania odpowiadają 401.
+
+Jeden adres IP może poprosić o 5 linków na 10 minut (`Account:LoginLinkRateLimit:PermitLimit`, `Account:LoginLinkRateLimit:WindowMinutes`). Dopóki brakuje `Shop:SiteUrl` albo `Resend:ApiKey`, prośba o link odpowiada 503. Lokalnie link przychodzi więc tylko z kluczem Resend i tylko na adres właściciela konta Resend (domena testowa).
+
+Klucze, którymi ASP.NET szyfruje ciasteczko sesji (Data Protection), są domyślnie w profilu użytkownika serwera; na hostingu trzeba je trwale przechowywać, inaczej każdy restart wyloguje Klientów.
+
 ### Zakup i płatności (Stripe Checkout)
 
-Koszyk wysyła `POST /api/checkout` z pozycjami (po cenach jednej sztuki, które Klient widzi, z liczbą sztuk Ebooka od 1 do 99 i odpowiedziami z formularzy Usług; każda Usługa to osobna pozycja), e-mailem, imieniem i nazwiskiem Klienta i kluczami zaakceptowanych zgód (regulamin i polityka prywatności, a przy Usłudze w Koszyku także żądanie rozpoczęcia jej przed upływem 14 dni). Backend sprawdza wszystko ponownie: zmieniona cena albo błędna pozycja to 409 z aktualnym Koszykiem, błędy pól i brak wymaganych zgód to 400. Gdy wszystko się zgadza, tworzy Zamówienie oczekujące na płatność (z kopią nazw i cen, imieniem i nazwiskiem Klienta oraz zgodami z czasem akceptacji) i zwraca adres Stripe Checkout (BLIK, Przelewy24, karta). Po płatności Stripe odsyła Klienta na `/zamowienie/<id>` (strona z podziękowaniem, czeka na potwierdzenie), a po przerwaniu na `/koszyk?platnosc=przerwana` z nietkniętym Koszykiem.
+Płacić można tylko po zalogowaniu: niezalogowany Klient widzi w Koszyku zaproszenie do logowania i wraca do Koszyka linkiem z maila. Koszyk wysyła `POST /api/checkout` z pozycjami (po cenach jednej sztuki, które Klient widzi, z liczbą sztuk Ebooka od 1 do 99 i odpowiedziami z formularzy Usług; każda Usługa to osobna pozycja), imieniem i nazwiskiem Klienta i kluczami zaakceptowanych zgód (regulamin i polityka prywatności, a przy Usłudze w Koszyku także żądanie rozpoczęcia jej przed upływem 14 dni). Backend sprawdza wszystko ponownie: zmieniona cena albo błędna pozycja to 409 z aktualnym Koszykiem, błędy pól i brak wymaganych zgód to 400. Gdy wszystko się zgadza, tworzy Zamówienie na Konto Klienta, oczekujące na płatność (z adresem Konta, kopią nazw i cen, imieniem i nazwiskiem Klienta oraz zgodami z czasem akceptacji) i zwraca adres Stripe Checkout (BLIK, Przelewy24, karta). Po płatności Stripe odsyła Klienta na `/zamowienie/<id>` (strona z podziękowaniem, czeka na potwierdzenie; `GET /api/orders/<id>` widzi tylko Konto, które złożyło Zamówienie), a po przerwaniu na `/koszyk?platnosc=przerwana` z nietkniętym Koszykiem.
 
 Stan Zamówienia zmienia wyłącznie podpisany webhook `POST /api/payments/stripe/webhook`: `checkout.session.completed` (opłacona) i `checkout.session.async_payment_succeeded` oznaczają Zamówienie jako opłacone i wysyłają maile (Klient: podsumowanie z Ebookami w załączniku; Klara: Zamówienie, Klient, formularze Usług i zgody), a `checkout.session.expired` i `checkout.session.async_payment_failed` jako wygasłe. Powtórzony webhook niczego nie robi drugi raz; gdy maile się nie wyślą, webhook odpowiada 500 i Stripe ponowi go później.
 
-Konfiguracja (sekrety w user-secrets albo zmiennych środowiskowych, nie w repo):
+Konfiguracja (sekrety poza repo). Najprościej lokalnie: plik `backend/src/SzeptTarota.Api/appsettings.Local.json` w tym samym układzie sekcji co `appsettings.json`. Jest w `.gitignore`, wczytuje się tylko w Development (po `appsettings.Development.json`, nadpisuje też user-secrets) i nie trafia do `dotnet publish`. Można też użyć user-secrets albo zmiennych środowiskowych:
 
 ```sh
 cd backend/src/SzeptTarota.Api
@@ -108,9 +116,11 @@ Testy integracyjne wysyłają zapytania HTTP do API uruchomionego przez `ApiFact
 
 Aplikacja bierze czas wyłącznie z wstrzykniętego `TimeProvider`, nigdy z `DateTime.Now` / `DateTimeOffset.UtcNow`. W testach to `FakeTimeProvider` dostępny jako `factory.Time` (`SetUtcNow`, `Advance`).
 
+Ciasteczko sesji ma datę ważności liczoną z `FakeTimeProvider`, więc wg prawdziwego zegara bywa „przeterminowane”. Dlatego testy zalogowanego Klienta używają `api.CreateBrowser()` / `api.LoggedInClient(factory.Emails, email)` (`BrowserCookies` odsyła ciasteczka bez sprawdzania daty), a nie `CreateClient()`. Po przesunięciu zegara o ponad 30 dni sesja wygasa i trzeba zalogować się ponownie.
+
 ### Fake'i adapterów zewnętrznych
 
-Każda zewnętrzna usługa (płatności, kalendarz, maile, pliki) jest za interfejsem z Application; czas to systemowy `TimeProvider`. Obecnie: `FakePaymentGateway` (`factory.Payments`, zapisuje sesje i buduje podpisane webhooki), `FakeEmailSender` (`factory.Emails`), `FakeEbookStorage` i `FakeContactMailer`. W testach podmieniamy je zawsze tak samo (pierwszy przykład w `ApiFactory`: `TimeProvider` → `FakeTimeProvider`):
+Każda zewnętrzna usługa (płatności, kalendarz, maile, pliki) jest za interfejsem z Application; czas to systemowy `TimeProvider`. Obecnie: `FakePaymentGateway` (`factory.Payments`, zapisuje sesje i buduje podpisane webhooki), `FakeEmailSender` (`factory.Emails`; `LoggedInClient` loguje przez Link logowania z jego maila), `FakeEbookStorage` i `FakeContactMailer`. W testach podmieniamy je zawsze tak samo (pierwszy przykład w `ApiFactory`: `TimeProvider` → `FakeTimeProvider`):
 
 1. Fake w `tests/SzeptTarota.Api.Tests/Fakes/`, implementuje interfejs i trzyma stan w pamięci (np. lista wysłanych maili).
 2. Publiczna właściwość w `ApiFactory`, np. `public FakeEmailSender Emails { get; } = new();`.

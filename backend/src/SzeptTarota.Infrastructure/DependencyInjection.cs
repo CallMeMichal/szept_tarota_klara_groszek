@@ -3,12 +3,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SzeptTarota.Application;
+using SzeptTarota.Application.Accounts;
 using SzeptTarota.Application.Catalog;
 using SzeptTarota.Application.Contact;
 using SzeptTarota.Application.Ebooks;
 using SzeptTarota.Application.Email;
 using SzeptTarota.Application.Orders;
 using SzeptTarota.Application.Payments;
+using SzeptTarota.Infrastructure.Accounts;
 using SzeptTarota.Infrastructure.Catalog;
 using SzeptTarota.Infrastructure.Contact;
 using SzeptTarota.Infrastructure.Ebooks;
@@ -33,6 +35,7 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IOrderStore, EfOrderStore>();
+        services.AddScoped<IAccountStore, EfAccountStore>();
 
         services.AddHealthChecks()
             .AddDbContextCheck<SzeptTarotaDbContext>("database");

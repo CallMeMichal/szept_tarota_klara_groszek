@@ -12,6 +12,9 @@ public interface IOrderStore
 
     Task<Order?> FindAsync(Guid id, CancellationToken cancellationToken);
 
+    /// <summary>Opłacone Zamówienia Konta, od najnowszego.</summary>
+    Task<IReadOnlyList<Order>> ListPaidAsync(Guid accountId, CancellationToken cancellationToken);
+
     Task<Order?> FindByPaymentSessionAsync(string paymentSessionId, CancellationToken cancellationToken);
 
     /// <summary>

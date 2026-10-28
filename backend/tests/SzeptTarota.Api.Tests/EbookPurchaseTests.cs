@@ -13,7 +13,8 @@ namespace SzeptTarota.Api.Tests;
 [Collection(ApiCollection.Name)]
 public class EbookPurchaseTests : IAsyncLifetime
 {
-    private const string Email = "anna@example.com";
+    // Każdy test na własny adres: linków logowania na jeden adres jest najwyżej kilka na 15 minut.
+    private readonly string _email = $"anna-{Guid.NewGuid():N}@example.com";
 
     private static readonly string[] RequiredConsents = ["termsAndPrivacy"];
 
@@ -30,7 +31,14 @@ public class EbookPurchaseTests : IAsyncLifetime
             builder.ConfigureTestServices(services => services.ReplaceWithFake<IProductCatalog>(_catalog)));
     }
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    private HttpClient _client = null!;
+
+    /// <summary>Klient płaci po zalogowaniu; mail z linkiem logowania nie liczy się do maili w testach.</summary>
+    public async Task InitializeAsync()
+    {
+        _client = await _api.LoggedInClient(_factory.Emails, _email);
+        _factory.Emails.Reset();
+    }
 
     public Task DisposeAsync() => _api.DisposeAsync().AsTask();
 
@@ -44,7 +52,7 @@ public class EbookPurchaseTests : IAsyncLifetime
         var started = (await response.Content.ReadFromJsonAsync<CheckoutStartedResponse>())!;
         var (request, session) = Assert.Single(_factory.Payments.Sessions);
         Assert.Equal(session.RedirectUrl, started.RedirectUrl);
-        Assert.Equal(Email, request.Email);
+        Assert.Equal(_email, request.Email);
         Assert.Equal(
             [("Tarot dla początkujących", 4900), ("Rytuały Księżyca", 3900)],
             request.Lines.Select(l => (l.Name, l.Price)));
@@ -68,17 +76,16 @@ public class EbookPurchaseTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_missing_name_or_invalid_email_are_errors_on_their_fields()
+    public async Task A_missing_name_is_an_error_on_its_field()
     {
         var checkout = Checkout([Item(FakeProductCatalog.EbookSlug, 4900)]);
-        checkout["email"] = "to nie jest email";
         checkout["name"] = " ";
 
         var response = await StartCheckout(checkout);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var problem = await response.Content.ReadFromJsonAsync<ValidationProblemResponse>();
-        Assert.Equal(["email", "name"], problem!.Errors.Keys.Order());
+        Assert.Equal(["name"], problem!.Errors.Keys);
         Assert.Empty(_factory.Payments.Sessions);
     }
 
@@ -120,15 +127,13 @@ public class EbookPurchaseTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Answers_service_unavailable_until_the_site_address_and_Klaras_email_are_configured()
+    public async Task Answers_service_unavailable_until_Klaras_email_is_configured()
     {
-        await using var unconfigured = _api.WithWebHostBuilder(builder =>
-        {
-            builder.UseSetting("Shop:SiteUrl", "");
-            builder.UseSetting("Shop:KlaraEmail", "");
-        });
+        // Bez adresu strony nie da się nawet zalogować (AccountTests), więc tu brakuje tylko adresu Klary.
+        await using var unconfigured = _api.WithWebHostBuilder(builder => builder.UseSetting("Shop:KlaraEmail", ""));
+        var client = await unconfigured.LoggedInClient(_factory.Emails, _email);
 
-        var response = await unconfigured.CreateClient().PostAsJsonAsync(
+        var response = await client.PostAsJsonAsync(
             "/api/checkout", Checkout([Item(FakeProductCatalog.EbookSlug, 4900)]));
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
@@ -146,7 +151,7 @@ public class EbookPurchaseTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("paid", (await GetOrder(started.OrderId)).Status);
 
-        var toKlient = Assert.Single(_factory.Emails.Sent, m => m.To == Email);
+        var toKlient = Assert.Single(_factory.Emails.Sent, m => m.To == _email);
         Assert.Contains("Tarot dla początkujących", toKlient.Html);
         Assert.Contains("88,00 zł", toKlient.Html);
         Assert.Equal(
@@ -158,7 +163,7 @@ public class EbookPurchaseTests : IAsyncLifetime
         Assert.All(toKlient.Attachments, a => Assert.Equal("application/pdf", a.ContentType));
 
         var toKlara = Assert.Single(_factory.Emails.Sent, m => m.To == ApiFactory.KlaraEmail);
-        Assert.Contains(Email, toKlara.Html);
+        Assert.Contains(_email, toKlara.Html);
         Assert.Contains("Anna Nowak", toKlara.Html);
         Assert.Contains("Rytuały Księżyca", toKlara.Html);
         Assert.Contains("88,00 zł", toKlara.Html);
@@ -180,7 +185,7 @@ public class EbookPurchaseTests : IAsyncLifetime
         var order = await GetOrder(started.OrderId);
         Assert.Equal(14700, order.Total);
         Assert.Equal((3, 4900), (Assert.Single(order.Items).Quantity, order.Items[0].Price));
-        var toKlient = Assert.Single(_factory.Emails.Sent, m => m.To == Email);
+        var toKlient = Assert.Single(_factory.Emails.Sent, m => m.To == _email);
         Assert.Contains("3 × Tarot dla początkujących", toKlient.Html);
         Assert.Contains("147,00 zł", toKlient.Html);
         Assert.Single(toKlient.Attachments);
@@ -198,7 +203,7 @@ public class EbookPurchaseTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         Assert.All(again, r => Assert.Equal(HttpStatusCode.OK, r.StatusCode));
         Assert.Equal("paid", (await GetOrder(started.OrderId)).Status);
-        Assert.Single(_factory.Emails.Sent, m => m.To == Email);
+        Assert.Single(_factory.Emails.Sent, m => m.To == _email);
         Assert.Single(_factory.Emails.Sent, m => m.To == ApiFactory.KlaraEmail);
     }
 
@@ -255,13 +260,16 @@ public class EbookPurchaseTests : IAsyncLifetime
         var line = Assert.Single(order.Items);
         Assert.Equal((FakeProductCatalog.EbookSlug, "Tarot dla początkujących", "ebook", 1, 4900), (line.Slug, line.Name, line.Kind, line.Quantity, line.Price));
         Assert.Equal(4900, order.Total);
-        Assert.Contains("49,00 zł", Assert.Single(_factory.Emails.Sent, m => m.To == Email).Html);
+        Assert.Contains("49,00 zł", Assert.Single(_factory.Emails.Sent, m => m.To == _email).Html);
     }
 
     [Fact]
     public async Task Klara_sees_the_Klients_name_and_the_consents_with_the_time_they_were_accepted()
     {
         _factory.Time.SetUtcNow(new DateTimeOffset(2026, 3, 2, 17, 45, 0, TimeSpan.Zero));
+        // Po takim skoku zegara sesja sprzed niego mogła wygasnąć.
+        _client = await _api.LoggedInClient(_factory.Emails, _email);
+        _factory.Emails.Reset();
         var checkout = Checkout([Item(FakeProductCatalog.EbookSlug, 4900)]);
         checkout["name"] = "Anna <Nowak>";
         var started = (await (await StartCheckout(checkout)).Content.ReadFromJsonAsync<CheckoutStartedResponse>())!;
@@ -287,7 +295,7 @@ public class EbookPurchaseTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.InternalServerError, failed.StatusCode);
         Assert.Equal(HttpStatusCode.OK, retried.StatusCode);
         Assert.Equal("paid", (await GetOrder(started.OrderId)).Status);
-        Assert.Single(_factory.Emails.Sent, m => m.To == Email);
+        Assert.Single(_factory.Emails.Sent, m => m.To == _email);
         Assert.Single(_factory.Emails.Sent, m => m.To == ApiFactory.KlaraEmail);
     }
 
@@ -303,7 +311,7 @@ public class EbookPurchaseTests : IAsyncLifetime
 
         Assert.Equal(HttpStatusCode.InternalServerError, failed.StatusCode);
         Assert.Equal(HttpStatusCode.OK, retried.StatusCode);
-        Assert.Single(_factory.Emails.Sent, m => m.To == Email);
+        Assert.Single(_factory.Emails.Sent, m => m.To == _email);
         Assert.Single(_factory.Emails.Sent, m => m.To == ApiFactory.KlaraEmail);
     }
 
@@ -337,17 +345,16 @@ public class EbookPurchaseTests : IAsyncLifetime
     private static Dictionary<string, object?> Checkout(object[] items, string[]? consents = null) => new()
     {
         ["items"] = items,
-        ["email"] = Email,
         ["name"] = "Anna Nowak",
         ["acceptedConsents"] = consents ?? RequiredConsents,
     };
 
     private Task<HttpResponseMessage> StartCheckout(object checkout) =>
-        _api.CreateClient().PostAsJsonAsync("/api/checkout", checkout);
+        _client.PostAsJsonAsync("/api/checkout", checkout);
 
     private async Task<OrderResponse> GetOrder(Guid id)
     {
-        var response = await _api.CreateClient().GetAsync($"/api/orders/{id}");
+        var response = await _client.GetAsync($"/api/orders/{id}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return (await response.Content.ReadFromJsonAsync<OrderResponse>())!;
     }

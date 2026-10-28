@@ -17,6 +17,12 @@ public sealed class EfOrderStore(SzeptTarotaDbContext db) : IOrderStore
     public Task<Order?> FindAsync(Guid id, CancellationToken cancellationToken) =>
         db.Orders.AsNoTracking().SingleOrDefaultAsync(o => o.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<Order>> ListPaidAsync(Guid accountId, CancellationToken cancellationToken) =>
+        await db.Orders.AsNoTracking()
+            .Where(o => o.AccountId == accountId && o.Status == OrderStatus.Paid)
+            .OrderByDescending(o => o.PaidAt)
+            .ToListAsync(cancellationToken);
+
     public Task<Order?> FindByPaymentSessionAsync(string paymentSessionId, CancellationToken cancellationToken) =>
         db.Orders.AsNoTracking().SingleOrDefaultAsync(o => o.PaymentSessionId == paymentSessionId, cancellationToken);
 

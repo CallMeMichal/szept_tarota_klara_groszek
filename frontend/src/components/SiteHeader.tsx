@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
+import { accountPath, loginPath, useSession } from '../account.ts'
 import moonStar from '../assets/home/moon-star.svg'
 import { cartPath, quantityOf, useCart } from '../cart.ts'
 import { homeNavItems, homeSectionPath } from '../homeSections.ts'
@@ -7,6 +8,7 @@ import { homeNavItems, homeSectionPath } from '../homeSections.ts'
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const cartCount = useCart().reduce((sum, item) => sum + quantityOf(item), 0)
+  const loggedIn = useSession().status === 'logged-in'
 
   return (
     <header className="site-header">
@@ -45,31 +47,52 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <Link to={cartPath} className="cart-link" onClick={() => setMenuOpen(false)}>
-          <svg
-            className="cart-link__icon"
-            viewBox="0 0 24 24"
-            width={26}
-            height={26}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L20.5 8H6.2" />
-            <circle cx="9.5" cy="19.5" r="1.25" />
-            <circle cx="17" cy="19.5" r="1.25" />
-          </svg>
-          <span className="visually-hidden">Koszyk</span>
-          {cartCount > 0 && (
-            <span className="cart-link__count">
-              {cartCount}
-              <span className="visually-hidden"> {productsLabel(cartCount)}</span>
-            </span>
-          )}
-        </Link>
+        <div className="header-actions">
+          <Link to={loggedIn ? accountPath : loginPath} className="account-link" onClick={() => setMenuOpen(false)}>
+            <svg
+              className="account-link__icon"
+              viewBox="0 0 24 24"
+              width={26}
+              height={26}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="8.5" r="3.75" />
+              <path d="M4.5 20c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5" />
+            </svg>
+            <span className="visually-hidden">{loggedIn ? 'Moje Konto' : 'Zaloguj się'}</span>
+          </Link>
+
+          <Link to={cartPath} className="cart-link" onClick={() => setMenuOpen(false)}>
+            <svg
+              className="cart-link__icon"
+              viewBox="0 0 24 24"
+              width={26}
+              height={26}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L20.5 8H6.2" />
+              <circle cx="9.5" cy="19.5" r="1.25" />
+              <circle cx="17" cy="19.5" r="1.25" />
+            </svg>
+            <span className="visually-hidden">Koszyk</span>
+            {cartCount > 0 && (
+              <span className="cart-link__count">
+                {cartCount}
+                <span className="visually-hidden"> {productsLabel(cartCount)}</span>
+              </span>
+            )}
+          </Link>
+        </div>
       </div>
     </header>
   )

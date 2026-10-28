@@ -12,7 +12,8 @@ namespace SzeptTarota.Api.Tests;
 [Collection(ApiCollection.Name)]
 public class ServicePurchaseTests : IAsyncLifetime
 {
-    private const string Email = "anna@example.com";
+    // Każdy test na własny adres: linków logowania na jeden adres jest najwyżej kilka na 15 minut.
+    private readonly string _email = $"anna-{Guid.NewGuid():N}@example.com";
 
     private readonly ApiFactory _factory;
     private readonly FakeProductCatalog _catalog = new();
@@ -27,7 +28,14 @@ public class ServicePurchaseTests : IAsyncLifetime
             builder.ConfigureTestServices(services => services.ReplaceWithFake<IProductCatalog>(_catalog)));
     }
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    private HttpClient _client = null!;
+
+    /// <summary>Klient płaci po zalogowaniu; mail z linkiem logowania nie liczy się do maili w testach.</summary>
+    public async Task InitializeAsync()
+    {
+        _client = await _api.LoggedInClient(_factory.Emails, _email);
+        _factory.Emails.Reset();
+    }
 
     public Task DisposeAsync() => _api.DisposeAsync().AsTask();
 
@@ -81,17 +89,16 @@ public class ServicePurchaseTests : IAsyncLifetime
         Assert.Contains("Żądam rozpoczęcia wykonywania Usługi przed upływem 14 dni", toKlara);
         Assert.True(toKlara.IndexOf("Anna", StringComparison.Ordinal) < toKlara.IndexOf("Maria", StringComparison.Ordinal));
 
-        var toKlient = Assert.Single(_factory.Emails.Sent, m => m.To == Email);
+        var toKlient = Assert.Single(_factory.Emails.Sent, m => m.To == _email);
         Assert.Contains("747,00 zł", toKlient.Html);
     }
 
     private static object Service(object form) => new { slug = FakeProductCatalog.ServiceSlug, price = 34900, form };
 
     private Task<HttpResponseMessage> StartCheckout(object[] items, string[]? consents = null) =>
-        _api.CreateClient().PostAsJsonAsync("/api/checkout", new
+        _client.PostAsJsonAsync("/api/checkout", new
         {
             items,
-            email = Email,
             name = "Anna Nowak",
             acceptedConsents = consents ?? ["termsAndPrivacy", "serviceEarlyStart"],
         });

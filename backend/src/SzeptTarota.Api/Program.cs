@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using SzeptTarota.Api.Accounts;
 using SzeptTarota.Api.Cart;
 using SzeptTarota.Api.Catalog;
 using SzeptTarota.Api.Contact;
@@ -10,6 +11,13 @@ using SzeptTarota.Application;
 using SzeptTarota.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+// Lokalne sekrety (klucze Stripe, Resend…) poza repo: plik jest w .gitignore. Tylko w Development,
+// żeby nie nadpisał ustawień testów ani produkcji.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+}
+
 var catalogDirectory = Path.Combine(builder.Environment.ContentRootPath, "Catalog");
 
 builder.Services.AddOpenApi();
@@ -19,6 +27,8 @@ builder.Services.AddProductCatalog(catalogDirectory);
 builder.Services.AddEbookStorage(
     builder.Configuration["EbookStorage:Directory"] ?? Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
 builder.Services.AddContactRateLimiting(builder.Configuration);
+builder.Services.AddLoginLinkRateLimiting(builder.Configuration);
+builder.Services.AddAccountAuthentication();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 
@@ -32,6 +42,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseRateLimiter();
 
 var api = app.MapGroup("/api");
@@ -56,6 +68,7 @@ api.MapProductEndpoints();
 api.MapCartEndpoints();
 api.MapContactEndpoints();
 api.MapOrderEndpoints();
+api.MapAccountEndpoints();
 
 app.Run();
 

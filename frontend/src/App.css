@@ -172,14 +172,12 @@
   }
 }
 
-/* Ikona Koszyka w prawej kolumnie nagłówka; na telefonie obok przycisku menu.
-   Liczba pozycji siedzi w prawym dolnym rogu ikony. */
-.cart-link {
-  position: relative;
+/* Ikony Konta i Koszyka w prawej kolumnie nagłówka; na telefonie obok przycisku menu. */
+.header-actions {
   justify-self: end;
-  display: inline-flex;
-  padding: 6px;
-  color: var(--cream);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
   @media (max-width: 760px) {
     order: 1;
@@ -187,10 +185,21 @@
   }
 }
 
+/* Liczba pozycji Koszyka siedzi w prawym dolnym rogu ikony. */
+.account-link,
+.cart-link {
+  position: relative;
+  display: inline-flex;
+  padding: 6px;
+  color: var(--cream);
+}
+
+.account-link:hover,
 .cart-link:hover {
   color: var(--sand-400);
 }
 
+.account-link__icon,
 .cart-link__icon {
   display: block;
 }
@@ -2114,6 +2123,96 @@ main {
 .cart-toast__close:hover {
   color: var(--cream);
   border-color: var(--sand-border);
+}
+
+/* Logowanie i Konto */
+
+.login-page,
+.account-page {
+  max-width: 52rem;
+}
+
+.login-page h1,
+.account-page h1 {
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+}
+
+.login-form {
+  max-width: 28rem;
+  margin: 2rem auto 0;
+}
+
+.login-form .button {
+  width: 100%;
+  justify-content: center;
+}
+
+.checkout-form__note {
+  margin: 0;
+  color: var(--mist);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.my-orders {
+  margin-top: 3rem;
+  text-align: left;
+}
+
+.my-orders h2 {
+  margin: 0 0 1rem;
+  font-size: 1.75rem;
+}
+
+.my-orders__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.my-order {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.my-order__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin: 0 0 0.75rem;
+  color: var(--mist);
+}
+
+.my-order__header strong {
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: var(--gold-300);
+}
+
+.my-order__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.my-order__lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.my-order__lines a {
+  color: var(--cream);
 }
 
 /* Zamówienie (powrót ze Stripe) */
