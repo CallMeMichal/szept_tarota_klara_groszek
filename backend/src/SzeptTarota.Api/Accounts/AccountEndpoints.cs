@@ -218,10 +218,12 @@ public static class AccountEndpoints
                 await schemes.GetSchemeAsync(GoogleDefaults.AuthenticationScheme) is null
                     ? TypedResults.Redirect(GoogleLoginFailedPath(returnUrl))
                     : TypedResults.Challenge(
-                        new AuthenticationProperties
+                        new GoogleChallengeProperties
                         {
                             RedirectUri = LocalPathOrNull(returnUrl) ?? AccountPagePath,
                             IsPersistent = true,
+                            // Bez tego Google sam wybiera ostatnio używane konto i nie da się zalogować innym.
+                            Prompt = "select_account",
                         },
                         [GoogleDefaults.AuthenticationScheme]))
             .WithName("LogInWithGoogle");

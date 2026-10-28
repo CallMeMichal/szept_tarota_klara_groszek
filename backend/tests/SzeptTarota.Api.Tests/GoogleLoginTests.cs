@@ -38,6 +38,14 @@ public class GoogleLoginTests
     }
 
     [Fact]
+    public async Task Google_always_asks_which_Google_account_to_use()
+    {
+        var challenge = await _factory.CreateBrowser().GetAsync("/api/account/google");
+
+        Assert.Equal("select_account", QueryHelpers.ParseQuery(challenge.Headers.Location!.Query)["prompt"].ToString());
+    }
+
+    [Fact]
     public async Task After_logging_in_with_Google_the_Klient_lands_where_they_started()
     {
         var client = _factory.CreateBrowser();
