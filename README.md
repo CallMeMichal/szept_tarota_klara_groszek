@@ -36,6 +36,8 @@ npm run dev
 
 Treści strony głównej są w `frontend/src/content/home.ts`.
 
+Lista kont, kluczy i ustawień potrzebnych do uruchomienia strony na kontach Klary (zamiast deweloperskich): [docs/konfiguracja-produkcyjna.md](docs/konfiguracja-produkcyjna.md).
+
 ### Katalog Produktów
 
 Produkty są treścią w repo: `backend/src/SzeptTarota.Api/Catalog/products.json`. Grafiki Produktów są tylko we frontendzie: `frontend/src/assets/products/<slug>.webp`; Produkt bez pliku dostaje księżyc marki. Backend wczytuje katalog przy starcie i nie wystartuje, jeśli jest błędny (np. powtórzony slug, Sesja bez długości). Slug jest adresem podstrony (`/oferta/<slug>`), więc raz opublikowanego nie zmieniamy. Ceny są w groszach. Startowa wersja to import oferty z naffy.io.
