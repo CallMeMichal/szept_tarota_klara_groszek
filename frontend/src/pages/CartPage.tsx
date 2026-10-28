@@ -248,12 +248,11 @@ type CartLineFormProps = {
 }
 
 /**
- * Odpowiedzi z formularza Usługi w pozycji Koszyka i ich poprawianie. Formularz
- * z błędami z serwera jest od razu otwarty do poprawy.
+ * Odpowiedzi z formularza Usługi w pozycji Koszyka i odnośnik do ich poprawienia.
+ * Błędy z serwera pokazujemy w formularzu po jego otwarciu.
  */
 function CartLineForm({ item, name, fields, serverErrors }: CartLineFormProps) {
-  const hasServerErrors = Object.keys(serverErrors).length > 0
-  const [editing, setEditing] = useState(hasServerErrors)
+  const [editing, setEditing] = useState(false)
   const [errors, setErrors] = useState<Record<string, string> | null>(null)
   const answers: FormAnswers = item.form ?? {}
   const idPrefix = `pozycja-${item.id}`
@@ -268,7 +267,7 @@ function CartLineForm({ item, name, fields, serverErrors }: CartLineFormProps) {
     setEditing(false)
   }
 
-  if (editing || hasServerErrors) {
+  if (editing) {
     return (
       <form
         className="cart-line__form service-form"
@@ -281,37 +280,37 @@ function CartLineForm({ item, name, fields, serverErrors }: CartLineFormProps) {
           <button type="submit" className="button button--primary">
             Zapisz formularz
           </button>
-          {!hasServerErrors && (
-            <button
-              type="button"
-              className="button button--ghost"
-              onClick={() => {
-                setErrors(null)
-                setEditing(false)
-              }}
-            >
-              Anuluj
-            </button>
-          )}
+          <button
+            type="button"
+            className="button button--ghost"
+            onClick={() => {
+              setErrors(null)
+              setEditing(false)
+            }}
+          >
+            Anuluj
+          </button>
         </div>
       </form>
     )
   }
 
+  const filled = fields.filter((field) => answers[field.key])
   return (
     <div className="cart-line__form">
-      <dl className="cart-line__answers">
-        {fields
-          .filter((field) => answers[field.key])
-          .map((field) => (
+      {filled.length > 0 && (
+        <dl className="cart-line__answers">
+          {filled.map((field) => (
             <div key={field.key}>
               <dt>{field.label}</dt>
               <dd>{formatAnswer(field, answers[field.key])}</dd>
             </div>
           ))}
-      </dl>
+        </dl>
+      )}
       <button type="button" className="cart-line__edit" onClick={() => setEditing(true)}>
-        Popraw formularz<span className="visually-hidden"> {name}</span>
+        {filled.length > 0 ? 'Popraw dane' : 'Uzupełnij dane'}
+        <span className="visually-hidden"> {name}</span>
       </button>
     </div>
   )

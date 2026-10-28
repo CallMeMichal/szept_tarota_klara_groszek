@@ -1,8 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect } from 'react'
 import { Link, useParams } from 'react-router'
 import { ProductImage } from '../components/ProductImage.tsx'
-import { ServiceFormFields } from '../components/ServiceFormFields.tsx'
-import { addEbookToCart, addServiceToCart } from '../cart.ts'
+import { AddToCartDialog } from '../components/AddToCartDialog.tsx'
+import { addEbookToCart } from '../cart.ts'
 import {
   categoryLabels,
   deliveryNotes,
@@ -13,7 +13,6 @@ import {
 } from '../catalog.ts'
 import { notifyAddedToCart } from '../cartNotice.ts'
 import { homeSectionPath, homeSections } from '../homeSections.ts'
-import { submitServiceForm } from '../serviceForm.ts'
 import { useApi } from '../useApi.ts'
 import { NotFoundPage } from './NotFoundPage.tsx'
 
@@ -83,10 +82,7 @@ function ProductContent({ product }: { product: ProductDetails }) {
 
         <div className="product-buy">
           {product.kind === 'ebook' && <AddEbookToCart product={product} />}
-          {product.kind === 'service' && <AddServiceToCart key={product.slug} product={product} />}
-          {product.kind === 'session' && (
-            <p className="product-buy__note">Wybór Terminu i zakup Sesji już wkrótce.</p>
-          )}
+          {product.kind !== 'ebook' && <AddToCartDialog key={product.slug} product={product} />}
         </div>
 
         <section className="product-page__description" aria-labelledby="product-description-title">
@@ -115,37 +111,6 @@ function AddEbookToCart({ product }: { product: ProductDetails }) {
         Dodaj do koszyka
       </button>
     </p>
-  )
-}
-
-/**
- * Formularz Usługi z przyciskiem dodania do Koszyka. Po dodaniu wyskakuje
- * powiadomienie, a formularz się czyści, więc tę samą Usługę można od razu
- * dodać dla kolejnej osoby.
- */
-function AddServiceToCart({ product }: { product: ProductDetails }) {
-  const [errors, setErrors] = useState<Record<string, string>>({})
-
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    const { answers, errors, valid } = submitServiceForm(event, product.form)
-    setErrors(errors)
-    if (!valid) return
-
-    addServiceToCart(product, answers)
-    notifyAddedToCart(product.name)
-    event.currentTarget.reset()
-  }
-
-  return (
-    <form className="service-form" onSubmit={onSubmit} noValidate aria-label={`Zamów: ${product.name}`}>
-      {product.form.length > 0 && (
-        <p className="service-form__lead">Tych informacji potrzebuję, żeby przygotować Usługę dla Ciebie.</p>
-      )}
-      <ServiceFormFields idPrefix="usluga" fields={product.form} errors={errors} />
-      <button type="submit" className="button button--primary product-buy__add">
-        Dodaj do koszyka
-      </button>
-    </form>
   )
 }
 

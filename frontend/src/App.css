@@ -1871,10 +1871,6 @@ main {
   font-size: 0.85rem;
 }
 
-.checkout-form__optional {
-  color: var(--text-muted);
-}
-
 /* Formularz Usługi: na podstronie Produktu i przy poprawianiu w Koszyku */
 
 .service-form {
@@ -1949,6 +1945,97 @@ main {
 
 .cart-line__edit:hover {
   color: var(--gold-300);
+}
+
+/* Okienko dodawania Usługi do Koszyka: dane, potem Termin */
+
+.add-dialog {
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 1.75rem;
+  color: var(--text);
+  text-align: left;
+  border: 1px solid var(--sand-border);
+  border-radius: 0.75rem;
+  background: var(--ink-950);
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.5);
+
+  @media (max-width: 640px) {
+    padding: 1.25rem 1rem;
+  }
+}
+
+.add-dialog::backdrop {
+  background: rgba(5, 8, 22, 0.75);
+}
+
+.add-dialog__header {
+  position: relative;
+  margin-bottom: 1.25rem;
+  padding-right: 2.5rem;
+}
+
+.add-dialog__step {
+  margin: 0;
+  color: var(--gold-400);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.add-dialog h2 {
+  margin: 0.35rem 0 0;
+  font-size: 1.8rem;
+}
+
+.add-dialog__product {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+}
+
+.add-dialog__close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  color: var(--mist);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.add-dialog__close:hover {
+  color: var(--cream);
+  border-color: var(--sand-border);
+}
+
+.add-dialog .service-form {
+  margin-top: 0;
+}
+
+.add-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.add-dialog__calendar {
+  display: grid;
+  place-items: center;
+  min-height: 14rem;
+  padding: 1.5rem;
+  color: var(--text-muted);
+  text-align: center;
+  border: 1px dashed var(--sand-border);
+  border-radius: 0.5rem;
 }
 
 /* Powiadomienie o dodaniu do Koszyka */
