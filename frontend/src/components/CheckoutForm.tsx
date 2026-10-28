@@ -6,13 +6,13 @@ type CheckoutFormProps = {
   /** Identyfikator formularza; przycisk „Zapłać” w podsumowaniu wskazuje go atrybutem `form`. */
   id: string
   consents: Consent[]
-  /** Adres Konta zalogowanego Klienta; na niego przyjdzie potwierdzenie Zamówienia. */
+  /** Adres Konta zalogowanego Klienta, wpisany z góry w pole e-mail; Klient może go zmienić. */
   email: string
   status: CheckoutStatus
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }
 
-/** Imię i nazwisko i wymagane zgody. Przycisk wysyłki jest w podsumowaniu Koszyka. */
+/** Imię i nazwisko, e-mail i wymagane zgody. Przycisk wysyłki jest w podsumowaniu Koszyka. */
 export function CheckoutForm({ id, consents, email, status, onSubmit }: CheckoutFormProps) {
   const errors = status.state === 'invalid' ? status.errors : {}
 
@@ -23,7 +23,9 @@ export function CheckoutForm({ id, consents, email, status, onSubmit }: Checkout
       <Field label="Imię i nazwisko" name="name" error={errors.name}>
         <input name="name" autoComplete="name" required maxLength={200} />
       </Field>
-      <p className="checkout-form__note">Potwierdzenie i Ebooki wyślę na adres Twojego Konta: {email}.</p>
+      <Field label="Email" name="email" error={errors.email}>
+        <input name="email" type="email" autoComplete="email" required maxLength={200} defaultValue={email} />
+      </Field>
 
       <fieldset className="checkout-form__group">
         <legend>Zgody</legend>

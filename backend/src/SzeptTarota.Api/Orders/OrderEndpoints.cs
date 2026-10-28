@@ -33,6 +33,7 @@ public static class OrderEndpoints
                 var command = new CheckoutCommand(
                     request.Items.Select(i => i!.ToCartItem()).ToList(),
                     user.AccountId(),
+                    request.Email,
                     request.Name,
                     (request.AcceptedConsents ?? []).OfType<string>().ToHashSet());
 
@@ -107,11 +108,12 @@ public static class OrderEndpoints
 }
 
 /// <summary>
-/// Formularz płatności zalogowanego Klienta: Koszyk z cenami, które widział, imię i nazwisko i klucze zaakceptowanych
-/// zgód. E-mail Zamówienia to adres Konta.
+/// Formularz płatności zalogowanego Klienta: Koszyk z cenami, które widział, e-mail na potwierdzenie (frontend
+/// wpisuje adres Konta, Klient może go zmienić), imię i nazwisko i klucze zaakceptowanych zgód.
 /// </summary>
 public sealed record CheckoutRequest(
     IReadOnlyList<CartItemRequest?>? Items,
+    string? Email,
     string? Name,
     IReadOnlyList<string?>? AcceptedConsents);
 

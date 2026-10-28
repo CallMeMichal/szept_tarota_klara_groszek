@@ -48,7 +48,7 @@ public sealed class Order
     /// <summary>Konto Klienta, który złożył Zamówienie; brak tylko w Zamówieniach sprzed Kont.</summary>
     public Guid? AccountId { get; private set; }
 
-    /// <summary>Adres Konta z chwili zakupu; na niego idzie potwierdzenie.</summary>
+    /// <summary>Adres podany przy płatności (domyślnie adres Konta); na niego idzie potwierdzenie.</summary>
     public string Email { get; private set; }
 
     /// <summary>Imię i nazwisko Klienta.</summary>

@@ -1,3 +1,4 @@
+using System.Net.Mail;
 using Microsoft.Extensions.Options;
 using SzeptTarota.Application.Accounts;
 using SzeptTarota.Application.Cart;
@@ -8,7 +9,8 @@ namespace SzeptTarota.Application.Orders;
 
 /// <summary>
 /// Rozpoczęcie płatności przez zalogowanego Klienta: ponownie sprawdza Koszyk, dane Klienta i zgody, tworzy
-/// Zamówienie na jego Konto, oczekujące na płatność, i zakłada dla niego sesję płatności w bramce.
+/// Zamówienie na jego Konto, oczekujące na płatność, i zakłada dla niego sesję płatności w bramce. Potwierdzenie
+/// idzie na e-mail z formularza: domyślnie adres Konta, ale Klient może podać inny.
 /// </summary>
 /// <exception cref="ShopNotConfiguredException">Gdy brakuje konfiguracji sekcji <c>Shop</c>.</exception>
 /// <exception cref="PaymentGatewayNotConfiguredException">Gdy brakuje kluczy bramki płatności.</exception>
@@ -20,6 +22,7 @@ public sealed class CheckoutService(
     TimeProvider time,
     IOptions<ShopOptions> shopOptions)
 {
+    private const int MaxEmailLength = 200;
     private const int MaxNameLength = 200;
 
     public async Task<CheckoutResult> StartAsync(CheckoutCommand command, CancellationToken cancellationToken)
@@ -48,6 +51,7 @@ public sealed class CheckoutService(
             return new CheckoutResult.Invalid(errors);
         }
 
+        var email = command.Email!.Trim();
         var now = time.GetUtcNow();
         var orderId = Guid.NewGuid();
         var lines = cart.Lines
@@ -69,7 +73,7 @@ public sealed class CheckoutService(
         var session = await paymentGateway.CreateCheckoutAsync(
             new PaymentSessionRequest(
                 orderId,
-                account.Email,
+                email,
                 lines.Select(l => new CheckoutLine(l.Name, l.Price, l.Quantity)).ToList(),
                 SuccessUrl: new Uri($"{siteUrl}/zamowienie/{orderId}"),
                 CancelUrl: new Uri($"{siteUrl}/koszyk?platnosc=przerwana")),
@@ -78,7 +82,7 @@ public sealed class CheckoutService(
         var order = new Order(
             orderId,
             account.Id,
-            account.Email,
+            email,
             command.Name!.Trim(),
             lines,
             cart.RequiredConsents.Select(c => new AcceptedConsent(c.Key, c.Text, now)).ToList(),
@@ -93,6 +97,13 @@ public sealed class CheckoutService(
     {
         var errors = new Dictionary<string, string[]>();
 
+        var email = command.Email?.Trim();
+        if (string.IsNullOrEmpty(email) || email.Length > MaxEmailLength
+            || !MailAddress.TryCreate(email, out var address) || address.Address != email)
+        {
+            errors["email"] = ["Podaj poprawny adres email."];
+        }
+
         // Imię trafia do maila Klary, więc bez znaków sterujących.
         var name = command.Name;
         if (string.IsNullOrWhiteSpace(name) || name.Trim().Length > MaxNameLength || name.Any(char.IsControl))
@@ -104,10 +115,11 @@ public sealed class CheckoutService(
     }
 }
 
-/// <summary>Dane z formularza płatności zalogowanego Klienta: Koszyk z cenami, które widział, imię i nazwisko i zgody.</summary>
+/// <summary>Dane z formularza płatności zalogowanego Klienta: Koszyk z cenami, które widział, e-mail, imię i nazwisko i zgody.</summary>
 public sealed record CheckoutCommand(
     IReadOnlyList<CartItem> Items,
     Guid AccountId,
+    string? Email,
     string? Name,
     IReadOnlyCollection<string> AcceptedConsents);
 

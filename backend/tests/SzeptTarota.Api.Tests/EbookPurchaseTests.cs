@@ -342,9 +342,10 @@ public class EbookPurchaseTests : IAsyncLifetime
         return _api.CreateClient().SendAsync(request);
     }
 
-    private static Dictionary<string, object?> Checkout(object[] items, string[]? consents = null) => new()
+    private Dictionary<string, object?> Checkout(object[] items, string[]? consents = null) => new()
     {
         ["items"] = items,
+        ["email"] = _email,
         ["name"] = "Anna Nowak",
         ["acceptedConsents"] = consents ?? RequiredConsents,
     };

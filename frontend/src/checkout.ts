@@ -34,6 +34,7 @@ export function useCheckout(onCartChanged: () => void) {
         quantity: line.quantity,
         form: items[index]?.form,
       })),
+      email: text('email'),
       name: text('name'),
       acceptedConsents: data.getAll('consent').map(String),
     })

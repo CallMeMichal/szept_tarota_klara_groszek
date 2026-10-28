@@ -99,6 +99,7 @@ public class ServicePurchaseTests : IAsyncLifetime
         _client.PostAsJsonAsync("/api/checkout", new
         {
             items,
+            email = _email,
             name = "Anna Nowak",
             acceptedConsents = consents ?? ["termsAndPrivacy", "serviceEarlyStart"],
         });

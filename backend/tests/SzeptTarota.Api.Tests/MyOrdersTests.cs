@@ -38,15 +38,31 @@ public class MyOrdersTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task The_Order_goes_to_the_Konto_email()
+    public async Task The_Order_goes_to_the_email_from_the_form_and_stays_in_the_Klients_Konto()
     {
-        var email = NewEmail();
-        var klient = await _api.LoggedInClient(_factory.Emails, email);
+        var klient = await _api.LoggedInClient(_factory.Emails, NewEmail());
+        var otherEmail = NewEmail();
 
-        await Pay(await Buy(klient, FakeProductCatalog.EbookSlug, 4900));
+        var order = await Buy(klient, FakeProductCatalog.EbookSlug, 4900, email: otherEmail);
+        await Pay(order);
 
-        Assert.Equal(email, Assert.Single(_factory.Payments.Sessions).Request.Email);
-        Assert.Single(_factory.Emails.Sent, m => m.To == email && m.Subject.Contains("Zamówienie"));
+        Assert.Equal(otherEmail, Assert.Single(_factory.Payments.Sessions).Request.Email);
+        Assert.Single(_factory.Emails.Sent, m => m.To == otherEmail && m.Subject.Contains("Zamówienie"));
+        Assert.Equal([order], (await MyOrders(klient)).Select(o => o.Id));
+    }
+
+    [Fact]
+    public async Task An_invalid_email_in_the_form_is_an_error_on_its_field()
+    {
+        var klient = await _api.LoggedInClient(_factory.Emails, NewEmail());
+
+        var response = await klient.PostAsJsonAsync(
+            "/api/checkout", Checkout(FakeProductCatalog.EbookSlug, 4900, email: "to nie jest email"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemResponse>();
+        Assert.Equal(["email"], problem!.Errors.Keys);
+        Assert.Empty(_factory.Payments.Sessions);
     }
 
     [Fact]
@@ -113,16 +129,17 @@ public class MyOrdersTests : IAsyncLifetime
 
     private static string NewEmail() => $"klient-{Guid.NewGuid():N}@example.com";
 
-    private static object Checkout(string slug, int price, int quantity = 1) => new
+    private static object Checkout(string slug, int price, int quantity = 1, string email = "anna@example.com") => new
     {
         items = new[] { new { slug, price, quantity } },
+        email,
         name = "Anna Nowak",
         acceptedConsents = new[] { "termsAndPrivacy" },
     };
 
-    private static async Task<Guid> Buy(HttpClient klient, string slug, int price, int quantity = 1)
+    private static async Task<Guid> Buy(HttpClient klient, string slug, int price, int quantity = 1, string email = "anna@example.com")
     {
-        var response = await klient.PostAsJsonAsync("/api/checkout", Checkout(slug, price, quantity));
+        var response = await klient.PostAsJsonAsync("/api/checkout", Checkout(slug, price, quantity, email));
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return (await response.Content.ReadFromJsonAsync<CheckoutStartedResponse>())!.OrderId;
     }
@@ -150,6 +167,8 @@ public class MyOrdersTests : IAsyncLifetime
     }
 
     private sealed record CheckoutStartedResponse(Guid OrderId);
+
+    private sealed record ValidationProblemResponse(Dictionary<string, string[]> Errors);
 
     private sealed record MyOrderResponse(Guid Id, DateTimeOffset PaidAt, List<OrderLineResponse> Items, int Total);
 

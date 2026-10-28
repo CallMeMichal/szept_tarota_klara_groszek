@@ -182,6 +182,8 @@ export function clearCart() {
 export type CheckoutForm = {
   /** Pozycje z cenami, które Klient widzi teraz w Koszyku, i formularzami Usług. */
   items: { slug: string; price: number; quantity: number; form?: FormAnswers }[]
+  /** Adres na potwierdzenie; domyślnie adres Konta. */
+  email: string
   /** Imię i nazwisko Klienta. */
   name: string
   acceptedConsents: string[]
@@ -191,14 +193,14 @@ export type CheckoutResult =
   | { status: 'started'; redirectUrl: string }
   /** Ceny albo pozycje zmieniły się od ostatniego sprawdzenia Koszyka. */
   | { status: 'cart-changed'; cart: CartValidation }
-  /** Błędy pól formularza: `name`, `acceptedConsents`. */
+  /** Błędy pól formularza: `email`, `name`, `acceptedConsents`. */
   | { status: 'invalid'; errors: Record<string, string[]> }
   /** Sesja wygasła; płacić można tylko po zalogowaniu. */
   | { status: 'logged-out' }
   | { status: 'unavailable' }
   | { status: 'error' }
 
-/** Płatność zalogowanego Klienta; e-mail Zamówienia to adres jego Konta. */
+/** Płatność zalogowanego Klienta; Zamówienie trafia na jego Konto. */
 export async function startCheckout(form: CheckoutForm): Promise<CheckoutResult> {
   try {
     const response = await fetch('/api/checkout', {
