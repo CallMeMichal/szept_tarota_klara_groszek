@@ -1,16 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router'
-import { accountPath, loginPathFor, logOut, panelPath, useSession, type MyOrder } from '../account.ts'
+import { accountPath, formatPaidAt, loginPathFor, logOut, panelPath, useSession, type MyOrder } from '../account.ts'
 import { formatPrice, productPath } from '../catalog.ts'
 import { homeSectionPath, homeSections } from '../homeSections.ts'
 import { useApi } from '../useApi.ts'
 import { usePageTitle } from '../usePageTitle.ts'
-
-const paidAtFormat = new Intl.DateTimeFormat('pl-PL', {
-  dateStyle: 'long',
-  timeStyle: 'short',
-  timeZone: 'Europe/Warsaw',
-})
 
 /** Konto zalogowanego Klienta: adres, wylogowanie i Moje Zamówienia. */
 export function AccountPage() {
@@ -96,7 +90,7 @@ function MyOrders() {
           {orders.data.map((order) => (
             <li key={order.id} className="my-order">
               <p className="my-order__header">
-                <span>{paidAtFormat.format(new Date(order.paidAt))}</span>
+                <span>{formatPaidAt(order.paidAt)}</span>
                 <strong>{formatPrice(order.total)}</strong>
               </p>
               <ul className="my-order__lines">

@@ -6,12 +6,14 @@ import { CartToast } from './components/CartToast.tsx'
 import { SiteFooter } from './components/SiteFooter.tsx'
 import { SiteHeader } from './components/SiteHeader.tsx'
 import { homeSections, linkedSectionIds } from './homeSections.ts'
+import { panelOrderPath } from './panel.ts'
 import { AccountPage } from './pages/AccountPage.tsx'
 import { CartPage } from './pages/CartPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { LoginPage } from './pages/LoginPage.tsx'
 import { NotFoundPage } from './pages/NotFoundPage.tsx'
 import { OrderPage } from './pages/OrderPage.tsx'
+import { PanelOrderPage } from './pages/PanelOrderPage.tsx'
 import { PanelPage } from './pages/PanelPage.tsx'
 import { ProductPage } from './pages/ProductPage.tsx'
 
@@ -32,6 +34,7 @@ function App() {
           <Route path={loginPath} element={<LoginPage />} />
           <Route path={accountPath} element={<AccountPage />} />
           <Route path={panelPath} element={<PanelPage />} />
+          <Route path={panelOrderPath(':id')} element={<PanelOrderPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

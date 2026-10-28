@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, useSearchParams } from 'react-router'
 import { loginPathFor, panelPath, useSession } from '../account.ts'
 import { AvailabilityEditor } from '../components/AvailabilityEditor.tsx'
+import { PanelOrders } from '../components/PanelOrders.tsx'
 import {
   chooseSessionCalendar,
   connectCalendarUrl,
@@ -26,7 +27,12 @@ export function PanelPage() {
     <section className="section account-page" aria-labelledby="panel-title" aria-busy={session.status === 'loading'}>
       <p className="eyebrow">Panel</p>
       <h1 id="panel-title">Panel Klary</h1>
-      {session.status === 'logged-in' && session.isKlara && <CalendarSection />}
+      {session.status === 'logged-in' && session.isKlara && (
+        <>
+          <PanelOrders />
+          <CalendarSection />
+        </>
+      )}
       {session.status === 'logged-in' && !session.isKlara && (
         <p className="section__lead">Ta strona jest dostępna tylko dla Klary.</p>
       )}

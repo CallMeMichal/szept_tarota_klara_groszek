@@ -24,6 +24,28 @@ public sealed class EfOrderStore(SzeptTarotaDbContext db) : IOrderStore
             .OrderByDescending(o => o.PaidAt)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<Order>> ListAllPaidAsync(PaidOrderFilter filter, CancellationToken cancellationToken)
+    {
+        var orders = db.Orders.AsNoTracking().Where(o => o.Status == OrderStatus.Paid);
+        // PostgreSQL przyjmuje tylko czas UTC.
+        if (filter.PaidFrom?.ToUniversalTime() is { } from)
+        {
+            orders = orders.Where(o => o.PaidAt >= from);
+        }
+
+        if (filter.PaidBefore?.ToUniversalTime() is { } before)
+        {
+            orders = orders.Where(o => o.PaidAt < before);
+        }
+
+        if (filter.ProductSlug is { } slug)
+        {
+            orders = orders.Where(o => o.Lines.Any(l => l.Slug == slug));
+        }
+
+        return await orders.OrderByDescending(o => o.PaidAt).ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Appointment>> ListPaidAppointmentsAsync(
         DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
     {

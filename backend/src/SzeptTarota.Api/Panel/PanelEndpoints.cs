@@ -99,6 +99,7 @@ public static class PanelEndpoints
             .WithName("ChooseSessionCalendar");
 
         MapAvailabilityEndpoints(api.MapGroup("/panel/availability").RequireAuthorization(KlaraPolicy));
+        api.MapGroup("/panel/orders").RequireAuthorization(KlaraPolicy).MapPanelOrderEndpoints();
 
         return api;
     }

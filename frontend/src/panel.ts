@@ -1,5 +1,8 @@
 // Panel Klary (PanelEndpoints.cs): dostęp ma tylko Konto Klary.
 
+import type { Appointment } from './appointments.ts'
+import type { ProductKind } from './catalog.ts'
+
 /** Przycisk „Połącz z Google Calendar” to zwykłe przejście pod ten adres: API odsyła do zgody w Google, a po powrocie na `/panel?kalendarz=…`. */
 export const connectCalendarUrl = '/api/panel/calendar/connect'
 
@@ -113,4 +116,38 @@ export async function removeAvailabilityBlock(id: string): Promise<{ status: 're
   } catch {
     return { status: 'error' }
   }
+}
+
+// Zamówienia w panelu: opłacone Zamówienia wszystkich Klientów (PanelOrderEndpoints.cs).
+
+/** Filtr listy Zamówień: dni zapłaty (RRRR-MM-DD, czas polski, włącznie) i slug Produktu; pusty to bez ograniczenia. */
+export type OrderFilter = { from: string; to: string; product: string }
+
+/** Adres listy Zamówień z filtrem (GET /api/panel/orders). */
+export function panelOrdersUrl({ from, to, product }: OrderFilter) {
+  const query = new URLSearchParams(
+    Object.entries({ from, to, product }).filter(([, value]) => value !== ''),
+  ).toString()
+  return query ? `/api/panel/orders?${query}` : '/api/panel/orders'
+}
+
+/** Strona szczegółów Zamówienia w panelu. */
+export const panelOrderPath = (id: string) => `/panel/zamowienia/${id}`
+
+/** Opłacone Zamówienie na liście; `email` to adres podany przy płatności, `price` to cena jednej sztuki. */
+export type PanelOrder = {
+  id: string
+  paidAt: string
+  customerName: string
+  email: string
+  items: { slug: string; name: string; kind: ProductKind; quantity: number; price: number }[]
+  total: number
+}
+
+/** Odpowiedź z formularza Usługi z etykietą pola z chwili zakupu. */
+export type LabelledFormAnswer = { key: string; label: string; value: string }
+
+// GET /api/panel/orders/<id>
+export type PanelOrderDetails = Omit<PanelOrder, 'items'> & {
+  items: (PanelOrder['items'][number] & { formAnswers: LabelledFormAnswer[]; appointment: Appointment | null })[]
 }

@@ -141,6 +141,11 @@ export function sessionExpired() {
 
 // GET /api/account/orders
 
+const paidAtFormat = new Intl.DateTimeFormat('pl-PL', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Europe/Warsaw' })
+
+/** Chwila zapłaty Zamówienia w czasie polskim, np. „28 października 2026 14:05”. */
+export const formatPaidAt = (iso: string) => paidAtFormat.format(new Date(iso))
+
 export type MyOrder = {
   id: string
   paidAt: string
