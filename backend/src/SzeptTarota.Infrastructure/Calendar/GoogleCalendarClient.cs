@@ -34,7 +34,7 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
 
     /// <summary>
     /// Lista kalendarzy (wybór kalendarza Sesji) i wydarzenia we wszystkich kalendarzach: odczyt bloków „Dostępna”
-    /// i zajętości oraz zapis Sesji z linkiem Meet. Węziej niż pełny zakres <c>calendar</c>.
+    /// i zajętości, bloki „Dostępna” dodawane w panelu oraz zapis Sesji z linkiem Meet. Węziej niż pełny zakres <c>calendar</c>.
     /// </summary>
     private static readonly string[] Scopes =
     [
@@ -113,7 +113,8 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
 
             response.EnsureSuccessStatusCode();
             var page = await response.Content.ReadFromJsonAsync<CalendarListResponse>(cancellationToken);
-            calendars.AddRange((page?.Items ?? []).Select(c => new GoogleCalendarInfo(c.Id, c.SummaryOverride ?? c.Summary ?? c.Id, c.Primary)));
+            calendars.AddRange((page?.Items ?? []).Select(c => new GoogleCalendarInfo(
+                c.Id, c.SummaryOverride ?? c.Summary ?? c.Id, c.Primary, Writable: c.AccessRole is "owner" or "writer")));
             pageToken = page?.NextPageToken;
         }
         while (pageToken is not null);
@@ -138,19 +139,13 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
                 ["maxResults"] = "2500",
                 ["pageToken"] = pageToken,
             };
-            var url = QueryHelpers.AddQueryString(
-                $"{CalendarsEndpoint}/{Uri.EscapeDataString(calendarId)}/events", query.Where(q => q.Value is not null));
+            var url = QueryHelpers.AddQueryString(EventsUrl(calendarId), query.Where(q => q.Value is not null));
             using var request = new HttpRequestMessage(HttpMethod.Get, url)
             {
                 Headers = { Authorization = new AuthenticationHeaderValue("Bearer", accessToken) },
             };
             using var response = await http.SendAsync(request, cancellationToken);
-            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            {
-                throw new GoogleCalendarAccessLostException(
-                    $"Google odmówił dostępu do wydarzeń ({(int)response.StatusCode}): {await response.Content.ReadAsStringAsync(cancellationToken)}");
-            }
-
+            await ThrowIfAccessLostAsync(response, cancellationToken);
             response.EnsureSuccessStatusCode();
             var page = await response.Content.ReadFromJsonAsync<EventsResponse>(cancellationToken);
             events.AddRange((page?.Items ?? []).Where(e => e.Status != "cancelled").Select(ToEvent).OfType<GoogleCalendarEvent>());
@@ -169,7 +164,60 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
         }
 
         var declined = entry.Attendees?.Any(a => a.Self && a.ResponseStatus == "declined") ?? false;
-        return new GoogleCalendarEvent(start, end, Busy: entry.Transparency != "transparent" && !declined);
+        return new GoogleCalendarEvent(entry.Id, start, end, Busy: entry.Transparency != "transparent" && !declined);
+    }
+
+    public async Task<string> CreateFreeEventAsync(
+        string refreshToken, string calendarId, string summary, DateTimeOffset start, DateTimeOffset end, CancellationToken cancellationToken)
+    {
+        var accessToken = await AccessTokenAsync(refreshToken, cancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Post, EventsUrl(calendarId))
+        {
+            Headers = { Authorization = new AuthenticationHeaderValue("Bearer", accessToken) },
+            Content = JsonContent.Create(new
+            {
+                summary,
+                start = new { dateTime = start.ToString("O") },
+                end = new { dateTime = end.ToString("O") },
+                // Blok „Dostępna” nie zajmuje czasu Klary i nie przypomina o sobie.
+                transparency = "transparent",
+                reminders = new { useDefault = false },
+            }),
+        };
+        using var response = await http.SendAsync(request, cancellationToken);
+        await ThrowIfAccessLostAsync(response, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var created = await response.Content.ReadFromJsonAsync<EventEntry>(cancellationToken);
+        return created?.Id ?? throw new HttpRequestException("Google nie zwrócił identyfikatora wydarzenia.");
+    }
+
+    public async Task DeleteEventAsync(string refreshToken, string calendarId, string eventId, CancellationToken cancellationToken)
+    {
+        var accessToken = await AccessTokenAsync(refreshToken, cancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Delete, $"{EventsUrl(calendarId)}/{Uri.EscapeDataString(eventId)}")
+        {
+            Headers = { Authorization = new AuthenticationHeaderValue("Bearer", accessToken) },
+        };
+        using var response = await http.SendAsync(request, cancellationToken);
+        // Usunięte już wcześniej (np. przez Klarę w Google): 404 albo 410.
+        if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Gone)
+        {
+            return;
+        }
+
+        await ThrowIfAccessLostAsync(response, cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
+    private static string EventsUrl(string calendarId) => $"{CalendarsEndpoint}/{Uri.EscapeDataString(calendarId)}/events";
+
+    private static async Task ThrowIfAccessLostAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            throw new GoogleCalendarAccessLostException(
+                $"Google odmówił dostępu do kalendarza ({(int)response.StatusCode}): {await response.Content.ReadAsStringAsync(cancellationToken)}");
+        }
     }
 
     /// <summary>Godzina wydarzenia albo północ czasu polskiego dla wydarzenia całodniowego.</summary>
@@ -233,6 +281,7 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
         [property: JsonPropertyName("nextPageToken")] string? NextPageToken);
 
     private sealed record EventEntry(
+        [property: JsonPropertyName("id")] string Id,
         [property: JsonPropertyName("status")] string? Status,
         [property: JsonPropertyName("start")] EventTime? Start,
         [property: JsonPropertyName("end")] EventTime? End,
@@ -251,5 +300,6 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
         [property: JsonPropertyName("id")] string Id,
         [property: JsonPropertyName("summary")] string? Summary,
         [property: JsonPropertyName("summaryOverride")] string? SummaryOverride,
-        [property: JsonPropertyName("primary")] bool Primary);
+        [property: JsonPropertyName("primary")] bool Primary,
+        [property: JsonPropertyName("accessRole")] string? AccessRole);
 }

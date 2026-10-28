@@ -24,7 +24,7 @@ public sealed class AvailabilityService(
     /// Najdalszy początek Terminu, jaki strona w ogóle sprawdza. To nie zasada Klary, tylko ochrona przed absurdalnymi
     /// datami z zapytań (przepełnienie dat, ogromne zapytania do Google).
     /// </summary>
-    private static readonly TimeSpan Horizon = TimeSpan.FromDays(2 * 366);
+    internal static readonly TimeSpan Horizon = TimeSpan.FromDays(2 * 366);
 
     /// <summary>
     /// Wolne Terminy Produktu zaczynające się w dniach od <paramref name="from"/> do <paramref name="to"/> (włącznie),
@@ -101,7 +101,7 @@ public sealed class AvailabilityService(
         TimeSpan.FromMinutes(product.DurationMinutes
             ?? throw new InvalidOperationException($"Produkt '{product.Slug}' nie ma długości Terminu."));
 
-    private static DateTimeOffset MidnightInWarsaw(DateOnly day)
+    internal static DateTimeOffset MidnightInWarsaw(DateOnly day)
     {
         var midnight = day.ToDateTime(TimeOnly.MinValue);
         return new DateTimeOffset(midnight, Warsaw.GetUtcOffset(midnight));

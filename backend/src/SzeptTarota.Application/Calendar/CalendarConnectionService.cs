@@ -59,7 +59,7 @@ public sealed class CalendarConnectionService(
 
     /// <summary>
     /// Ustawia Kalendarz Sesji; zwraca błąd do pokazania albo <c>null</c>. Musi to być kalendarz z konta Google Klary
-    /// inny niż główny.
+    /// inny niż główny, w którym może dodawać wydarzenia.
     /// </summary>
     public async Task<string?> ChooseSessionCalendarAsync(string? calendarId, CancellationToken cancellationToken)
     {
@@ -77,6 +77,12 @@ public sealed class CalendarConnectionService(
         if (calendar.Primary)
         {
             return "Główny kalendarz jest odczytywany jako zajętość; wybierz osobny kalendarz z blokami „Dostępna”.";
+        }
+
+        // Panel dodaje w nim bloki „Dostępna”, więc subskrybowane kalendarze (np. „Święta w Polsce”) się nie nadają.
+        if (!calendar.Writable)
+        {
+            return "W tym kalendarzu nie możesz dodawać wydarzeń; wybierz kalendarz założony przez Ciebie.";
         }
 
         await store.SaveSessionCalendarAsync(calendar.Id, cancellationToken);

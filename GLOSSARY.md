@@ -39,7 +39,7 @@ Konkretna data, godzina i długość spotkania online Klary z Klientem przy Usł
 _Avoid_: slot, rezerwacja, wizyta
 
 **Kalendarz Sesji**:
-Osobny kalendarz Google Klary, w którym wpisuje bloki „Dostępna”, czyli godziny, w których przyjmuje Terminy Usług i Sesji; wybiera go w panelu. Jej główny kalendarz jest odczytywany tylko jako zajętość.
+Osobny kalendarz Google Klary z blokami „Dostępna”, czyli godzinami, w których przyjmuje Terminy Usług i Sesji; wybiera go w panelu i tam zaznacza bloki (może też wpisywać je wprost w Google Calendar). Jej główny kalendarz jest odczytywany tylko jako zajętość.
 _Avoid_: kalendarz dostępności, grafik
 
 ## Sprzedaż

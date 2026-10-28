@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<LoginService>();
         services.AddScoped<CalendarConnectionService>();
         services.AddScoped<AvailabilityService>();
+        services.AddScoped<AvailabilityBlockService>();
 
         return services;
     }

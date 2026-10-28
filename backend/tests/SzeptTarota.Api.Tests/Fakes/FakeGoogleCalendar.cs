@@ -7,7 +7,9 @@ namespace SzeptTarota.Api.Tests.Fakes;
 /// <summary>
 /// Udaje Google Calendar Klary. Test „zgadza się” w Google przez <see cref="GrantAccess"/> i dostaje kod, z którym
 /// Google odesłałby przeglądarkę na stronę; za kod strona dostaje refresh token, a z nim listę <see cref="Calendars"/>.
-/// <see cref="RevokeAccess"/> udaje cofnięcie zgody: wydane dotąd tokeny przestają działać.
+/// <see cref="RevokeAccess"/> udaje cofnięcie zgody: wydane dotąd tokeny przestają działać. Wydarzenia leżą w pamięci
+/// po kalendarzach; test dodaje je przez <see cref="AddAvailableBlock"/> i <see cref="AddMainCalendarEvent"/>, a strona
+/// przez <see cref="CreateFreeEventAsync"/>.
 /// </summary>
 public sealed class FakeGoogleCalendar : IGoogleCalendar
 {
@@ -15,11 +17,18 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
 
     public static readonly GoogleCalendarInfo SessionsCalendar = new("sesje@group.calendar.google.com", "Sesje", Primary: false);
 
+    /// <summary>Subskrybowany kalendarz Google, w którym Klara nie może nic dodać.</summary>
+    public static readonly GoogleCalendarInfo HolidaysCalendar =
+        new("pl.polish#holiday@group.v.calendar.google.com", "Święta w Polsce", Primary: false, Writable: false);
+
     private readonly ConcurrentDictionary<string, string> _codes = new();
     private readonly ConcurrentDictionary<string, bool> _tokens = new();
 
+    /// <summary>Wydarzenia po identyfikatorach kalendarzy.</summary>
+    private readonly ConcurrentDictionary<string, List<GoogleCalendarEvent>> _events = new();
+
     /// <summary>Kalendarze na koncie Google Klary.</summary>
-    public List<GoogleCalendarInfo> Calendars { get; } = [MainCalendar, SessionsCalendar];
+    public List<GoogleCalendarInfo> Calendars { get; } = [MainCalendar, SessionsCalendar, HolidaysCalendar];
 
     /// <summary>Refresh tokeny wydane stronie, od najstarszego.</summary>
     public List<string> IssuedTokens { get; } = [];
@@ -41,26 +50,42 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
         }
     }
 
-    /// <summary>Wydarzenia po identyfikatorach kalendarzy.</summary>
-    private readonly ConcurrentDictionary<string, List<GoogleCalendarEvent>> _events = new();
-
-    /// <summary>Blok „Dostępna” w Kalendarzu Sesji.</summary>
-    public void AddAvailableBlock(DateTimeOffset start, DateTimeOffset end) =>
-        AddEvent(SessionsCalendar.Id, new GoogleCalendarEvent(start, end, Busy: false));
+    /// <summary>Blok „Dostępna” w Kalendarzu Sesji; zwraca identyfikator wydarzenia.</summary>
+    public string AddAvailableBlock(DateTimeOffset start, DateTimeOffset end) =>
+        AddEvent(SessionsCalendar.Id, start, end, busy: false);
 
     /// <summary>Wydarzenie w głównym kalendarzu Klary; <paramref name="busy"/> <c>false</c> to wydarzenie „Dostępna”.</summary>
     public void AddMainCalendarEvent(DateTimeOffset start, DateTimeOffset end, bool busy = true) =>
-        AddEvent(MainCalendar.Id, new GoogleCalendarEvent(start, end, busy));
+        AddEvent(MainCalendar.Id, start, end, busy);
+
+    /// <summary>Wydarzenia w kalendarzu, od najwcześniejszego.</summary>
+    public IReadOnlyList<GoogleCalendarEvent> EventsIn(string calendarId)
+    {
+        var events = _events.GetOrAdd(calendarId, _ => []);
+        lock (events)
+        {
+            return [.. events.OrderBy(e => e.Start)];
+        }
+    }
 
     public void Reset()
     {
         Calendars.Clear();
-        Calendars.AddRange([MainCalendar, SessionsCalendar]);
+        Calendars.AddRange([MainCalendar, SessionsCalendar, HolidaysCalendar]);
         _events.Clear();
     }
 
-    private void AddEvent(string calendarId, GoogleCalendarEvent calendarEvent) =>
-        _events.GetOrAdd(calendarId, _ => []).Add(calendarEvent);
+    private string AddEvent(string calendarId, DateTimeOffset start, DateTimeOffset end, bool busy)
+    {
+        var id = $"event-{Guid.NewGuid():N}";
+        var events = _events.GetOrAdd(calendarId, _ => []);
+        lock (events)
+        {
+            events.Add(new GoogleCalendarEvent(id, start, end, busy));
+        }
+
+        return id;
+    }
 
     public Uri ConsentUrl(Uri redirectUri, string state) => new(QueryHelpers.AddQueryString(
         "https://accounts.google.com/o/oauth2/v2/auth",
@@ -90,14 +115,38 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
     public Task<IReadOnlyList<GoogleCalendarEvent>> ListEventsAsync(
         string refreshToken, string calendarId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
     {
+        EnsureActive(refreshToken);
+        IReadOnlyList<GoogleCalendarEvent> events = [.. EventsIn(Resolve(calendarId)).Where(e => e.Start < to && e.End > from)];
+        return Task.FromResult(events);
+    }
+
+    public Task<string> CreateFreeEventAsync(
+        string refreshToken, string calendarId, string summary, DateTimeOffset start, DateTimeOffset end, CancellationToken cancellationToken)
+    {
+        EnsureActive(refreshToken);
+        return Task.FromResult(AddEvent(Resolve(calendarId), start, end, busy: false));
+    }
+
+    public Task DeleteEventAsync(string refreshToken, string calendarId, string eventId, CancellationToken cancellationToken)
+    {
+        EnsureActive(refreshToken);
+        var events = _events.GetOrAdd(Resolve(calendarId), _ => []);
+        lock (events)
+        {
+            events.RemoveAll(e => e.Id == eventId);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static string Resolve(string calendarId) => calendarId == GoogleCalendarIds.Primary ? MainCalendar.Id : calendarId;
+
+    private void EnsureActive(string refreshToken)
+    {
         if (!IsActive(refreshToken))
         {
             throw new GoogleCalendarAccessLostException("invalid_grant");
         }
-
-        var id = calendarId == GoogleCalendarIds.Primary ? MainCalendar.Id : calendarId;
-        IReadOnlyList<GoogleCalendarEvent> events = [.. _events.GetValueOrDefault(id, []).Where(e => e.Start < to && e.End > from)];
-        return Task.FromResult(events);
     }
 
     private bool IsActive(string refreshToken) => _tokens.TryGetValue(refreshToken, out var active) && active;

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 using SzeptTarota.Application;
 using SzeptTarota.Application.Accounts;
+using SzeptTarota.Application.Appointments;
 using SzeptTarota.Application.Calendar;
 
 namespace SzeptTarota.Api.Panel;
@@ -96,8 +98,84 @@ public static class PanelEndpoints
                     : TypedResults.NoContent())
             .WithName("ChooseSessionCalendar");
 
+        MapAvailabilityEndpoints(api.MapGroup("/panel/availability").RequireAuthorization(KlaraPolicy));
+
         return api;
     }
+
+    /// <summary>Dostępność zaznaczana w panelu: bloki „Dostępna” w Kalendarzu Sesji Klary (AvailabilityBlockService).</summary>
+    private static void MapAvailabilityEndpoints(RouteGroupBuilder availability)
+    {
+        // Zakres dni: DayRange.
+        availability.MapGet("", async Task<Results<Ok<AvailabilityWeek>, ValidationProblem, ProblemHttpResult>> (
+                string? from,
+                string? to,
+                AvailabilityBlockService blocks,
+                CancellationToken cancellationToken) =>
+            {
+                if (DayRange.Parse(from, to, out var errors) is not { } days)
+                {
+                    return TypedResults.ValidationProblem(errors);
+                }
+
+                return await blocks.ListAsync(days.From, days.To, cancellationToken) switch
+                {
+                    AvailabilityResult<AvailabilityWeek>.Ok ok => TypedResults.Ok(ok.Value),
+                    var failure => Problem(failure),
+                };
+            })
+            .WithName("ListAvailability");
+
+        // Godziny w czasie polskim bez strefy, np. 2026-11-03T10:00; koniec o północy to 00:00 następnego dnia.
+        availability.MapPost("", async Task<Results<Created<AvailabilityBlock>, ValidationProblem, ProblemHttpResult>> (
+                AvailabilityBlockRequest request,
+                AvailabilityBlockService blocks,
+                CancellationToken cancellationToken) =>
+            {
+                if (ParseLocalTime(request.Start) is not { } start || ParseLocalTime(request.End) is not { } end)
+                {
+                    return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+                    {
+                        ["start"] = ["Podaj początek i koniec w formacie RRRR-MM-DDTGG:MM."],
+                    });
+                }
+
+                return await blocks.AddAsync(start, end, cancellationToken) switch
+                {
+                    AvailabilityResult<AvailabilityBlock>.Ok ok =>
+                        TypedResults.Created($"/api/panel/availability/{Uri.EscapeDataString(ok.Value.Id)}", ok.Value),
+                    AvailabilityResult<AvailabilityBlock>.Invalid invalid =>
+                        TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["end"] = [invalid.Error] }),
+                    var failure => Problem(failure),
+                };
+            })
+            .WithName("AddAvailabilityBlock");
+
+        availability.MapDelete("/{id}", async Task<Results<NoContent, ProblemHttpResult>> (
+                string id,
+                AvailabilityBlockService blocks,
+                CancellationToken cancellationToken) =>
+                await blocks.RemoveAsync(id, cancellationToken) switch
+                {
+                    AvailabilityResult<string>.Ok => TypedResults.NoContent(),
+                    var failure => Problem(failure),
+                })
+            .WithName("RemoveAvailabilityBlock");
+    }
+
+    private static ProblemHttpResult Problem<T>(AvailabilityResult<T> failure) => failure switch
+    {
+        AvailabilityResult<T>.NoSessionCalendar => TypedResults.Problem(
+            "Najpierw połącz stronę z Google Calendar i wybierz Kalendarz Sesji.", statusCode: StatusCodes.Status409Conflict),
+        _ => TypedResults.Problem(
+            "Google Calendar chwilowo nie odpowiada albo strona straciła dostęp. Spróbuj ponownie albo połącz kalendarz jeszcze raz.",
+            statusCode: StatusCodes.Status503ServiceUnavailable),
+    };
+
+    private static DateTime? ParseLocalTime(string? value) =>
+        DateTime.TryParseExact(value, "yyyy-MM-dd'T'HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var time)
+            ? time
+            : null;
 
     private static string ResultPath(bool connected) =>
         $"{PanelPagePath}?kalendarz={(connected ? "polaczono" : "nieudane")}";
@@ -123,7 +201,11 @@ public static class PanelEndpoints
 
 public sealed record SessionCalendarRequest(string? CalendarId);
 
-public sealed record CalendarResponse(string Id, string Name, bool Primary);
+/// <summary>Nowy blok „Dostępna”: początek i koniec w czasie polskim bez strefy (RRRR-MM-DDTGG:MM).</summary>
+public sealed record AvailabilityBlockRequest(string? Start, string? End);
+
+/// <summary>Kalendarz Klary; <see cref="Writable"/>: może w nim dodawać wydarzenia, więc nadaje się na Kalendarz Sesji.</summary>
+public sealed record CalendarResponse(string Id, string Name, bool Primary, bool Writable);
 
 /// <summary>Stan połączenia z Google Calendar dla panelu.</summary>
 public sealed record CalendarConnectionResponse(
@@ -133,6 +215,6 @@ public sealed record CalendarConnectionResponse(
 {
     public static CalendarConnectionResponse From(CalendarConnectionStatus status) => new(
         status.State,
-        status.Calendars.Select(c => new CalendarResponse(c.Id, c.Name, c.Primary)).ToList(),
+        status.Calendars.Select(c => new CalendarResponse(c.Id, c.Name, c.Primary, c.Writable)).ToList(),
         status.SessionCalendarId);
 }

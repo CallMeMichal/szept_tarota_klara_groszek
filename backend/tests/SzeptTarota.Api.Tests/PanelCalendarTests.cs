@@ -64,9 +64,10 @@ public class PanelCalendarTests
         var connection = await Connection(klara);
         Assert.Equal("connected", connection.Status);
         Assert.Equal(
-            [FakeGoogleCalendar.MainCalendar.Id, FakeGoogleCalendar.SessionsCalendar.Id],
+            [FakeGoogleCalendar.MainCalendar.Id, FakeGoogleCalendar.SessionsCalendar.Id, FakeGoogleCalendar.HolidaysCalendar.Id],
             connection.Calendars.Select(c => c.Id));
         Assert.True(connection.Calendars.Single(c => c.Id == FakeGoogleCalendar.MainCalendar.Id).Primary);
+        Assert.Equal([true, true, false], connection.Calendars.Select(c => c.Writable));
     }
 
     [Fact]
@@ -180,6 +181,18 @@ public class PanelCalendarTests
     }
 
     [Fact]
+    public async Task A_calendar_Klara_cannot_add_events_to_cannot_be_the_Sessions_calendar()
+    {
+        var klara = await Klara();
+        await Connect(klara, _factory.GoogleCalendar.GrantAccess());
+
+        var response = await klara.PutAsJsonAsync(
+            "/api/panel/calendar/session-calendar", new { calendarId = FakeGoogleCalendar.HolidaysCalendar.Id });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Only_a_calendar_from_Klaras_Google_account_can_be_the_Sessions_calendar()
     {
         var klara = await Klara();
@@ -239,7 +252,7 @@ public class PanelCalendarTests
 
     private sealed record ConnectionResponse(string Status, List<CalendarResponse> Calendars, string? SessionCalendarId);
 
-    private sealed record CalendarResponse(string Id, string Name, bool Primary);
+    private sealed record CalendarResponse(string Id, string Name, bool Primary, bool Writable);
 
     private sealed record AccountResponse(string Email, bool IsKlara);
 

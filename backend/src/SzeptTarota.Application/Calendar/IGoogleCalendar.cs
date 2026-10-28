@@ -34,6 +34,20 @@ public interface IGoogleCalendar
     /// <exception cref="GoogleCalendarNotConfiguredException">Gdy brakuje kluczy klienta OAuth.</exception>
     Task<IReadOnlyList<GoogleCalendarEvent>> ListEventsAsync(
         string refreshToken, string calendarId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Dodaje do kalendarza <paramref name="calendarId"/> wydarzenie, które nie zajmuje czasu Klary (w Google „Dostępna”)
+    /// i nie ma przypomnień; zwraca jego identyfikator.
+    /// </summary>
+    /// <exception cref="GoogleCalendarAccessLostException">Gdy refresh token już nie działa (cofnięta zgoda, wygasł).</exception>
+    /// <exception cref="GoogleCalendarNotConfiguredException">Gdy brakuje kluczy klienta OAuth.</exception>
+    Task<string> CreateFreeEventAsync(
+        string refreshToken, string calendarId, string summary, DateTimeOffset start, DateTimeOffset end, CancellationToken cancellationToken);
+
+    /// <summary>Usuwa wydarzenie z kalendarza <paramref name="calendarId"/>; usunięte już wcześniej nie jest błędem.</summary>
+    /// <exception cref="GoogleCalendarAccessLostException">Gdy refresh token już nie działa (cofnięta zgoda, wygasł).</exception>
+    /// <exception cref="GoogleCalendarNotConfiguredException">Gdy brakuje kluczy klienta OAuth.</exception>
+    Task DeleteEventAsync(string refreshToken, string calendarId, string eventId, CancellationToken cancellationToken);
 }
 
 public static class GoogleCalendarIds
@@ -42,14 +56,17 @@ public static class GoogleCalendarIds
     public const string Primary = "primary";
 }
 
-/// <summary>Kalendarz na koncie Google Klary; <see cref="Primary"/> to jej główny kalendarz.</summary>
-public sealed record GoogleCalendarInfo(string Id, string Name, bool Primary);
+/// <summary>
+/// Kalendarz na koncie Google Klary; <see cref="Primary"/> to jej główny kalendarz, a <see cref="Writable"/> mówi, czy
+/// może w nim dodawać wydarzenia (nie może np. w subskrybowanym „Święta w Polsce”).
+/// </summary>
+public sealed record GoogleCalendarInfo(string Id, string Name, bool Primary, bool Writable = true);
 
 /// <summary>
 /// Wydarzenie w kalendarzu Klary. <see cref="Busy"/> mówi, czy zajmuje jej czas: nie zajmuje, gdy w Google ma
 /// pokazywać „Dostępna” (przezroczyste) albo Klara odrzuciła zaproszenie.
 /// </summary>
-public sealed record GoogleCalendarEvent(DateTimeOffset Start, DateTimeOffset End, bool Busy);
+public sealed record GoogleCalendarEvent(string Id, DateTimeOffset Start, DateTimeOffset End, bool Busy);
 
 public sealed class GoogleCalendarNotConfiguredException()
     : InvalidOperationException("Brak konfiguracji 'Google:ClientId' albo 'Google:ClientSecret'.");

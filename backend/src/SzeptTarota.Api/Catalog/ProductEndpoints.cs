@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using SzeptTarota.Application.Appointments;
 using SzeptTarota.Application.Catalog;
@@ -22,7 +21,7 @@ public static class ProductEndpoints
                     : TypedResults.NotFound())
             .WithName("GetProduct");
 
-        // Daty `from` i `to` (RRRR-MM-DD, włącznie) to dni w czasie polskim.
+        // Zakres dni: DayRange.
         products.MapGet("/{slug}/appointments", async Task<Results<Ok<FreeAppointmentsResponse>, NotFound, ValidationProblem, ProblemHttpResult>> (
                 string slug,
                 string? from,
@@ -36,20 +35,12 @@ public static class ProductEndpoints
                     return TypedResults.NotFound();
                 }
 
-                var errors = new Dictionary<string, string[]>();
-                var fromDay = ParseDay(from, "from", errors);
-                var toDay = ParseDay(to, "to", errors);
-                if (fromDay > toDay || toDay?.DayNumber - fromDay?.DayNumber >= MaxRangeDays)
-                {
-                    errors["to"] = [$"Zakres może mieć od 1 do {MaxRangeDays} dni."];
-                }
-
-                if (fromDay is null || toDay is null || errors.Count > 0)
+                if (DayRange.Parse(from, to, out var errors) is not { } days)
                 {
                     return TypedResults.ValidationProblem(errors);
                 }
 
-                return await availability.FreeAsync(product, fromDay.Value, toDay.Value, cancellationToken) is { } free
+                return await availability.FreeAsync(product, days.From, days.To, cancellationToken) is { } free
                     ? TypedResults.Ok(new FreeAppointmentsResponse(product.DurationMinutes!.Value, free))
                     : TypedResults.Problem(
                         "Kalendarz Klary jest chwilowo niedostępny. Spróbuj ponownie później.",
@@ -58,23 +49,6 @@ public static class ProductEndpoints
             .WithName("ListFreeAppointments");
 
         return api;
-    }
-
-    /// <summary>
-    /// Najdłuższy zakres w jednym zapytaniu (kalendarz pokazuje miesiąc); ogranicza tylko wielkość zapytania do Google,
-    /// nie to, na ile do przodu Klara przyjmuje Terminy.
-    /// </summary>
-    private const int MaxRangeDays = 62;
-
-    private static DateOnly? ParseDay(string? value, string key, Dictionary<string, string[]> errors)
-    {
-        if (DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var day))
-        {
-            return day;
-        }
-
-        errors[key] = ["Podaj datę w formacie RRRR-MM-DD."];
-        return null;
     }
 }
 

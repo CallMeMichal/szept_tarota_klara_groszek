@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useSearchParams } from 'react-router'
 import { loginPathFor, panelPath, useSession } from '../account.ts'
+import { AvailabilityEditor } from '../components/AvailabilityEditor.tsx'
 import {
   chooseSessionCalendar,
   connectCalendarUrl,
@@ -105,7 +106,8 @@ function CalendarConnectionDetails({ connection }: { connection: CalendarConnect
 }
 
 function SessionCalendarChoice({ connection }: { connection: CalendarConnection }) {
-  const options = connection.calendars.filter((calendar) => !calendar.primary)
+  // Panel dodaje w nim bloki „Dostępna”, więc tylko kalendarze, w których Klara może coś dodać (bez np. „Święta w Polsce”).
+  const options = connection.calendars.filter((calendar) => !calendar.primary && calendar.writable)
   const [saved, setSaved] = useState(connection.sessionCalendarId)
   const [selected, setSelected] = useState(connection.sessionCalendarId ?? options[0]?.id ?? '')
   const [state, setState] = useState<{ status: 'idle' | 'saving' | 'saved' } | { status: 'failed'; error: string }>({
@@ -115,54 +117,63 @@ function SessionCalendarChoice({ connection }: { connection: CalendarConnection 
   if (options.length === 0) {
     return (
       <p className="checkout-form__note">
-        Załóż w Google Calendar osobny kalendarz na bloki „Dostępna” i odśwież tę stronę, żeby go wybrać.
+        Załóż w Google Calendar osobny kalendarz na swoją dostępność (po lewej przy „Inne kalendarze”: + → Utwórz nowy
+        kalendarz, np. „Sesje”) i odśwież tę stronę, żeby go wybrać.
       </p>
     )
   }
 
   return (
-    <form
-      className="panel-calendar__choice"
-      onSubmit={(event) => {
-        event.preventDefault()
-        setState({ status: 'saving' })
-        void chooseSessionCalendar(selected).then((result) => {
-          if (result.status === 'saved') {
-            setSaved(selected)
-            setState({ status: 'saved' })
-          } else {
-            setState({
-              status: 'failed',
-              error: result.status === 'invalid' ? result.error : 'Nie udało się zapisać. Spróbuj ponownie.',
-            })
-          }
-        })
-      }}
-    >
-      <label className="checkout-form__field">
-        Kalendarz z blokami „Dostępna” (Kalendarz Sesji)
-        <select value={selected} onChange={(event) => setSelected(event.target.value)}>
-          {options.map((calendar) => (
-            <option key={calendar.id} value={calendar.id}>
-              {calendar.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      {!saved && <p className="checkout-form__error">Wybierz Kalendarz Sesji, żeby strona wiedziała, kiedy przyjmujesz Sesje.</p>}
-      <button type="submit" className="button button--primary" disabled={state.status === 'saving' || selected === saved}>
-        Zapisz
-      </button>
-      {state.status === 'saved' && (
-        <p className="checkout-form__note" role="status">
-          Zapisano.
-        </p>
+    <>
+      <form
+        className="panel-calendar__choice"
+        onSubmit={(event) => {
+          event.preventDefault()
+          setState({ status: 'saving' })
+          void chooseSessionCalendar(selected).then((result) => {
+            if (result.status === 'saved') {
+              setSaved(selected)
+              setState({ status: 'saved' })
+            } else {
+              setState({
+                status: 'failed',
+                error: result.status === 'invalid' ? result.error : 'Nie udało się zapisać. Spróbuj ponownie.',
+              })
+            }
+          })
+        }}
+      >
+        <label className="checkout-form__field">
+          Kalendarz z blokami „Dostępna” (Kalendarz Sesji)
+          <select value={selected} onChange={(event) => setSelected(event.target.value)}>
+            {options.map((calendar) => (
+              <option key={calendar.id} value={calendar.id}>
+                {calendar.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        {!saved && <p className="checkout-form__error">Wybierz Kalendarz Sesji, żeby strona wiedziała, kiedy przyjmujesz Sesje.</p>}
+        <button type="submit" className="button button--primary" disabled={state.status === 'saving' || selected === saved}>
+          Zapisz
+        </button>
+        {state.status === 'saved' && (
+          <p className="checkout-form__note" role="status">
+            Zapisano.
+          </p>
+        )}
+        {state.status === 'failed' && (
+          <p className="checkout-form__error" role="alert">
+            {state.error}
+          </p>
+        )}
+      </form>
+      {saved && (
+        <section className="panel-availability" aria-labelledby="panel-availability-title">
+          <h2 id="panel-availability-title">Dostępność</h2>
+          <AvailabilityEditor key={saved} />
+        </section>
       )}
-      {state.status === 'failed' && (
-        <p className="checkout-form__error" role="alert">
-          {state.error}
-        </p>
-      )}
-    </form>
+    </>
   )
 }
