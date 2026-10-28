@@ -55,16 +55,29 @@ public class CartValidationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task The_same_Ebook_twice_is_an_error_on_the_second_line()
+    public async Task An_Ebook_can_be_bought_in_any_quantity_and_the_total_counts_every_copy()
     {
         var cart = await Validate(
-            new { slug = FakeProductCatalog.EbookSlug, price = 4900 },
+            new { slug = FakeProductCatalog.EbookSlug, price = 4900, quantity = 3 },
             new { slug = FakeProductCatalog.EbookSlug, price = 4900 });
 
+        Assert.True(cart.IsValid);
+        Assert.Equal([3, 1], cart.Items.Select(l => l.Quantity));
+        Assert.All(cart.Items, line => Assert.Equal(4900, line.Price));
+        Assert.Equal(19600, cart.Total);
+    }
+
+    [Fact]
+    public async Task A_quantity_below_one_or_above_the_limit_or_more_than_one_Service_per_form_is_an_error()
+    {
+        var cart = await Validate(
+            new { slug = FakeProductCatalog.EbookSlug, price = 4900, quantity = 0 },
+            new { slug = FakeProductCatalog.EbookSlug, price = 4900, quantity = 100 },
+            new { slug = FakeProductCatalog.ServiceSlug, price = 34900, quantity = 2, form = new { name = "Anna", birthDate = "1990-04-12" } });
+
         Assert.False(cart.IsValid);
-        Assert.Empty(cart.Items[0].Errors);
-        Assert.Equal("ebookTwice", Assert.Single(cart.Items[1].Errors).Code);
-        Assert.Equal(4900, cart.Total);
+        Assert.All(cart.Items, line => Assert.Equal("invalidQuantity", Assert.Single(line.Errors).Code));
+        Assert.Equal(0, cart.Total);
     }
 
     [Fact]
@@ -202,6 +215,7 @@ public class CartValidationTests : IAsyncLifetime
         string Slug,
         string? Name,
         string? Kind,
+        int Quantity,
         int? Price,
         int? PreviousPrice,
         List<ErrorResponse> Errors,

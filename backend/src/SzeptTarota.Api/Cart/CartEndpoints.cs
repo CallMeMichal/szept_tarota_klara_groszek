@@ -34,10 +34,13 @@ public static class CartEndpoints
 /// <summary>Koszyk z przeglądarki.</summary>
 public sealed record CartRequest(IReadOnlyList<CartItemRequest?>? Items);
 
-/// <summary>Pozycja Koszyka: slug Produktu, cena widziana przy dodaniu (w groszach) i odpowiedzi z formularza Usługi.</summary>
-public sealed record CartItemRequest(string? Slug, int? Price, Dictionary<string, string?>? Form)
+/// <summary>
+/// Pozycja Koszyka: slug Produktu, cena jednej sztuki widziana przy dodaniu (w groszach), liczba sztuk
+/// (domyślnie 1) i odpowiedzi z formularza Usługi.
+/// </summary>
+public sealed record CartItemRequest(string? Slug, int? Price, int? Quantity, Dictionary<string, string?>? Form)
 {
-    public CartItem ToCartItem() => new(Slug!, Price, Form);
+    public CartItem ToCartItem() => new(Slug!, Price, Quantity ?? 1, Form);
 }
 
 /// <summary>Sprawdzony Koszyk: pozycje w kolejności z zapytania, suma poprawnych pozycji i wymagane zgody.</summary>
@@ -55,7 +58,7 @@ public sealed record CartResponse(
 }
 
 /// <summary>
-/// Pozycja Koszyka z aktualną ceną. <see cref="PreviousPrice"/> to cena widziana przy dodaniu, gdy od tamtej
+/// Pozycja Koszyka z liczbą sztuk i aktualną ceną jednej sztuki. <see cref="PreviousPrice"/> to cena widziana przy dodaniu, gdy od tamtej
 /// pory się zmieniła. Dla nieznanego Produktu znany jest tylko slug. <see cref="Form"/> to definicja formularza
 /// Usługi (do poprawienia go w Koszyku), a <see cref="FormErrors"/> to jego błędy po kluczach pól.
 /// </summary>
@@ -63,6 +66,7 @@ public sealed record CartLineResponse(
     string Slug,
     string? Name,
     ProductKind? Kind,
+    int Quantity,
     int? Price,
     int? PreviousPrice,
     IReadOnlyList<CartError> Errors,
@@ -73,6 +77,7 @@ public sealed record CartLineResponse(
         line.Slug,
         line.Product?.Product.Name,
         line.Product?.Product.Kind,
+        line.Quantity,
         line.Product?.Price,
         line.Product?.PreviousPrice,
         line.Errors,

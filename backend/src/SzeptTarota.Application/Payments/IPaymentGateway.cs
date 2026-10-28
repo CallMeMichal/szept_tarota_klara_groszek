@@ -16,8 +16,8 @@ public interface IPaymentGateway
     PaymentEvent? ReadWebhook(string payload, string? signature);
 }
 
-/// <summary>Pozycja do zapłaty: nazwa i cena w groszach.</summary>
-public sealed record CheckoutLine(string Name, int Price);
+/// <summary>Pozycja do zapłaty: nazwa, cena jednej sztuki w groszach i liczba sztuk.</summary>
+public sealed record CheckoutLine(string Name, int Price, int Quantity);
 
 public sealed record PaymentSessionRequest(
     Guid OrderId,

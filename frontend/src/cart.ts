@@ -1,6 +1,6 @@
 // Koszyk zapisany w pamięci przeglądarki (localStorage), więc przetrwa jej
-// zamknięcie. Trzymamy slug, cenę widzianą przy dodaniu i odpowiedzi z
-// formularza Usługi: ceny, błędy i wymagane zgody liczy serwer
+// zamknięcie. Trzymamy slug, cenę widzianą przy dodaniu, liczbę sztuk i
+// odpowiedzi z formularza Usługi: ceny, błędy i wymagane zgody liczy serwer
 // (POST /api/cart/validate), a zapisana cena służy wyłącznie do pokazania
 // Klientowi, że od tamtej pory się zmieniła.
 
@@ -14,8 +14,10 @@ export type CartItem = {
   slug: string
   /** Nazwa z chwili dodania; pokazujemy ją, gdy serwer jest niedostępny. */
   name: string
-  /** Cena w groszach widziana przy dodaniu. */
+  /** Cena jednej sztuki w groszach widziana przy dodaniu. */
   price: number
+  /** Liczba sztuk; tylko Ebook może mieć więcej niż jedną (Usługa to zawsze osobna pozycja z formularzem). */
+  quantity?: number
   /** Odpowiedzi z formularza Usługi po kluczach pól. */
   form?: FormAnswers
 }
@@ -48,6 +50,7 @@ function isCartItem(value: unknown): value is Omit<CartItem, 'id'> & { id?: stri
     typeof item.name === 'string' &&
     typeof item.price === 'number' &&
     (item.id === undefined || typeof item.id === 'string') &&
+    (item.quantity === undefined || typeof item.quantity === 'number') &&
     (item.form === undefined ||
       (typeof item.form === 'object' &&
         item.form !== null &&
@@ -85,11 +88,27 @@ export function useCart(): CartItem[] {
 
 type ProductInCart = { slug: string; name: string; price: number }
 
-/** Dodaje Ebook do Koszyka; Ebook może być w Koszyku najwyżej raz. */
+/** Najwięcej sztuk w jednej pozycji (CartValidator.MaxQuantity). */
+export const maxQuantity = 99
+
+/** Liczba sztuk pozycji (zapisy bez liczby to jedna sztuka). */
+export const quantityOf = (item: { quantity?: number }) => item.quantity ?? 1
+
+/** Dodaje sztukę Ebooka; kolejne sztuki tego samego Ebooka trafiają do jednej pozycji. */
 export function addEbookToCart(product: ProductInCart) {
   const items = readItems()
-  if (items.some((item) => item.slug === product.slug)) return
-  writeItems([...items, { id: newId(), slug: product.slug, name: product.name, price: product.price }])
+  const existing = items.find((item) => item.slug === product.slug && !item.form)
+  if (existing) {
+    setCartItemQuantity(existing.id, quantityOf(existing) + 1)
+    return
+  }
+  writeItems([...items, { id: newId(), slug: product.slug, name: product.name, price: product.price, quantity: 1 }])
+}
+
+/** Zmienia liczbę sztuk pozycji (od 1 do `maxQuantity`). */
+export function setCartItemQuantity(id: string, quantity: number) {
+  const clamped = Math.min(Math.max(1, Math.round(quantity)), maxQuantity)
+  writeItems(readItems().map((item) => (item.id === id ? { ...item, quantity: clamped } : item)))
 }
 
 /** Dodaje Usługę z wypełnionym formularzem; tę samą Usługę można dodać wiele razy. */
@@ -117,7 +136,8 @@ export type CartLine = {
   slug: string
   name: string | null
   kind: ProductKind | null
-  /** Aktualna cena w groszach; brak dla Produktu spoza katalogu. */
+  quantity: number
+  /** Aktualna cena jednej sztuki w groszach; brak dla Produktu spoza katalogu. */
   price: number | null
   /** Cena widziana przy dodaniu, gdy od tamtej pory się zmieniła. */
   previousPrice: number | null
@@ -141,7 +161,9 @@ export async function validateCart(items: CartItem[], signal: AbortSignal): Prom
   const response = await fetch('/api/cart/validate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ items: items.map(({ slug, price, form }) => ({ slug, price, form })) }),
+    body: JSON.stringify({
+      items: items.map((item) => ({ slug: item.slug, price: item.price, quantity: quantityOf(item), form: item.form })),
+    }),
     signal,
   })
   if (!response.ok || !response.headers.get('Content-Type')?.includes('json')) {
@@ -159,7 +181,7 @@ export function clearCart() {
 
 export type CheckoutForm = {
   /** Pozycje z cenami, które Klient widzi teraz w Koszyku, i formularzami Usług. */
-  items: { slug: string; price: number; form?: FormAnswers }[]
+  items: { slug: string; price: number; quantity: number; form?: FormAnswers }[]
   email: string
   /** Imię i nazwisko Klienta. */
   name: string
@@ -206,7 +228,8 @@ export type OrderStatus = 'pendingPayment' | 'paid' | 'expired'
 export type OrderSummary = {
   id: string
   status: OrderStatus
-  items: { slug: string; name: string; kind: ProductKind; price: number }[]
+  /** `price` to cena jednej sztuki. */
+  items: { slug: string; name: string; kind: ProductKind; quantity: number; price: number }[]
   total: number
 }
 

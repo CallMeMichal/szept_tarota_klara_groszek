@@ -30,6 +30,7 @@ export function useCheckout(onCartChanged: () => void) {
       items: cart.items.map((line, index) => ({
         slug: line.slug,
         price: line.price ?? 0,
+        quantity: line.quantity,
         form: items[index]?.form,
       })),
       email: text('email'),

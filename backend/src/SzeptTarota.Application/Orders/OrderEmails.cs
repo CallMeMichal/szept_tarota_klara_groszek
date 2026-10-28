@@ -51,7 +51,8 @@ public static class OrderEmails
         var html = new StringBuilder("<table>");
         foreach (var line in order.Lines)
         {
-            html.Append($"<tr><td>{HtmlEncode(line.Name)}</td><td>{FormatPrice(line.Price)}</td></tr>");
+            var quantity = line.Quantity > 1 ? $"{line.Quantity} × " : "";
+            html.Append($"<tr><td>{quantity}{HtmlEncode(line.Name)}</td><td>{FormatPrice(line.Price * line.Quantity)}</td></tr>");
             if (withFormAnswers && line.FormAnswers.Count > 0)
             {
                 html.Append("<tr><td colspan=\"2\"><ul>");

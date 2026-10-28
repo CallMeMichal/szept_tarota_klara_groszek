@@ -117,8 +117,9 @@ public sealed record OrderSummaryResponse(Guid Id, OrderStatus Status, IReadOnly
     public static OrderSummaryResponse From(Order order) => new(
         order.Id,
         order.Status,
-        order.Lines.Select(l => new OrderLineResponse(l.Slug, l.Name, l.Kind, l.Price)).ToList(),
+        order.Lines.Select(l => new OrderLineResponse(l.Slug, l.Name, l.Kind, l.Quantity, l.Price)).ToList(),
         order.Total);
 }
 
-public sealed record OrderLineResponse(string Slug, string Name, ProductKind Kind, int Price);
+/// <summary>Pozycja Zamówienia: <see cref="Price"/> to cena jednej sztuki w groszach.</summary>
+public sealed record OrderLineResponse(string Slug, string Name, ProductKind Kind, int Quantity, int Price);

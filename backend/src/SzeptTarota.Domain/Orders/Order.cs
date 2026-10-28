@@ -23,7 +23,7 @@ public sealed class Order
         CustomerName = customerName;
         Lines = lines.ToList();
         Consents = consents.ToList();
-        Total = lines.Sum(l => l.Price);
+        Total = lines.Sum(l => l.Price * l.Quantity);
         PaymentSessionId = paymentSessionId;
         CreatedAt = createdAt;
         Status = OrderStatus.PendingPayment;
@@ -76,11 +76,13 @@ public enum OrderStatus
 }
 
 /// <summary>
-/// Pozycja Zamówienia: Produkt z nazwą i ceną (w groszach) z chwili zakupu oraz odpowiedziami z formularza Usługi
-/// (z etykietami pól z chwili zakupu).
+/// Pozycja Zamówienia: Produkt z nazwą i ceną jednej sztuki (w groszach) z chwili zakupu, liczbą sztuk
+/// oraz odpowiedziami z formularza Usługi (z etykietami pól z chwili zakupu).
 /// </summary>
 public sealed record OrderLine(string Slug, ProductKind Kind, string Name, int Price, string? EbookFileKey)
 {
+    public int Quantity { get; init; } = 1;
+
     // Poza konstruktorem, bo EF Core nie wiąże kolekcji przez parametry konstruktora.
     public List<FormAnswer> FormAnswers { get; init; } = [];
 }

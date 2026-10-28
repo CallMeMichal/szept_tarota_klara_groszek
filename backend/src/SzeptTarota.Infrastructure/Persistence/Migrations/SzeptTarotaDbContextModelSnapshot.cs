@@ -93,6 +93,8 @@ namespace SzeptTarota.Infrastructure.Persistence.Migrations
 
                             b1.Property<int>("Price");
 
+                            b1.Property<int>("Quantity");
+
                             b1.Property<string>("Slug")
                                 .IsRequired();
 

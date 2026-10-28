@@ -47,10 +47,10 @@ public sealed class CheckoutService(
         var orderId = Guid.NewGuid();
         var email = command.Email!.Trim();
         var lines = cart.Lines
-            .Select(l => l.Product!)
-            .Select(p => new OrderLine(p.Product.Slug, p.Product.Kind, p.Product.Name, p.Price, p.Product.EbookFileKey)
+            .Select(l => new OrderLine(l.Product!.Product.Slug, l.Product.Product.Kind, l.Product.Product.Name, l.Product.Price, l.Product.Product.EbookFileKey)
             {
-                FormAnswers = p.FormAnswers.ToList(),
+                Quantity = l.Quantity,
+                FormAnswers = l.Product.FormAnswers.ToList(),
             })
             .ToList();
 
@@ -66,7 +66,7 @@ public sealed class CheckoutService(
             new PaymentSessionRequest(
                 orderId,
                 email,
-                lines.Select(l => new CheckoutLine(l.Name, l.Price)).ToList(),
+                lines.Select(l => new CheckoutLine(l.Name, l.Price, l.Quantity)).ToList(),
                 SuccessUrl: new Uri($"{siteUrl}/zamowienie/{orderId}"),
                 CancelUrl: new Uri($"{siteUrl}/koszyk?platnosc=przerwana")),
             cancellationToken);

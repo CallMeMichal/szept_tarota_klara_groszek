@@ -48,7 +48,7 @@ public sealed class StripePaymentGateway(IOptions<StripeOptions> options, TimePr
                 ClientReferenceId = request.OrderId.ToString(),
                 LineItems = request.Lines.Select(line => new SessionLineItemOptions
                 {
-                    Quantity = 1,
+                    Quantity = line.Quantity,
                     PriceData = new SessionLineItemPriceDataOptions
                     {
                         Currency = Currency,

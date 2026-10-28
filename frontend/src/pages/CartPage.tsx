@@ -3,7 +3,10 @@ import { Link, useSearchParams } from 'react-router'
 import arrowPrimary from '../assets/home/arrow-up-right-primary.svg'
 import {
   interruptedPaymentParam,
+  maxQuantity,
+  quantityOf,
   removeFromCart,
+  setCartItemQuantity,
   updateCartItemForm,
   useCart,
   validateCart,
@@ -99,8 +102,8 @@ export function CartPage() {
         </div>
 
         <CartSummary
-          count={cart ? cart.items.length : items.length}
-          total={cart ? cart.total : items.reduce((sum, item) => sum + item.price, 0)}
+          count={items.reduce((sum, item) => sum + quantityOf(item), 0)}
+          total={cart ? cart.total : items.reduce((sum, item) => sum + item.price * quantityOf(item), 0)}
           payable={cart?.isValid ?? false}
           sending={checkout.status.state === 'sending'}
           message={
@@ -205,15 +208,23 @@ function CheckedCartLines({ cart, items }: { cart: CartValidation; items: CartIt
           <div className="cart-line__price">
             {line.previousPrice !== null && line.price !== null && (
               <>
-                <s aria-label={`Cena przy dodaniu ${formatPrice(line.previousPrice)}`}>
-                  {formatPrice(line.previousPrice)}
+                <s aria-label={`Cena przy dodaniu ${formatPrice(line.previousPrice * line.quantity)}`}>
+                  {formatPrice(line.previousPrice * line.quantity)}
                 </s>
                 <span className="cart-line__note">Cena zmieniła się od dodania do Koszyka</span>
               </>
             )}
-            {line.price !== null && <strong>{formatPrice(line.price)}</strong>}
+            {line.price !== null && <strong>{formatPrice(line.price * line.quantity)}</strong>}
+            {line.price !== null && line.quantity > 1 && (
+              <span className="cart-line__note">{formatPrice(line.price)} za sztukę</span>
+            )}
           </div>
-          <RemoveButton index={index} name={line.name ?? line.slug} />
+          <div className="cart-line__actions">
+            {line.kind === 'ebook' && items[index] && (
+              <QuantityStepper item={items[index]} name={line.name ?? line.slug} />
+            )}
+            <RemoveButton index={index} name={line.name ?? line.slug} />
+          </div>
           {line.form.length > 0 && items[index] && (
             <CartLineForm
               item={items[index]}
@@ -317,9 +328,12 @@ function UncheckedCartLines({ items }: { items: CartItem[] }) {
             <Link to={productPath(item.slug)}>{item.name}</Link>
           </div>
           <div className="cart-line__price">
-            <strong>{formatPrice(item.price)}</strong>
+            <strong>{formatPrice(item.price * quantityOf(item))}</strong>
           </div>
-          <RemoveButton index={index} name={item.name} />
+          <div className="cart-line__actions">
+            {!item.form && <QuantityStepper item={item} name={item.name} />}
+            <RemoveButton index={index} name={item.name} />
+          </div>
         </li>
       ))}
     </ul>
@@ -336,6 +350,46 @@ function CartLineImage({ slug, linked }: { slug: string; linked: boolean }) {
     </Link>
   ) : (
     image
+  )
+}
+
+/** Liczba sztuk Ebooka: przyciski − i + oraz pole do wpisania liczby. */
+function QuantityStepper({ item, name }: { item: CartItem; name: string }) {
+  const quantity = quantityOf(item)
+  return (
+    <div className="quantity" role="group" aria-label={`Liczba sztuk: ${name}`}>
+      <button
+        type="button"
+        className="quantity__button"
+        onClick={() => setCartItemQuantity(item.id, quantity - 1)}
+        disabled={quantity <= 1}
+      >
+        <span aria-hidden="true">−</span>
+        <span className="visually-hidden">Jedna sztuka mniej</span>
+      </button>
+      <input
+        className="quantity__input"
+        type="number"
+        inputMode="numeric"
+        min={1}
+        max={maxQuantity}
+        value={quantity}
+        aria-label="Liczba sztuk"
+        onChange={(event) => {
+          const value = Number(event.target.value)
+          if (Number.isFinite(value) && value >= 1) setCartItemQuantity(item.id, value)
+        }}
+      />
+      <button
+        type="button"
+        className="quantity__button"
+        onClick={() => setCartItemQuantity(item.id, quantity + 1)}
+        disabled={quantity >= maxQuantity}
+      >
+        <span aria-hidden="true">+</span>
+        <span className="visually-hidden">Jedna sztuka więcej</span>
+      </button>
+    </div>
   )
 }
 

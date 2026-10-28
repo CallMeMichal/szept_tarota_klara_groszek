@@ -94,10 +94,13 @@ function OrderContent({ order, gaveUpWaiting }: { order: OrderSummary; gaveUpWai
         {order.items.map((line, index) => (
           <li key={index} className="order-line">
             <span className="order-line__product">
-              <Link to={productPath(line.slug)}>{line.name}</Link>
+              <Link to={productPath(line.slug)}>
+                {line.quantity > 1 && `${line.quantity} × `}
+                {line.name}
+              </Link>
               <span className="cart-line__kind">{kindLabels[line.kind]}</span>
             </span>
-            <strong>{formatPrice(line.price)}</strong>
+            <strong>{formatPrice(line.price * line.quantity)}</strong>
           </li>
         ))}
       </ul>

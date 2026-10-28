@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import moonStar from '../assets/home/moon-star.svg'
-import { cartPath, useCart } from '../cart.ts'
+import { cartPath, quantityOf, useCart } from '../cart.ts'
 import { homeNavItems, homeSectionPath } from '../homeSections.ts'
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const cartCount = useCart().length
+  const cartCount = useCart().reduce((sum, item) => sum + quantityOf(item), 0)
 
   return (
     <header className="site-header">
@@ -66,7 +66,7 @@ export function SiteHeader() {
           {cartCount > 0 && (
             <span className="cart-link__count">
               {cartCount}
-              <span className="visually-hidden"> {positionsLabel(cartCount)}</span>
+              <span className="visually-hidden"> {productsLabel(cartCount)}</span>
             </span>
           )}
         </Link>
@@ -75,11 +75,11 @@ export function SiteHeader() {
   )
 }
 
-/** „1 pozycja”, „2 pozycje”, „5 pozycji”: odmiana dla czytników ekranu. */
-function positionsLabel(count: number) {
+/** „1 produkt”, „2 produkty”, „5 produktów” (licząc sztuki): odmiana dla czytników ekranu. */
+function productsLabel(count: number) {
   const lastDigit = count % 10
   const lastTwoDigits = count % 100
-  if (count === 1) return 'pozycja'
-  if (lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14)) return 'pozycje'
-  return 'pozycji'
+  if (count === 1) return 'produkt'
+  if (lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14)) return 'produkty'
+  return 'produktów'
 }

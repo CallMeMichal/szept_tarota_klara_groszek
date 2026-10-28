@@ -101,7 +101,7 @@ public class EbookPurchaseTests : IAsyncLifetime
     public async Task A_cart_with_errors_sends_the_Klient_back_to_the_cart()
     {
         var response = await StartCheckout(Checkout(
-            [Item(FakeProductCatalog.EbookSlug, 4900), Item(FakeProductCatalog.EbookSlug, 4900)]));
+            [Item(FakeProductCatalog.EbookSlug, 4900), Item("nie-ma-takiego-ebooka", 4900)]));
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         var cart = (await response.Content.ReadFromJsonAsync<CartResponse>())!;
@@ -164,6 +164,27 @@ public class EbookPurchaseTests : IAsyncLifetime
         Assert.Contains("88,00 zł", toKlara.Html);
         Assert.Empty(toKlara.Attachments);
         Assert.Equal(2, _factory.Emails.Sent.Count);
+    }
+
+    [Fact]
+    public async Task Several_copies_of_an_Ebook_are_paid_once_per_copy_and_the_file_is_attached_once()
+    {
+        var started = await StartPurchase(new { slug = FakeProductCatalog.EbookSlug, price = 4900, quantity = 3 });
+
+        var request = Assert.Single(_factory.Payments.Sessions).Request;
+        var line = Assert.Single(request.Lines);
+        Assert.Equal(("Tarot dla początkujących", 4900, 3), (line.Name, line.Price, line.Quantity));
+
+        await SendWebhook(started, PaymentOutcome.Paid);
+
+        var order = await GetOrder(started.OrderId);
+        Assert.Equal(14700, order.Total);
+        Assert.Equal((3, 4900), (Assert.Single(order.Items).Quantity, order.Items[0].Price));
+        var toKlient = Assert.Single(_factory.Emails.Sent, m => m.To == Email);
+        Assert.Contains("3 × Tarot dla początkujących", toKlient.Html);
+        Assert.Contains("147,00 zł", toKlient.Html);
+        Assert.Single(toKlient.Attachments);
+        Assert.Contains("3 × Tarot dla początkujących", Assert.Single(_factory.Emails.Sent, m => m.To == ApiFactory.KlaraEmail).Html);
     }
 
     [Fact]
@@ -232,7 +253,7 @@ public class EbookPurchaseTests : IAsyncLifetime
 
         var order = await GetOrder(started.OrderId);
         var line = Assert.Single(order.Items);
-        Assert.Equal((FakeProductCatalog.EbookSlug, "Tarot dla początkujących", "ebook", 4900), (line.Slug, line.Name, line.Kind, line.Price));
+        Assert.Equal((FakeProductCatalog.EbookSlug, "Tarot dla początkujących", "ebook", 1, 4900), (line.Slug, line.Name, line.Kind, line.Quantity, line.Price));
         Assert.Equal(4900, order.Total);
         Assert.Contains("49,00 zł", Assert.Single(_factory.Emails.Sent, m => m.To == Email).Html);
     }
@@ -341,5 +362,5 @@ public class EbookPurchaseTests : IAsyncLifetime
 
     private sealed record OrderResponse(Guid Id, string Status, List<OrderLineResponse> Items, int Total);
 
-    private sealed record OrderLineResponse(string Slug, string Name, string Kind, int Price);
+    private sealed record OrderLineResponse(string Slug, string Name, string Kind, int Quantity, int Price);
 }
