@@ -133,11 +133,6 @@ export function AvailabilityEditor() {
         </button>
       </div>
 
-      <p className="checkout-form__note">
-        Zaznacz godziny, w których przyjmujesz: myszką przeciągnij po kratkach dnia, a na telefonie dotknij godziny
-        początku i potem godziny końca. Bloki zapisują się w Twoim Kalendarzu Sesji w Google.
-      </p>
-
       <div className="availability-editor__days" role="group" aria-label="Dzień">
         {days.map((day) => (
           <button

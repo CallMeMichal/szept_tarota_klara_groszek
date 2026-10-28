@@ -78,17 +78,7 @@ function CalendarConnectionDetails({ connection }: { connection: CalendarConnect
       <p className={`panel-calendar__status panel-calendar__status--${connection.status}`}>
         {statusLabels[connection.status]}
       </p>
-      {connection.status === 'notConnected' && (
-        <p className="checkout-form__note">
-          Połącz stronę ze swoim kalendarzem Google, żeby Klienci widzieli Twoje wolne Terminy.
-        </p>
-      )}
-      {connection.status === 'broken' && (
-        <p className="checkout-form__note">
-          Strona straciła dostęp do kalendarza (np. dostęp cofnięto w ustawieniach konta Google). Połącz ponownie.
-        </p>
-      )}
-      {connection.status === 'connected' && (
+      {connection.status === 'connected' ? (
         <>
           {mainCalendar && (
             <p className="checkout-form__note">
@@ -97,10 +87,19 @@ function CalendarConnectionDetails({ connection }: { connection: CalendarConnect
           )}
           <SessionCalendarChoice connection={connection} />
         </>
+      ) : (
+        // W miejscu kalendarza dostępności: bez połączenia z Google nie ma czego pokazać.
+        <div className="panel-calendar__connect">
+          <p>
+            {connection.status === 'notConnected'
+              ? 'Połącz stronę ze swoim kalendarzem Google, żeby zaznaczać dostępność i żeby Klienci widzieli Twoje wolne Terminy.'
+              : 'Strona straciła dostęp do kalendarza (np. dostęp cofnięto w ustawieniach konta Google). Połącz go ponownie.'}
+          </p>
+          <a className="button button--primary" href={connectCalendarUrl}>
+            {connection.status === 'notConnected' ? 'Połącz z Google Calendar' : 'Połącz ponownie'}
+          </a>
+        </div>
       )}
-      <a className={`button ${connection.status === 'connected' ? 'button--ghost' : 'button--primary'}`} href={connectCalendarUrl}>
-        {connection.status === 'notConnected' ? 'Połącz z Google Calendar' : 'Połącz ponownie'}
-      </a>
     </>
   )
 }
