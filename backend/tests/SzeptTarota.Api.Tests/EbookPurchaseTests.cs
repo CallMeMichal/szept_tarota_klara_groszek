@@ -15,7 +15,7 @@ public class EbookPurchaseTests : IAsyncLifetime
 {
     private const string Email = "anna@example.com";
 
-    private static readonly string[] EbookConsents = ["termsAndPrivacy", "ebookImmediateDelivery"];
+    private static readonly string[] RequiredConsents = ["termsAndPrivacy"];
 
     private readonly ApiFactory _factory;
     private readonly FakeProductCatalog _catalog = new();
@@ -59,7 +59,7 @@ public class EbookPurchaseTests : IAsyncLifetime
     [Fact]
     public async Task Without_the_required_consents_payment_does_not_start()
     {
-        var response = await StartCheckout(Checkout([Item(FakeProductCatalog.EbookSlug, 4900)], consents: ["termsAndPrivacy"]));
+        var response = await StartCheckout(Checkout([Item(FakeProductCatalog.EbookSlug, 4900)], consents: []));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var problem = await response.Content.ReadFromJsonAsync<ValidationProblemResponse>();
@@ -68,19 +68,17 @@ public class EbookPurchaseTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Missing_email_or_billing_details_are_errors_on_their_fields()
+    public async Task A_missing_name_or_invalid_email_are_errors_on_their_fields()
     {
         var checkout = Checkout([Item(FakeProductCatalog.EbookSlug, 4900)]);
         checkout["email"] = "to nie jest email";
-        checkout["billing"] = new { name = " ", street = "", postalCode = "00950", city = "Warszawa", taxId = "123" };
+        checkout["name"] = " ";
 
         var response = await StartCheckout(checkout);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var problem = await response.Content.ReadFromJsonAsync<ValidationProblemResponse>();
-        Assert.Equal(
-            ["billing.name", "billing.postalCode", "billing.street", "billing.taxId", "email"],
-            problem!.Errors.Keys.Order());
+        Assert.Equal(["email", "name"], problem!.Errors.Keys.Order());
         Assert.Empty(_factory.Payments.Sessions);
     }
 
@@ -240,29 +238,19 @@ public class EbookPurchaseTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Klara_sees_the_billing_details_and_the_consents_with_the_time_they_were_accepted()
+    public async Task Klara_sees_the_Klients_name_and_the_consents_with_the_time_they_were_accepted()
     {
         _factory.Time.SetUtcNow(new DateTimeOffset(2026, 3, 2, 17, 45, 0, TimeSpan.Zero));
         var checkout = Checkout([Item(FakeProductCatalog.EbookSlug, 4900)]);
-        checkout["billing"] = new
-        {
-            name = "Pracownia <Anna> Nowak",
-            street = "ul. Księżycowa 7/3",
-            postalCode = "00-950",
-            city = "Warszawa",
-            taxId = "123-456-32-18",
-        };
+        checkout["name"] = "Anna <Nowak>";
         var started = (await (await StartCheckout(checkout)).Content.ReadFromJsonAsync<CheckoutStartedResponse>())!;
 
         await SendWebhook(started, PaymentOutcome.Paid);
 
         var toKlara = Assert.Single(_factory.Emails.Sent, m => m.To == ApiFactory.KlaraEmail).Html;
-        Assert.Contains("Pracownia &lt;Anna&gt; Nowak", toKlara);
-        Assert.Contains("ul. Księżycowa 7/3", toKlara);
-        Assert.Contains("00-950 Warszawa", toKlara);
-        Assert.Contains("NIP: 1234563218", toKlara);
+        Assert.Contains("Anna &lt;Nowak&gt;", toKlara);
         Assert.Contains("Akceptuję regulamin i politykę prywatności. (2 marca 2026, 18:45)", toKlara);
-        Assert.Contains("tracę prawo do odstąpienia od umowy. (2 marca 2026, 18:45)", toKlara);
+        Assert.DoesNotContain("odstąpienia", toKlara);
     }
 
     [Fact]
@@ -329,15 +317,8 @@ public class EbookPurchaseTests : IAsyncLifetime
     {
         ["items"] = items,
         ["email"] = Email,
-        ["billing"] = new
-        {
-            name = "Anna Nowak",
-            street = "ul. Księżycowa 7/3",
-            postalCode = "00-950",
-            city = "Warszawa",
-            taxId = (string?)null,
-        },
-        ["acceptedConsents"] = consents ?? EbookConsents,
+        ["name"] = "Anna Nowak",
+        ["acceptedConsents"] = consents ?? RequiredConsents,
     };
 
     private Task<HttpResponseMessage> StartCheckout(object checkout) =>

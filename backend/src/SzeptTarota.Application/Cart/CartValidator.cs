@@ -80,23 +80,6 @@ public sealed record Consent(string Key, string Text)
         "termsAndPrivacy",
         "Akceptuję regulamin i politykę prywatności.");
 
-    public static readonly Consent EbookImmediateDelivery = new(
-        "ebookImmediateDelivery",
-        "Żądam dostarczenia Ebooka od razu po zapłacie i przyjmuję do wiadomości, że w ten sposób tracę prawo do odstąpienia od umowy.");
-
-    public static IReadOnlyList<Consent> RequiredFor(IReadOnlyCollection<Product> products)
-    {
-        if (products.Count == 0)
-        {
-            return [];
-        }
-
-        List<Consent> consents = [TermsAndPrivacy];
-        if (products.Any(p => p.Kind == ProductKind.Ebook))
-        {
-            consents.Add(EbookImmediateDelivery);
-        }
-
-        return consents;
-    }
+    public static IReadOnlyList<Consent> RequiredFor(IReadOnlyCollection<Product> products) =>
+        products.Count == 0 ? [] : [TermsAndPrivacy];
 }

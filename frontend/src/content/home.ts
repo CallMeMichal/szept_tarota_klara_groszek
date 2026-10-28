@@ -6,7 +6,6 @@ export const instagram = {
 }
 
 export const hero = {
-  eyebrow: 'Klara Groszek · Tarot, energia, intuicja',
   titleLines: ['Szept', 'Tarota'],
   tagline: 'Karty nie mówią głośno.',
   lead: 'Szepczą to, co już wiesz w głębi siebie. Pomogę Ci to usłyszeć przez tarot, analizy, rytuały i Sesje online.',
@@ -16,14 +15,13 @@ export const hero = {
 }
 
 export const about = {
-  eyebrow: 'O mnie',
   titleLines: ['Mam na imię Klara.', 'Słucham tego, co niewidoczne.'],
   paragraphs: [
     'Od lat pracuję z tarotem, energią i intuicją, a przez ten czas przeprowadziłam ponad 5000 Sesji dla osób, które szukały odpowiedzi, spokoju albo nowego kierunku.',
     'Wierzę, że karty nie przepowiadają losu, tylko pokazują to, co dzieje się w nas i wokół nas. Moja praca to przede wszystkim słuchanie: Ciebie, kart i tego, co między słowami.',
     'Pracuję online, więc możemy spotkać się bez względu na to, gdzie jesteś.',
   ],
-  signature: 'Klara Groszek',
+  signature: 'Klara',
   imageAlt: 'Otwarta księga, karta tarota i świeca na drewnianym stole',
   thoughtLines: ['Ciebie, kart i tego,', 'co między słowami.'],
 }
@@ -83,8 +81,6 @@ export const faq = {
 }
 
 export const contact = {
-  eyebrow: 'Kontakt',
   titleLines: ['Nie musisz wiedzieć', 'od czego zacząć.'],
   lead: 'Masz pytanie, zanim coś wybierzesz? Napisz do mnie przez formularz albo na Instagramie, odpowiadam na każdą wiadomość.',
-  closingThought: 'Posłuchaj swojego szeptu.',
 }

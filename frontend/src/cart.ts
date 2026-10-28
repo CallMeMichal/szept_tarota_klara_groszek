@@ -125,7 +125,8 @@ export type CheckoutForm = {
   /** Pozycje z cenami, które Klient widzi teraz w Koszyku. */
   items: { slug: string; price: number }[]
   email: string
-  billing: { name: string; street: string; postalCode: string; city: string; taxId: string | null }
+  /** Imię i nazwisko Klienta. */
+  name: string
   acceptedConsents: string[]
 }
 
@@ -133,7 +134,7 @@ export type CheckoutResult =
   | { status: 'started'; redirectUrl: string }
   /** Ceny albo pozycje zmieniły się od ostatniego sprawdzenia Koszyka. */
   | { status: 'cart-changed'; cart: CartValidation }
-  /** Błędy pól formularza, np. `email`, `billing.postalCode`, `acceptedConsents`. */
+  /** Błędy pól formularza: `email`, `name`, `acceptedConsents`. */
   | { status: 'invalid'; errors: Record<string, string[]> }
   | { status: 'unavailable' }
   | { status: 'error' }

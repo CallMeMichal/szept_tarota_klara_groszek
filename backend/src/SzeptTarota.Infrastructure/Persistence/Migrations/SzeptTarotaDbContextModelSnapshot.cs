@@ -31,6 +31,11 @@ namespace SzeptTarota.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -57,30 +62,6 @@ namespace SzeptTarota.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("Total")
                         .HasColumnType("integer");
-
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "Billing", "SzeptTarota.Domain.Orders.Order.Billing#BillingDetails", b1 =>
-                        {
-                            b1.IsRequired();
-
-                            b1.Property<string>("City")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<string>("Name")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<string>("PostalCode")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<string>("Street")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<string>("TaxId")
-                                .HasColumnType("text");
-                        });
 
                     b.ComplexCollection(typeof(List<Dictionary<string, object>>), "Consents", "SzeptTarota.Domain.Orders.Order.Consents#AcceptedConsent", b1 =>
                         {

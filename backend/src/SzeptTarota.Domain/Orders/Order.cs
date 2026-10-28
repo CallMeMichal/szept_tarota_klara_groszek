@@ -4,7 +4,7 @@ namespace SzeptTarota.Domain.Orders;
 
 /// <summary>
 /// Jeden zakup jednego lub kilku Produktów, opłacany jedną płatnością. Powstaje jako oczekujące na płatność
-/// i trzyma kopię nazw i cen z chwili zakupu, zaakceptowane zgody i dane do faktury, więc późniejsze zmiany
+/// i trzyma kopię nazw i cen z chwili zakupu, imię i nazwisko Klienta i zaakceptowane zgody, więc późniejsze zmiany
 /// katalogu go nie zmieniają.
 /// </summary>
 public sealed class Order
@@ -12,7 +12,7 @@ public sealed class Order
     public Order(
         Guid id,
         string email,
-        BillingDetails billing,
+        string customerName,
         IReadOnlyList<OrderLine> lines,
         IReadOnlyList<AcceptedConsent> consents,
         string paymentSessionId,
@@ -20,7 +20,7 @@ public sealed class Order
     {
         Id = id;
         Email = email;
-        Billing = billing;
+        CustomerName = customerName;
         Lines = lines.ToList();
         Consents = consents.ToList();
         Total = lines.Sum(l => l.Price);
@@ -33,7 +33,7 @@ public sealed class Order
     private Order()
     {
         Email = null!;
-        Billing = null!;
+        CustomerName = null!;
         Lines = null!;
         Consents = null!;
         PaymentSessionId = null!;
@@ -45,7 +45,8 @@ public sealed class Order
 
     public string Email { get; private set; }
 
-    public BillingDetails Billing { get; private set; }
+    /// <summary>Imię i nazwisko Klienta.</summary>
+    public string CustomerName { get; private set; }
 
     public List<OrderLine> Lines { get; private set; }
 
@@ -76,9 +77,6 @@ public enum OrderStatus
 
 /// <summary>Pozycja Zamówienia: Produkt z nazwą i ceną (w groszach) z chwili zakupu.</summary>
 public sealed record OrderLine(string Slug, ProductKind Kind, string Name, int Price, string? EbookFileKey);
-
-/// <summary>Dane do faktury; <see cref="TaxId"/> (NIP) tylko przy zakupie na firmę.</summary>
-public sealed record BillingDetails(string Name, string Street, string PostalCode, string City, string? TaxId);
 
 /// <summary>Zgoda zaakceptowana przed płatnością: jej klucz, treść widziana przez Klienta i czas akceptacji.</summary>
 public sealed record AcceptedConsent(string Key, string Text, DateTimeOffset AcceptedAt);

@@ -355,14 +355,6 @@ main {
   margin: 0;
 }
 
-.hero__eyebrow {
-  color: var(--sand-500);
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.2;
-  text-transform: uppercase;
-}
-
 .hero h1 {
   font-size: clamp(72px, 14vw, 112px);
   font-weight: 400;
@@ -539,10 +531,6 @@ main {
     gap: 22px;
   }
 
-  .hero__eyebrow {
-    text-shadow: 0 1px 8px rgba(10, 16, 35, 0.9);
-  }
-
   .hero h1 {
     font-size: 76px;
     text-shadow: 0 2px 24px rgba(10, 16, 35, 0.6);
@@ -649,13 +637,6 @@ main {
   margin: 0;
 }
 
-.about__eyebrow {
-  color: var(--slate);
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.2;
-  text-transform: uppercase;
-}
 
 .about h2 {
   font-size: clamp(38px, 7vw, 58px);
@@ -1088,24 +1069,42 @@ main {
   }
 }
 
+/* Tłem karty jest nocne niebo: na komputerze po prawej, przechodzące w kartę za formularzem. */
 .contact__card {
   max-width: 1264px;
   margin: 0 auto;
   padding: 60px;
   display: grid;
-  grid-template-columns: minmax(0, 650px) minmax(0, 1fr);
-  align-items: center;
-  gap: 65px;
-  background: var(--ink-900);
+  grid-template-columns: minmax(0, 650px);
+  background:
+    linear-gradient(
+      90deg,
+      var(--ink-900) 0%,
+      var(--ink-900) 52%,
+      rgba(16, 26, 51, 0.55) 68%,
+      rgba(16, 26, 51, 0) 85%
+    ),
+    url('./assets/home/contact-night-sky.jpg') right center / auto 100% no-repeat,
+    var(--ink-900);
   border: 1px solid var(--sand-border);
   border-radius: 8px;
+  overflow: hidden;
 
+  /* Tablet i telefon: jedna kolumna, nocne niebo na górze karty, nad nagłówkiem. */
   @media (max-width: 1100px) {
     grid-template-columns: minmax(0, 1fr);
-    gap: 48px;
+    padding: 260px 40px 48px;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(16, 26, 51, 0) 0%,
+        rgba(16, 26, 51, 0.45) 300px,
+        var(--ink-900) 560px
+      ),
+      url('./assets/home/contact-night-sky.jpg') center top / 100% auto no-repeat,
+      var(--ink-900);
   }
 
-  /* Telefon: nocne niebo z Figmy jako tło karty zamiast konstelacji. */
   @media (max-width: 640px) {
     padding: 200px 22px 36px;
     background:
@@ -1117,7 +1116,6 @@ main {
       ),
       url('./assets/home/contact-night-sky.jpg') center top / auto 480px no-repeat,
       var(--ink-900);
-    overflow: hidden;
   }
 }
 
@@ -1133,64 +1131,6 @@ main {
   color: var(--mist);
   font-size: 16px;
   line-height: 1.75;
-}
-
-/* Konstelacja z projektu (429 × 350): orbity, gwiazdy, księżyc i myśl. */
-.contact__constellation {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  height: 350px;
-
-  /* Na telefonie zamiast konstelacji tło karty to nocne niebo. */
-  @media (max-width: 640px) {
-    display: none;
-  }
-}
-
-.contact__orbit {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
-}
-
-.contact__star {
-  position: absolute;
-  background: var(--sand-500);
-  rotate: 45deg;
-}
-
-.contact__star--large {
-  left: calc(50% - 184px);
-  top: 18.3%;
-  width: 8px;
-  height: 8px;
-}
-
-.contact__star--small {
-  left: calc(50% + 61px);
-  top: 72%;
-  width: 6px;
-  height: 6px;
-}
-
-.contact__moon {
-  position: relative;
-  display: block;
-}
-
-.contact__thought {
-  position: relative;
-  margin: 0;
-  font-family: var(--serif);
-  font-size: 25px;
-  font-style: italic;
-  line-height: 1.2;
-  color: var(--sand-400);
 }
 
 /* Formularz kontaktowy */
@@ -1344,12 +1284,8 @@ main {
 .site-footer__brand {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  color: var(--mist);
-  font-size: 12px;
-  line-height: 1.2;
 
-  /* Na telefonie logo i podpis stoją na środku stopki. */
+  /* Na telefonie logo stoi na środku stopki. */
   @media (max-width: 760px) {
     align-items: center;
     width: 100%;
@@ -1611,6 +1547,134 @@ main {
   background: rgba(199, 171, 114, 0.08);
 }
 
+/* Koszyk z Produktami: po lewej Produkty i dane do zamówienia, po prawej podsumowanie */
+
+.cart-page--filled {
+  max-width: 72rem;
+  text-align: left;
+}
+
+.cart-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 2rem;
+  align-items: start;
+  margin-top: 2.5rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.cart-layout__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.cart-panel {
+  padding: 0.5rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+
+  @media (max-width: 640px) {
+    padding: 0.5rem 1rem;
+  }
+}
+
+.cart-panel__title {
+  margin: 1rem 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.cart-panel .cart-lines {
+  margin: 0;
+  border-top: 0;
+}
+
+.cart-panel .cart-line:last-child {
+  border-bottom: 0;
+}
+
+.cart-summary {
+  position: sticky;
+  top: calc(var(--header-height) + 1.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--sand-border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+
+  @media (max-width: 900px) {
+    position: static;
+  }
+}
+
+.cart-summary h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.cart-summary__rows {
+  margin: 0;
+}
+
+.cart-summary__rows div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--text-muted);
+}
+
+.cart-summary__rows dd {
+  margin: 0;
+  color: var(--cream);
+}
+
+.cart-summary__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--hairline);
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  color: var(--text-h);
+}
+
+.cart-summary__total strong {
+  font-size: 2rem;
+  font-weight: 500;
+  color: var(--gold-300);
+}
+
+.cart-summary__pay {
+  width: 100%;
+}
+
+.cart-summary__pay:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cart-summary__note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.cart-summary__message {
+  margin: 0;
+  color: var(--sand-400);
+  font-size: 0.9rem;
+}
+
 /* Formularz płatności w Koszyku */
 
 .checkout-form {
@@ -1618,7 +1682,6 @@ main {
   flex-direction: column;
   align-items: flex-start;
   gap: 16px;
-  margin-top: 2.5rem;
   padding: 1.5rem;
   text-align: left;
   border: 1px solid var(--border);
@@ -1647,17 +1710,6 @@ main {
   font-family: var(--serif);
   font-size: 1.25rem;
   color: var(--text-h);
-}
-
-.checkout-form__row {
-  display: grid;
-  grid-template-columns: 10rem 1fr;
-  gap: 16px;
-  width: 100%;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
 }
 
 .checkout-form__field {
@@ -1692,13 +1744,6 @@ main {
   border-color: var(--sand-400);
 }
 
-.checkout-form__field small,
-.checkout-form__note {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
-
 .checkout-form__consent {
   display: flex;
   gap: 0.75rem;
@@ -1720,21 +1765,6 @@ main {
 .checkout-form__error {
   color: #f0a39a;
   font-size: 0.85rem;
-}
-
-.checkout-form .button:disabled {
-  opacity: 0.7;
-  cursor: progress;
-}
-
-.checkout-form__status {
-  margin: 0;
-  color: var(--sand-400);
-  font-size: 0.9rem;
-}
-
-.checkout-form__status:empty {
-  display: none;
 }
 
 /* Zamówienie (powrót ze Stripe) */

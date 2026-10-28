@@ -1,5 +1,4 @@
 using System.Net.Mail;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using SzeptTarota.Application.Cart;
 using SzeptTarota.Application.Payments;
@@ -13,7 +12,7 @@ namespace SzeptTarota.Application.Orders;
 /// </summary>
 /// <exception cref="ShopNotConfiguredException">Gdy brakuje konfiguracji sekcji <c>Shop</c>.</exception>
 /// <exception cref="PaymentGatewayNotConfiguredException">Gdy brakuje kluczy bramki płatności.</exception>
-public sealed partial class CheckoutService(
+public sealed class CheckoutService(
     CartValidator cartValidator,
     IPaymentGateway paymentGateway,
     IOrderStore orders,
@@ -21,7 +20,7 @@ public sealed partial class CheckoutService(
     IOptions<ShopOptions> shopOptions)
 {
     private const int MaxEmailLength = 200;
-    private const int MaxFieldLength = 200;
+    private const int MaxNameLength = 200;
 
     public async Task<CheckoutResult> StartAsync(CheckoutCommand command, CancellationToken cancellationToken)
     {
@@ -69,16 +68,10 @@ public sealed partial class CheckoutService(
                 CancelUrl: new Uri($"{siteUrl}/koszyk?platnosc=przerwana")),
             cancellationToken);
 
-        var billing = command.Billing!;
         var order = new Order(
             orderId,
             email,
-            new BillingDetails(
-                billing.Name!.Trim(),
-                billing.Street!.Trim(),
-                billing.PostalCode!.Trim(),
-                billing.City!.Trim(),
-                NormalizeTaxId(billing.TaxId)),
+            command.Name!.Trim(),
             lines,
             cart.RequiredConsents.Select(c => new AcceptedConsent(c.Key, c.Text, now)).ToList(),
             session.Id,
@@ -99,51 +92,23 @@ public sealed partial class CheckoutService(
             errors["email"] = ["Podaj poprawny adres email."];
         }
 
-        var billing = command.Billing ?? new BillingInput(null, null, null, null, null);
-        RequireText(errors, "billing.name", billing.Name, "Podaj imię i nazwisko albo nazwę firmy.");
-        RequireText(errors, "billing.street", billing.Street, "Podaj ulicę i numer.");
-        RequireText(errors, "billing.city", billing.City, "Podaj miejscowość.");
-
-        if (billing.PostalCode is null || !PostalCodePattern().IsMatch(billing.PostalCode.Trim()))
+        // Imię trafia do maila Klary, więc bez znaków sterujących.
+        var name = command.Name;
+        if (string.IsNullOrWhiteSpace(name) || name.Trim().Length > MaxNameLength || name.Any(char.IsControl))
         {
-            errors["billing.postalCode"] = ["Podaj kod pocztowy w formacie 00-000."];
-        }
-
-        if (!string.IsNullOrWhiteSpace(billing.TaxId) && !TaxIdPattern().IsMatch(NormalizeTaxId(billing.TaxId)!))
-        {
-            errors["billing.taxId"] = ["NIP to 10 cyfr."];
+            errors["name"] = [$"Podaj imię i nazwisko (do {MaxNameLength} znaków)."];
         }
 
         return errors;
     }
-
-    private static void RequireText(Dictionary<string, string[]> errors, string key, string? value, string message)
-    {
-        // Dane trafiają do maili i na fakturę, więc bez znaków sterujących.
-        if (string.IsNullOrWhiteSpace(value) || value.Trim().Length > MaxFieldLength || value.Any(char.IsControl))
-        {
-            errors[key] = [$"{message} (do {MaxFieldLength} znaków)"];
-        }
-    }
-
-    private static string? NormalizeTaxId(string? taxId) =>
-        string.IsNullOrWhiteSpace(taxId) ? null : taxId.Replace("-", "").Replace(" ", "").Trim();
-
-    [GeneratedRegex("^[0-9]{2}-[0-9]{3}$")]
-    private static partial Regex PostalCodePattern();
-
-    [GeneratedRegex("^[0-9]{10}$")]
-    private static partial Regex TaxIdPattern();
 }
 
-/// <summary>Dane z formularza płatności: Koszyk z cenami, które Klient widział, e-mail, dane do faktury i zgody.</summary>
+/// <summary>Dane z formularza płatności: Koszyk z cenami, które Klient widział, imię i nazwisko, e-mail i zgody.</summary>
 public sealed record CheckoutCommand(
     IReadOnlyList<CartItem> Items,
     string? Email,
-    BillingInput? Billing,
+    string? Name,
     IReadOnlyCollection<string> AcceptedConsents);
-
-public sealed record BillingInput(string? Name, string? Street, string? PostalCode, string? City, string? TaxId);
 
 public abstract record CheckoutResult
 {

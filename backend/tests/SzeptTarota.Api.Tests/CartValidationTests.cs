@@ -38,7 +38,7 @@ public class CartValidationTests : IAsyncLifetime
         Assert.Null(line.PreviousPrice);
         Assert.Empty(line.Errors);
         Assert.Equal(4900, cart.Total);
-        Assert.Equal(["termsAndPrivacy", "ebookImmediateDelivery"], cart.RequiredConsents.Select(c => c.Key));
+        Assert.Equal(["termsAndPrivacy"], cart.RequiredConsents.Select(c => c.Key));
         Assert.All(cart.RequiredConsents, c => Assert.False(string.IsNullOrWhiteSpace(c.Text)));
     }
 
@@ -51,7 +51,7 @@ public class CartValidationTests : IAsyncLifetime
 
         Assert.True(cart.IsValid);
         Assert.Equal(8800, cart.Total);
-        Assert.Equal(["termsAndPrivacy", "ebookImmediateDelivery"], cart.RequiredConsents.Select(c => c.Key));
+        Assert.Equal(["termsAndPrivacy"], cart.RequiredConsents.Select(c => c.Key));
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class CartValidationTests : IAsyncLifetime
         Assert.Null(unknown.Price);
         Assert.Equal("unknownProduct", Assert.Single(unknown.Errors).Code);
         Assert.Equal(4900, cart.Total);
-        Assert.Equal(["termsAndPrivacy", "ebookImmediateDelivery"], cart.RequiredConsents.Select(c => c.Key));
+        Assert.Equal(["termsAndPrivacy"], cart.RequiredConsents.Select(c => c.Key));
     }
 
     [Fact]

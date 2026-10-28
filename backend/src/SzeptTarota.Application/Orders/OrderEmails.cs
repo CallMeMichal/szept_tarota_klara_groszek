@@ -27,21 +27,15 @@ public static class OrderEmails
         return new EmailMessage(order.Email, "Twoje Zamówienie w Szept Tarota", html, ebooks, $"zamowienie-{order.Id}-klient");
     }
 
-    /// <summary>Powiadomienie dla Klary: kto kupił, co, za ile, dane do faktury i zaakceptowane zgody.</summary>
+    /// <summary>Powiadomienie dla Klary: kto kupił, co, za ile i jakie zgody zaakceptował.</summary>
     public static EmailMessage ToKlara(Order order, string klaraEmail)
     {
-        var billing = order.Billing;
         var html = new StringBuilder()
             .Append("<h1>Nowe Zamówienie</h1>")
             .Append($"<p>Opłacone {FormatTime(order.PaidAt ?? order.CreatedAt)}. Numer: {order.Id}</p>")
-            .Append($"<p>Klient: {HtmlEncode(order.Email)}</p>")
+            .Append($"<p>Klient: {HtmlEncode(order.CustomerName)}, {HtmlEncode(order.Email)}</p>")
             .Append(LinesTable(order))
-            .Append("<h2>Dane do faktury</h2><p>")
-            .Append(HtmlEncode(billing.Name)).Append("<br>")
-            .Append(HtmlEncode(billing.Street)).Append("<br>")
-            .Append(HtmlEncode(billing.PostalCode)).Append(' ').Append(HtmlEncode(billing.City))
-            .Append(billing.TaxId is null ? "" : $"<br>NIP: {HtmlEncode(billing.TaxId)}")
-            .Append("</p><h2>Zgody</h2><ul>");
+            .Append("<h2>Zgody</h2><ul>");
         foreach (var consent in order.Consents)
         {
             html.Append($"<li>{HtmlEncode(consent.Text)} ({FormatTime(consent.AcceptedAt)})</li>");

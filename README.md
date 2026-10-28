@@ -1,4 +1,4 @@
-# Szept Tarota — Klara Groszek
+# Szept Tarota
 
 Aplikacja .NET 10 (ASP.NET Core Web API) + React 19 (Vite, TypeScript).
 
@@ -46,9 +46,9 @@ Formularz w sekcji Kontakt wysyła `POST /api/contact`, a backend przekazuje wia
 
 ### Zakup i płatności (Stripe Checkout)
 
-Koszyk wysyła `POST /api/checkout` z pozycjami (po cenach, które Klient widzi), e-mailem, danymi do faktury i kluczami zaakceptowanych zgód. Backend sprawdza wszystko ponownie: zmieniona cena albo błędna pozycja to 409 z aktualnym Koszykiem, błędy pól i brak wymaganych zgód to 400. Gdy wszystko się zgadza, tworzy Zamówienie oczekujące na płatność (z kopią nazw i cen, zgodami z czasem akceptacji i danymi do faktury) i zwraca adres Stripe Checkout (BLIK, Przelewy24, karta). Po płatności Stripe odsyła Klienta na `/zamowienie/<id>` (strona z podziękowaniem, czeka na potwierdzenie), a po przerwaniu na `/koszyk?platnosc=przerwana` z nietkniętym Koszykiem.
+Koszyk wysyła `POST /api/checkout` z pozycjami (po cenach, które Klient widzi), e-mailem, imieniem i nazwiskiem Klienta i kluczami zaakceptowanych zgód (obecnie tylko regulamin i polityka prywatności). Backend sprawdza wszystko ponownie: zmieniona cena albo błędna pozycja to 409 z aktualnym Koszykiem, błędy pól i brak wymaganych zgód to 400. Gdy wszystko się zgadza, tworzy Zamówienie oczekujące na płatność (z kopią nazw i cen, imieniem i nazwiskiem Klienta oraz zgodami z czasem akceptacji) i zwraca adres Stripe Checkout (BLIK, Przelewy24, karta). Po płatności Stripe odsyła Klienta na `/zamowienie/<id>` (strona z podziękowaniem, czeka na potwierdzenie), a po przerwaniu na `/koszyk?platnosc=przerwana` z nietkniętym Koszykiem.
 
-Stan Zamówienia zmienia wyłącznie podpisany webhook `POST /api/payments/stripe/webhook`: `checkout.session.completed` (opłacona) i `checkout.session.async_payment_succeeded` oznaczają Zamówienie jako opłacone i wysyłają maile (Klient: podsumowanie z Ebookami w załączniku; Klara: Zamówienie, dane do faktury i zgody), a `checkout.session.expired` i `checkout.session.async_payment_failed` jako wygasłe. Powtórzony webhook niczego nie robi drugi raz; gdy maile się nie wyślą, webhook odpowiada 500 i Stripe ponowi go później.
+Stan Zamówienia zmienia wyłącznie podpisany webhook `POST /api/payments/stripe/webhook`: `checkout.session.completed` (opłacona) i `checkout.session.async_payment_succeeded` oznaczają Zamówienie jako opłacone i wysyłają maile (Klient: podsumowanie z Ebookami w załączniku; Klara: Zamówienie, Klient i zgody), a `checkout.session.expired` i `checkout.session.async_payment_failed` jako wygasłe. Powtórzony webhook niczego nie robi drugi raz; gdy maile się nie wyślą, webhook odpowiada 500 i Stripe ponowi go później.
 
 Konfiguracja (sekrety w user-secrets albo zmiennych środowiskowych, nie w repo):
 

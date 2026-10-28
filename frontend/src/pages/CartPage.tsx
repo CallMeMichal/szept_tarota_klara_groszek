@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import arrowPrimary from '../assets/home/arrow-up-right-primary.svg'
 import {
   interruptedPaymentParam,
   removeFromCart,
@@ -8,6 +9,7 @@ import {
   type CartItem,
   type CartValidation,
 } from '../cart.ts'
+import { checkoutStatusMessage, useCheckout } from '../checkout.ts'
 import { CheckoutForm } from '../components/CheckoutForm.tsx'
 import { ProductImage } from '../components/ProductImage.tsx'
 import { formatPrice, kindLabels, productPath } from '../catalog.ts'
@@ -18,14 +20,22 @@ type Validation =
   | { status: 'ok'; data: CartValidation }
   | { status: 'error' }
 
+/** Formularz z danymi do zamówienia; przycisk płatności w podsumowaniu wysyła go atrybutem `form`. */
+const checkoutFormId = 'dane-zamowienia'
+
 export function CartPage() {
   const items = useCart()
   // Zwiększenie wymusza ponowne sprawdzenie Koszyka, gdy serwer odrzuci płatność, bo coś się zmieniło.
   const [revision, setRevision] = useState(0)
   const [cartChanged, setCartChanged] = useState(false)
   const validation = useCartValidation(items, revision)
+  const checkout = useCheckout(() => {
+    setCartChanged(true)
+    setRevision((r) => r + 1)
+  })
   const [searchParams] = useSearchParams()
   const paymentInterrupted = searchParams.get(interruptedPaymentParam) === 'przerwana'
+  const cart = validation.status === 'ok' ? validation.data : null
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
@@ -36,12 +46,29 @@ export function CartPage() {
     }
   }, [])
 
+  if (items.length === 0) {
+    return (
+      <section className="section cart-page" aria-labelledby="cart-title">
+        <p className="eyebrow">Twój wybór</p>
+        <h1 id="cart-title">Koszyk</h1>
+        <p className="section__lead">Koszyk jest pusty. Zajrzyj do oferty i wybierz coś dla siebie.</p>
+        <Link className="button button--primary" to={homeSectionPath(homeSections.offer)}>
+          Zobacz ofertę
+        </Link>
+      </section>
+    )
+  }
+
   return (
-    <section className="section cart-page" aria-labelledby="cart-title" aria-busy={validation.status === 'loading'}>
+    <section
+      className="section cart-page cart-page--filled"
+      aria-labelledby="cart-title"
+      aria-busy={validation.status === 'loading'}
+    >
       <p className="eyebrow">Twój wybór</p>
       <h1 id="cart-title">Koszyk</h1>
 
-      {paymentInterrupted && items.length > 0 && (
+      {paymentInterrupted && (
         <p className="cart-page__notice" role="status">
           Płatność została przerwana. Twój Koszyk czeka, możesz spróbować ponownie.
         </p>
@@ -52,31 +79,38 @@ export function CartPage() {
         </p>
       )}
 
-      {items.length === 0 ? (
-        <>
-          <p className="section__lead">Koszyk jest pusty. Zajrzyj do oferty i wybierz coś dla siebie.</p>
-          <Link className="button button--primary" to={homeSectionPath(homeSections.offer)}>
-            Zobacz ofertę
-          </Link>
-        </>
-      ) : validation.status === 'ok' ? (
-        <>
-          <CheckedCart cart={validation.data} />
-          {validation.data.isValid ? (
+      <div className="cart-layout">
+        <div className="cart-layout__main">
+          <div className="cart-panel">
+            <h2 className="cart-panel__title">Produkty</h2>
+            {cart ? <CheckedCartLines cart={cart} /> : <UncheckedCartLines items={items} />}
+          </div>
+          {cart?.isValid && (
             <CheckoutForm
-              cart={validation.data}
-              onCartChanged={() => {
-                setCartChanged(true)
-                setRevision((r) => r + 1)
-              }}
+              id={checkoutFormId}
+              consents={cart.requiredConsents}
+              status={checkout.status}
+              onSubmit={(event) => void checkout.submit(event, cart)}
             />
-          ) : (
-            <p className="cart-page__status">Usuń z Koszyka pozycje z błędami, żeby przejść do płatności.</p>
           )}
-        </>
-      ) : (
-        <UncheckedCart items={items} checking={validation.status === 'loading'} />
-      )}
+        </div>
+
+        <CartSummary
+          count={cart ? cart.items.length : items.length}
+          total={cart ? cart.total : items.reduce((sum, item) => sum + item.price, 0)}
+          payable={cart?.isValid ?? false}
+          sending={checkout.status.state === 'sending'}
+          message={
+            validation.status === 'loading'
+              ? 'Sprawdzam aktualne ceny…'
+              : validation.status === 'error'
+                ? 'Nie udało się sprawdzić aktualnych cen. Pokazuję ceny z chwili dodania; sprawdzę je ponownie przed płatnością.'
+                : !validation.data.isValid
+                  ? 'Usuń z Koszyka pozycje z błędami, żeby przejść do płatności.'
+                  : checkoutStatusMessage(checkout.status)
+          }
+        />
+      </div>
     </section>
   )
 }
@@ -105,78 +139,100 @@ function useCartValidation(items: CartItem[], revision: number): Validation {
   return state.items === items && state.revision === revision ? state.result : { status: 'loading' }
 }
 
-function CheckedCart({ cart }: { cart: CartValidation }) {
-  return (
-    <>
-      <ul className="cart-lines">
-        {cart.items.map((line, index) => (
-          <li key={index} className="cart-line">
-            <CartLineImage slug={line.slug} linked={line.name !== null} />
-            <div className="cart-line__product">
-              {line.name ? (
-                <Link to={productPath(line.slug)}>{line.name}</Link>
-              ) : (
-                <span>Produkt niedostępny</span>
-              )}
-              {line.kind && <span className="cart-line__kind">{kindLabels[line.kind]}</span>}
-              {line.errors.map((error) => (
-                <span key={error.code} className="cart-line__error" role="alert">
-                  {error.message}
-                </span>
-              ))}
-            </div>
-            <div className="cart-line__price">
-              {line.previousPrice !== null && line.price !== null && (
-                <>
-                  <s aria-label={`Cena przy dodaniu ${formatPrice(line.previousPrice)}`}>
-                    {formatPrice(line.previousPrice)}
-                  </s>
-                  <span className="cart-line__note">Cena zmieniła się od dodania do Koszyka</span>
-                </>
-              )}
-              {line.price !== null && <strong>{formatPrice(line.price)}</strong>}
-            </div>
-            <RemoveButton index={index} name={line.name ?? line.slug} />
-          </li>
-        ))}
-      </ul>
+type CartSummaryProps = {
+  count: number
+  total: number
+  /** Koszyk jest sprawdzony i bez błędów, więc można przejść do płatności. */
+  payable: boolean
+  sending: boolean
+  /** Stan Koszyka albo wynik próby płatności, pokazywany pod przyciskiem. */
+  message: string | null
+}
 
-      <p className="cart-total">
-        <span>Suma</span>
-        <strong>{formatPrice(cart.total)}</strong>
+/** Podsumowanie obok Produktów (na telefonie pod nimi): suma do zapłaty i przejście do płatności. */
+function CartSummary({ count, total, payable, sending, message }: CartSummaryProps) {
+  return (
+    <aside className="cart-summary" aria-labelledby="cart-summary-title">
+      <h2 id="cart-summary-title">Podsumowanie</h2>
+      <dl className="cart-summary__rows">
+        <div>
+          <dt>Wartość produktów ({count})</dt>
+          <dd>{formatPrice(total)}</dd>
+        </div>
+      </dl>
+      <p className="cart-summary__total">
+        <span>Do zapłaty</span>
+        <strong>{formatPrice(total)}</strong>
       </p>
-    </>
+      <button
+        className="button button--primary cart-summary__pay"
+        type="submit"
+        form={checkoutFormId}
+        disabled={!payable || sending}
+      >
+        {sending ? 'Przechodzę do płatności…' : 'Przejdź do płatności'}
+        <img src={arrowPrimary} width={16} height={16} alt="" />
+      </button>
+      <p className="cart-summary__note">BLIK, Przelewy24 albo karta. Płatność obsługuje Stripe.</p>
+      {message && (
+        <p className="cart-summary__message" role="status">
+          {message}
+        </p>
+      )}
+    </aside>
   )
 }
 
-/** Koszyk z cenami z chwili dodania, gdy nie udało się go sprawdzić na serwerze. */
-function UncheckedCart({ items, checking }: { items: CartItem[]; checking: boolean }) {
+function CheckedCartLines({ cart }: { cart: CartValidation }) {
   return (
-    <>
-      <ul className="cart-lines">
-        {items.map((item, index) => (
-          <li key={index} className="cart-line">
-            <CartLineImage slug={item.slug} linked />
-            <div className="cart-line__product">
-              <Link to={productPath(item.slug)}>{item.name}</Link>
-            </div>
-            <div className="cart-line__price">
-              <strong>{formatPrice(item.price)}</strong>
-            </div>
-            <RemoveButton index={index} name={item.name} />
-          </li>
-        ))}
-      </ul>
-      <p className="cart-total">
-        <span>Suma</span>
-        <strong>{formatPrice(items.reduce((sum, item) => sum + item.price, 0))}</strong>
-      </p>
-      <p className="cart-page__status" role="status">
-        {checking
-          ? 'Sprawdzam aktualne ceny…'
-          : 'Nie udało się sprawdzić aktualnych cen. Pokazuję ceny z chwili dodania; sprawdzę je ponownie przed płatnością.'}
-      </p>
-    </>
+    <ul className="cart-lines">
+      {cart.items.map((line, index) => (
+        <li key={index} className="cart-line">
+          <CartLineImage slug={line.slug} linked={line.name !== null} />
+          <div className="cart-line__product">
+            {line.name ? <Link to={productPath(line.slug)}>{line.name}</Link> : <span>Produkt niedostępny</span>}
+            {line.kind && <span className="cart-line__kind">{kindLabels[line.kind]}</span>}
+            {line.errors.map((error) => (
+              <span key={error.code} className="cart-line__error" role="alert">
+                {error.message}
+              </span>
+            ))}
+          </div>
+          <div className="cart-line__price">
+            {line.previousPrice !== null && line.price !== null && (
+              <>
+                <s aria-label={`Cena przy dodaniu ${formatPrice(line.previousPrice)}`}>
+                  {formatPrice(line.previousPrice)}
+                </s>
+                <span className="cart-line__note">Cena zmieniła się od dodania do Koszyka</span>
+              </>
+            )}
+            {line.price !== null && <strong>{formatPrice(line.price)}</strong>}
+          </div>
+          <RemoveButton index={index} name={line.name ?? line.slug} />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Pozycje z cenami z chwili dodania, gdy Koszyk nie jest (jeszcze) sprawdzony na serwerze. */
+function UncheckedCartLines({ items }: { items: CartItem[] }) {
+  return (
+    <ul className="cart-lines">
+      {items.map((item, index) => (
+        <li key={index} className="cart-line">
+          <CartLineImage slug={item.slug} linked />
+          <div className="cart-line__product">
+            <Link to={productPath(item.slug)}>{item.name}</Link>
+          </div>
+          <div className="cart-line__price">
+            <strong>{formatPrice(item.price)}</strong>
+          </div>
+          <RemoveButton index={index} name={item.name} />
+        </li>
+      ))}
+    </ul>
   )
 }
 

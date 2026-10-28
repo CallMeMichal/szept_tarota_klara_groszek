@@ -6,9 +6,6 @@ import arrowPrimary from '../assets/home/arrow-up-right-primary.svg'
 import globeIcon from '../assets/home/globe.svg'
 import heroTarot from '../assets/home/hero-tarot.jpg'
 import intuitionSeal from '../assets/home/intuition-seal.svg'
-import moonStarLarge from '../assets/home/moon-star-large.svg'
-import orbitInner from '../assets/home/orbit-inner.svg'
-import orbitOuter from '../assets/home/orbit-outer.svg'
 import orbit from '../assets/home/orbit.svg'
 import plusIcon from '../assets/home/plus.svg'
 import { ContactForm } from '../components/ContactForm.tsx'
@@ -80,7 +77,6 @@ export function HomePage({ section }: HomePageProps) {
       <section id={homeSections.start} className="hero" aria-labelledby="start-title">
         <div className="hero__inner">
           <div className="hero__intro">
-            <p className="hero__eyebrow">{hero.eyebrow}</p>
             <h1 id="start-title">
               {hero.titleLines.map((line) => (
                 <span key={line}>{line}</span>
@@ -132,7 +128,6 @@ export function HomePage({ section }: HomePageProps) {
           </figure>
 
           <div className="about__story">
-            <p className="about__eyebrow">{about.eyebrow}</p>
             <h2 id="o-mnie-title">
               {about.titleLines.map((line) => (
                 <span key={line}>{line}</span>
@@ -196,7 +191,6 @@ export function HomePage({ section }: HomePageProps) {
       <section id={homeSections.contact} className="contact" aria-labelledby="kontakt-title">
         <div className="contact__card">
           <div className="contact__invite">
-            <p className="section-eyebrow">{contact.eyebrow}</p>
             <h2 id="kontakt-title">
               {contact.titleLines.map((line) => (
                 <span key={line}>{line}</span>
@@ -216,15 +210,6 @@ export function HomePage({ section }: HomePageProps) {
                 </a>
               }
             />
-          </div>
-
-          <div className="contact__constellation" aria-hidden="true">
-            <img className="contact__orbit contact__orbit--outer" src={orbitOuter} width={340} height={340} alt="" />
-            <img className="contact__orbit contact__orbit--inner" src={orbitInner} width={274} height={274} alt="" />
-            <span className="contact__star contact__star--large" />
-            <span className="contact__star contact__star--small" />
-            <img className="contact__moon" src={moonStarLarge} width={86} height={86} alt="" />
-            <p className="contact__thought">{contact.closingThought}</p>
           </div>
         </div>
       </section>

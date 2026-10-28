@@ -30,7 +30,7 @@ public static class OrderEndpoints
                 var command = new CheckoutCommand(
                     request.Items.Select(i => new CartItem(i!.Slug!, i.Price)).ToList(),
                     request.Email,
-                    request.Billing is { } b ? new BillingInput(b.Name, b.Street, b.PostalCode, b.City, b.TaxId) : null,
+                    request.Name,
                     (request.AcceptedConsents ?? []).OfType<string>().ToHashSet());
 
                 try
@@ -98,14 +98,12 @@ public static class OrderEndpoints
     }
 }
 
-/// <summary>Formularz płatności: Koszyk z cenami, które Klient widział, e-mail, dane do faktury i klucze zaakceptowanych zgód.</summary>
+/// <summary>Formularz płatności: Koszyk z cenami, które Klient widział, e-mail, imię i nazwisko i klucze zaakceptowanych zgód.</summary>
 public sealed record CheckoutRequest(
     IReadOnlyList<CartItemRequest?>? Items,
     string? Email,
-    BillingRequest? Billing,
+    string? Name,
     IReadOnlyList<string?>? AcceptedConsents);
-
-public sealed record BillingRequest(string? Name, string? Street, string? PostalCode, string? City, string? TaxId);
 
 /// <summary>Zamówienie czeka na płatność; przeglądarka przechodzi na <see cref="RedirectUrl"/> (Stripe Checkout).</summary>
 public sealed record CheckoutStartedResponse(Guid OrderId, Uri RedirectUrl);

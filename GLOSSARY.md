@@ -1,6 +1,6 @@
 # Szept Tarota
 
-Strona marki Szept Tarota prowadzonej przez Klarę Groszek: prezentuje ją i jej pracę oraz sprzedaje jej Produkty bezpośrednio, bez pośredników.
+Strona marki Szept Tarota prowadzonej przez Klarę: prezentuje ją i jej pracę oraz sprzedaje jej Produkty bezpośrednio, bez pośredników.
 
 ## Ludzie i marka
 
@@ -9,7 +9,7 @@ Marka, pod którą występuje Klara; główna nazwa na stronie.
 _Avoid_: szept_tarota (to tylko nazwa konta na IG)
 
 **Klara**:
-Klara Groszek, tarocistka i właścicielka marki; sprzedawca wszystkich Produktów.
+Tarocistka i właścicielka marki; sprzedawca wszystkich Produktów.
 _Avoid_: autorka, admin, właścicielka sklepu
 
 ## Oferta
