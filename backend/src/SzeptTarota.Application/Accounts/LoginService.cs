@@ -7,8 +7,9 @@ using SzeptTarota.Domain.Accounts;
 namespace SzeptTarota.Application.Accounts;
 
 /// <summary>
-/// Logowanie bez hasła (ADR 0003): Klient podaje e-mail, dostaje na niego jednorazowy kod i wpisuje go na stronie.
-/// Konto zakłada się przy pierwszym poprawnym kodzie, więc samo poproszenie o kod na cudzy adres niczego nie tworzy.
+/// Logowanie bez hasła (ADR 0003): Klient podaje e-mail, dostaje na niego jednorazowy kod i wpisuje go na stronie,
+/// albo loguje się przez Google. Konto zakłada się przy pierwszym poprawnym kodzie (więc samo poproszenie o kod na cudzy
+/// adres niczego nie tworzy) albo pierwszym logowaniu przez Google; oba sposoby prowadzą do jednego Konta na adres.
 /// </summary>
 public sealed class LoginService(IAccountStore accounts, IEmailSender emails, TimeProvider time)
 {
@@ -82,6 +83,16 @@ public sealed class LoginService(IAccountStore accounts, IEmailSender emails, Ti
             ? await accounts.GetOrCreateAsync(address, now, cancellationToken)
             : null;
     }
+
+    /// <summary>
+    /// Konto, do którego loguje konto Google z adresem <paramref name="email"/>: to samo, co przy logowaniu Kodem
+    /// logowania na ten adres, albo nowe. <c>null</c>, gdy Google nie potwierdził adresu, bo wtedy ktoś mógłby
+    /// wejść na cudze Konto, wpisując w Google cudzy e-mail.
+    /// </summary>
+    public async Task<Account?> LogInWithGoogleAsync(string? email, bool emailVerified, CancellationToken cancellationToken) =>
+        emailVerified && NormalizeEmail(email) is { } address
+            ? await accounts.GetOrCreateAsync(address, time.GetUtcNow(), cancellationToken)
+            : null;
 
     /// <summary>Poprawny adres małymi literami, bez spacji wokół; <c>null</c> dla niepoprawnego.</summary>
     private static string? NormalizeEmail(string? email)

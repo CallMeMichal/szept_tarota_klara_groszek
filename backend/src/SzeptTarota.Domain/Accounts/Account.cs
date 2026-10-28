@@ -1,8 +1,9 @@
 namespace SzeptTarota.Domain.Accounts;
 
 /// <summary>
-/// Konto Klienta: tożsamość, pod którą widzi swoje Zamówienia. Konto nie ma hasła: Klient loguje się linkiem
-/// wysłanym na <see cref="Email"/>, więc samo zalogowanie potwierdza, że adres jest jego (ADR 0003).
+/// Konto Klienta: tożsamość, pod którą widzi swoje Zamówienia. Konto nie ma hasła: Klient loguje się Kodem logowania
+/// wysłanym na <see cref="Email"/> albo przez Google z tym samym, potwierdzonym w Google adresem, więc samo zalogowanie
+/// potwierdza, że adres jest jego (ADR 0003).
 /// </summary>
 public sealed class Account
 {

@@ -28,7 +28,7 @@ builder.Services.AddEbookStorage(
     builder.Configuration["EbookStorage:Directory"] ?? Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
 builder.Services.AddContactRateLimiting(builder.Configuration);
 builder.Services.AddLoginRateLimiting(builder.Configuration);
-builder.Services.AddAccountAuthentication();
+builder.Services.AddAccountAuthentication(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 
@@ -42,6 +42,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseSiteAddressForGoogleLogin();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();

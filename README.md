@@ -52,6 +52,8 @@ Konto nie ma hasła (ADR 0003). Na `/logowanie` Klient podaje e-mail, a `POST /a
 
 Jeden adres IP może poprosić o 5 kodów na 10 minut (`Account:LoginCodeRateLimit:PermitLimit`, `Account:LoginCodeRateLimit:WindowMinutes`), a na jeden adres e-mail wychodzą najwyżej 3 kody na 15 minut. Prób logowania z jednego IP może być 20 na 10 minut (`Account:LoginRateLimit:PermitLimit`, `Account:LoginRateLimit:WindowMinutes`), a każdy kod ma najwyżej 5 prób, liczonych atomowo przed sprawdzeniem kodu. Dopóki brakuje `Resend:ApiKey`, prośba o kod odpowiada 503. Lokalnie kod przychodzi więc tylko z kluczem Resend i tylko na adres właściciela konta Resend (domena testowa).
 
+Logowanie przez Google: przycisk „Zaloguj przez Google” na `/logowanie` przechodzi na `GET /api/account/google?returnUrl=<ścieżka>`, API odsyła przeglądarkę do Google, a po powrocie na `/api/account/google/callback` loguje do Konta o adresie z Google (małymi literami; to samo Konto co przy logowaniu Kodem logowania, a przy pierwszym logowaniu nowe) i przekierowuje na `returnUrl` (tylko ścieżki tej strony, domyślnie `/konto`). Konto Google bez potwierdzonego adresu, anulowanie w Google i brak kluczy kończą się powrotem na `/logowanie?google=nieudane` (z `dalej`). Klucze są poza repo, jak inne sekrety: `Google:ClientId` i `Google:ClientSecret` (klient OAuth typu „Aplikacja internetowa” w Google Cloud Console); bez nich Google nie jest w ogóle rejestrowany. W kliencie OAuth trzeba dodać adres powrotu `<adres strony>/api/account/google/callback` (lokalnie `http://localhost:5173/api/account/google/callback`, przez proxy Vite). API buduje ten adres z `Shop:SiteUrl`, a nie z adresu zapytania, bo stoi za proxy (Vite, na hostingu proxy kończące TLS) i widziałoby swój wewnętrzny adres.
+
 Klucze, którymi ASP.NET szyfruje ciasteczko sesji (Data Protection), są domyślnie w profilu użytkownika serwera; na hostingu trzeba je trwale przechowywać, inaczej każdy restart wyloguje Klientów.
 
 ### Zakup i płatności (Stripe Checkout)
@@ -68,6 +70,8 @@ dotnet user-secrets set "Stripe:SecretKey" "sk_test_..."
 dotnet user-secrets set "Stripe:WebhookSecret" "whsec_..."   # z `stripe listen`, patrz niżej
 dotnet user-secrets set "Resend:ApiKey" "re_..."
 dotnet user-secrets set "Shop:KlaraEmail" "adres@klary"
+dotnet user-secrets set "Google:ClientId" "....apps.googleusercontent.com"
+dotnet user-secrets set "Google:ClientSecret" "GOCSPX-..."
 ```
 
 - `Shop:SiteUrl`: adres frontendu, na który Stripe odsyła Klienta (w Development `http://localhost:5173`).
@@ -120,7 +124,7 @@ Ciasteczko sesji ma datę ważności liczoną z `FakeTimeProvider`, więc wg pra
 
 ### Fake'i adapterów zewnętrznych
 
-Każda zewnętrzna usługa (płatności, kalendarz, maile, pliki) jest za interfejsem z Application; czas to systemowy `TimeProvider`. Obecnie: `FakePaymentGateway` (`factory.Payments`, zapisuje sesje i buduje podpisane webhooki), `FakeEmailSender` (`factory.Emails`; `LoggedInClient` loguje Kodem logowania z jego maila), `FakeEbookStorage` i `FakeContactMailer`. W testach podmieniamy je zawsze tak samo (pierwszy przykład w `ApiFactory`: `TimeProvider` → `FakeTimeProvider`):
+Każda zewnętrzna usługa (płatności, kalendarz, maile, pliki) jest za interfejsem z Application; czas to systemowy `TimeProvider`. Logowanie przez Google to handler ASP.NET, a nie interfejs z Application, więc `FakeGoogle` (`factory.Google`) podmienia tylko jego połączenie z serwerami Google (`BackchannelHttpHandler`); `client.LogInWithGoogle(factory.Google, email)` przechodzi całe przekierowanie jak przeglądarka. Obecnie: `FakePaymentGateway` (`factory.Payments`, zapisuje sesje i buduje podpisane webhooki), `FakeEmailSender` (`factory.Emails`; `LoggedInClient` loguje Kodem logowania z jego maila), `FakeEbookStorage` i `FakeContactMailer`. W testach podmieniamy je zawsze tak samo (pierwszy przykład w `ApiFactory`: `TimeProvider` → `FakeTimeProvider`):
 
 1. Fake w `tests/SzeptTarota.Api.Tests/Fakes/`, implementuje interfejs i trzyma stan w pamięci (np. lista wysłanych maili).
 2. Publiczna właściwość w `ApiFactory`, np. `public FakeEmailSender Emails { get; } = new();`.

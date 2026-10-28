@@ -1,6 +1,6 @@
 // Konto Klienta (AccountEndpoints.cs). Nie ma haseł: Klient podaje e-mail, dostaje
-// na niego jednorazowy kod i wpisuje go na stronie logowania, a API ustawia
-// ciasteczko sesji. Stan logowania trzymamy w jednym miejscu, żeby nagłówek,
+// na niego jednorazowy kod i wpisuje go na stronie logowania, albo loguje się przez
+// Google, a API ustawia ciasteczko sesji. Stan logowania trzymamy w jednym miejscu, żeby nagłówek,
 // Koszyk i Konto widziały to samo i odświeżały się razem po zalogowaniu i wylogowaniu.
 
 import { useSyncExternalStore } from 'react'
@@ -25,6 +25,13 @@ export function localPathOrNull(path: string | null | undefined): string | null 
 
 /** Logowanie z powrotem na `returnTo`, np. do Koszyka. */
 export const loginPathFor = (returnTo: string) => `${loginPath}?dalej=${encodeURIComponent(returnTo)}`
+
+/**
+ * Adres, pod który przeglądarka przechodzi, żeby zalogować się przez Google. API odsyła ją do Google, a po
+ * powrocie na `returnTo` (bez niego do Konta); gdy się nie uda, na stronę logowania z `?google=nieudane`.
+ */
+export const googleLoginUrl = (returnTo: string | null) =>
+  returnTo ? `/api/account/google?returnUrl=${encodeURIComponent(returnTo)}` : '/api/account/google'
 
 let session: Session = { status: 'loading' }
 let loaded = false

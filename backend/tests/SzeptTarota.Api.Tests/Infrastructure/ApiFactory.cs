@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 using SzeptTarota.Api.Tests.Fakes;
 using SzeptTarota.Application.Contact;
@@ -30,6 +32,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public FakeEbookStorage Ebooks { get; } = new();
 
+    public FakeGoogle Google { get; } = new();
+
     public const string SiteUrl = "https://szept-tarota.test";
 
     public const string KlaraEmail = "klara@szept-tarota.test";
@@ -46,9 +50,14 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Account:LoginRateLimit:PermitLimit", "1000");
         builder.UseSetting("Shop:SiteUrl", SiteUrl);
         builder.UseSetting("Shop:KlaraEmail", KlaraEmail);
+        builder.UseSetting("Google:ClientId", "test-client-id.apps.googleusercontent.com");
+        builder.UseSetting("Google:ClientSecret", "test-client-secret");
 
         builder.ConfigureTestServices(services =>
         {
+            // Logowanie przez Google to handler ASP.NET, nie interfejs z Application, więc podmieniamy mu tylko
+            // połączenie z serwerami Google.
+            services.Configure<GoogleOptions>(GoogleDefaults.AuthenticationScheme, options => options.BackchannelHttpHandler = Google);
             services.ReplaceWithFake<TimeProvider>(Time);
             services.ReplaceWithFake<IContactMailer>(ContactMailer);
             services.ReplaceWithFake<IPaymentGateway>(Payments);

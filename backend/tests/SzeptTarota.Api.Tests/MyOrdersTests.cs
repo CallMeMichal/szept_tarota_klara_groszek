@@ -127,6 +127,34 @@ public class MyOrdersTests : IAsyncLifetime
         Assert.Equal([order], (await MyOrders(secondVisit)).Select(o => o.Id));
     }
 
+    [Fact]
+    public async Task Logging_in_with_Google_on_the_same_email_shows_the_Orders_bought_after_logging_in_with_a_code()
+    {
+        var email = NewEmail();
+        var withCode = await _api.LoggedInClient(_factory.Emails, email);
+        var order = await Buy(withCode, FakeProductCatalog.EbookSlug, 4900);
+        await Pay(order);
+
+        var withGoogle = _api.CreateBrowser();
+        await withGoogle.LogInWithGoogle(_factory.Google, email.ToUpperInvariant());
+
+        Assert.Equal([order], (await MyOrders(withGoogle)).Select(o => o.Id));
+    }
+
+    [Fact]
+    public async Task Logging_in_with_a_code_on_the_same_email_shows_the_Orders_bought_after_logging_in_with_Google()
+    {
+        var email = NewEmail();
+        var withGoogle = _api.CreateBrowser();
+        await withGoogle.LogInWithGoogle(_factory.Google, email);
+        var order = await Buy(withGoogle, FakeProductCatalog.EbookSlug, 4900);
+        await Pay(order);
+
+        var withCode = await _api.LoggedInClient(_factory.Emails, email);
+
+        Assert.Equal([order], (await MyOrders(withCode)).Select(o => o.Id));
+    }
+
     private static string NewEmail() => $"klient-{Guid.NewGuid():N}@example.com";
 
     private static object Checkout(string slug, int price, int quantity = 1, string email = "anna@example.com") => new

@@ -1,9 +1,13 @@
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
+using SzeptTarota.Application;
 using SzeptTarota.Api.Orders;
 using SzeptTarota.Application.Accounts;
 using SzeptTarota.Application.Email;
@@ -18,13 +22,23 @@ public static class AccountEndpoints
     private const string LoginCodeRateLimitPolicy = "login-code";
     private const string LoginRateLimitPolicy = "login";
 
+    /// <summary>Strona frontendu, na którą Klient wraca po zalogowaniu, gdy nie wskazał innej.</summary>
+    private const string AccountPagePath = "/konto";
+
+    /// <summary>Strona logowania frontendu (<c>loginPath</c>); <c>dalej</c> to powrót po zalogowaniu.</summary>
+    private const string LoginPagePath = "/logowanie";
+
+    /// <summary>Czy Google potwierdził adres; bez tego logowanie przez Google nie wchodzi na Konto.</summary>
+    private const string EmailVerifiedClaim = "email_verified";
+
     /// <summary>
     /// Sesja Klienta w ciasteczku (frontend i API pod jednym originem). Endpointy wymagające logowania
     /// odpowiadają 401 zamiast przekierowania na stronę logowania, bo pytają je zapytania z frontendu.
+    /// Logowanie przez Google działa, gdy w konfiguracji są <c>Google:ClientId</c> i <c>Google:ClientSecret</c>.
     /// </summary>
-    public static IServiceCollection AddAccountAuthentication(this IServiceCollection services)
+    public static IServiceCollection AddAccountAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+        var authentication = services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(options =>
             {
                 options.Cookie.Name = "szept-tarota-konto";
@@ -41,9 +55,93 @@ public static class AccountEndpoints
                     return Task.CompletedTask;
                 };
             });
+
+        // Bez kluczy nie rejestrujemy Google wcale: handler z pustym ClientId psułby każde zapytanie.
+        var google = configuration.GetSection("Google");
+        if (!string.IsNullOrEmpty(google["ClientId"]) && !string.IsNullOrEmpty(google["ClientSecret"]))
+        {
+            authentication.AddGoogle(options =>
+            {
+                options.ClientId = google["ClientId"]!;
+                options.ClientSecret = google["ClientSecret"]!;
+                // Pod /api, żeby powrót z Google trafił przez proxy frontendu do API.
+                options.CallbackPath = "/api/account/google/callback";
+                options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.ClaimActions.MapCustomJson(EmailVerifiedClaim, user =>
+                    user.TryGetProperty("email_verified", out var verified) && verified.ValueKind == JsonValueKind.True
+                        ? "true"
+                        : null);
+                options.Events.OnTicketReceived = LogInWithGoogleAsync;
+                options.Events.OnRemoteFailure = context =>
+                {
+                    // Np. Klient anulował logowanie w Google.
+                    context.Response.Redirect(GoogleLoginFailedPath(context.Properties?.RedirectUri));
+                    context.HandleResponse();
+                    return Task.CompletedTask;
+                };
+            });
+        }
+
         services.AddAuthorization();
         return services;
     }
+
+    /// <summary>
+    /// Adres powrotu z Google (redirect_uri) handler buduje z adresu zapytania, a API stoi za proxy frontendu
+    /// (lokalnie Vite, na hostingu proxy kończące TLS), więc widziałby swój wewnętrzny adres. Dla ścieżek logowania
+    /// przez Google podstawiamy adres strony z <c>Shop:SiteUrl</c>: Google odsyła Klienta na stronę, a wymiana kodu
+    /// podaje ten sam adres. Musi stać przed <c>UseAuthentication</c>.
+    /// </summary>
+    public static IApplicationBuilder UseSiteAddressForGoogleLogin(this IApplicationBuilder app) =>
+        app.Use((context, next) =>
+        {
+            var siteUrl = context.RequestServices.GetRequiredService<IOptions<ShopOptions>>().Value.SiteUrl;
+            if (context.Request.Path.StartsWithSegments("/api/account/google")
+                && Uri.TryCreate(siteUrl, UriKind.Absolute, out var site))
+            {
+                context.Request.Scheme = site.Scheme;
+                // Authority pomija domyślny port, więc adres zgadza się z tym wpisanym w Google.
+                context.Request.Host = new HostString(site.Authority);
+            }
+
+            return next(context);
+        });
+
+    /// <summary>
+    /// Zamienia tożsamość z Google na Konto o tym samym adresie, więc ciasteczko sesji jest takie samo jak po
+    /// logowaniu Kodem logowania. Bez potwierdzonego w Google adresu Klient wraca na stronę logowania.
+    /// </summary>
+    private static async Task LogInWithGoogleAsync(TicketReceivedContext context)
+    {
+        var login = context.HttpContext.RequestServices.GetRequiredService<LoginService>();
+        if (await login.LogInWithGoogleAsync(
+                context.Principal?.FindFirstValue(ClaimTypes.Email),
+                context.Principal?.HasClaim(EmailVerifiedClaim, "true") == true,
+                context.HttpContext.RequestAborted) is not { } account)
+        {
+            context.Response.Redirect(GoogleLoginFailedPath(context.ReturnUri));
+            context.HandleResponse();
+            return;
+        }
+
+        context.Principal = Principal(account);
+    }
+
+    /// <summary>Strona logowania z komunikatem o nieudanym logowaniu przez Google i tym samym powrotem.</summary>
+    private static string GoogleLoginFailedPath(string? returnUrl) =>
+        LocalPathOrNull(returnUrl) is { } path && path != AccountPagePath
+            ? $"{LoginPagePath}?google=nieudane&dalej={Uri.EscapeDataString(path)}"
+            : $"{LoginPagePath}?google=nieudane";
+
+    /// <summary>
+    /// Ścieżka na tej stronie (np. <c>/koszyk</c>) albo <c>null</c>, żeby powrót po logowaniu nie wyprowadził Klienta
+    /// na cudzą stronę; te same zasady co <c>localPathOrNull</c> we frontendzie.
+    /// </summary>
+    private static string? LocalPathOrNull(string? path) =>
+        path is { Length: > 0 and <= 200 } && path.StartsWith('/') && !path.StartsWith("//")
+        && !path.Contains('\\') && !path.Any(char.IsControl)
+            ? path
+            : null;
 
     /// <summary>
     /// Limity z jednego adresu IP: prośby o kod (domyślnie 5 na 10 minut, <c>Account:LoginCodeRateLimit</c>), żeby nikt
@@ -111,6 +209,22 @@ public static class AccountEndpoints
             })
             .RequireRateLimiting(LoginRateLimitPolicy)
             .WithName("LogIn");
+
+        // Przeglądarka przechodzi tu z przycisku „Zaloguj przez Google”; API odsyła ją do Google, a po powrocie
+        // (CallbackPath) loguje do Konta i przekierowuje na returnUrl, domyślnie do Konta.
+        account.MapGet("/google", async Task<Results<ChallengeHttpResult, RedirectHttpResult>> (
+                string? returnUrl,
+                IAuthenticationSchemeProvider schemes) =>
+                await schemes.GetSchemeAsync(GoogleDefaults.AuthenticationScheme) is null
+                    ? TypedResults.Redirect(GoogleLoginFailedPath(returnUrl))
+                    : TypedResults.Challenge(
+                        new AuthenticationProperties
+                        {
+                            RedirectUri = LocalPathOrNull(returnUrl) ?? AccountPagePath,
+                            IsPersistent = true,
+                        },
+                        [GoogleDefaults.AuthenticationScheme]))
+            .WithName("LogInWithGoogle");
 
         account.MapPost("/logout", async (HttpContext context) =>
             {
