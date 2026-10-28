@@ -1,6 +1,6 @@
 // Konto Klienta (AccountEndpoints.cs). Nie ma haseł: Klient podaje e-mail, dostaje
-// jednorazowy link logowania, a strona pod tym linkiem wysyła token do API, które
-// ustawia ciasteczko sesji. Stan logowania trzymamy w jednym miejscu, żeby nagłówek,
+// na niego jednorazowy kod i wpisuje go na stronie logowania, a API ustawia
+// ciasteczko sesji. Stan logowania trzymamy w jednym miejscu, żeby nagłówek,
 // Koszyk i Konto widziały to samo i odświeżały się razem po zalogowaniu i wylogowaniu.
 
 import { useSyncExternalStore } from 'react'
@@ -14,14 +14,9 @@ export type Session =
   | { status: 'unavailable' }
 
 export const loginPath = '/logowanie'
-/** Strona, na którą prowadzi link z maila (LoginService.cs). */
-export const loginLinkPath = '/logowanie/link'
 export const accountPath = '/konto'
 
-/**
- * Ścieżka tej strony (np. `/koszyk`) albo `null`, gdy to adres innej strony; ta sama zasada co
- * w LoginService.cs, żeby `dalej` z adresu nie wyprowadził Klienta poza stronę.
- */
+/** Ścieżka tej strony (np. `/koszyk`) albo `null`, gdy to adres innej strony, żeby `dalej` z adresu nie wyprowadził Klienta poza stronę. */
 export function localPathOrNull(path: string | null | undefined): string | null {
   if (!path || path.length > 200 || !path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return null
   // oxlint-disable-next-line no-control-regex -- właśnie znaków sterujących szukamy
@@ -68,20 +63,20 @@ export function useSession(): Session {
   return useSyncExternalStore(subscribe, () => session)
 }
 
-export type LoginLinkResult =
+export type LoginCodeResult =
   | { status: 'sent' }
   | { status: 'invalid'; errors: Record<string, string[]> }
   | { status: 'too-many' }
   | { status: 'unavailable' }
   | { status: 'error' }
 
-/** Prosi o link logowania na `email`; po zalogowaniu Klient wróci na `returnTo`. */
-export async function requestLoginLink(email: string, returnTo: string | null): Promise<LoginLinkResult> {
+/** Prosi o kod logowania na `email`. */
+export async function requestLoginCode(email: string): Promise<LoginCodeResult> {
   try {
-    const response = await fetch('/api/account/login-link', {
+    const response = await fetch('/api/account/login-code', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ email, returnTo }),
+      body: JSON.stringify({ email }),
     })
     if (response.status === 202) return { status: 'sent' }
     if (response.status === 400 && response.headers.get('Content-Type')?.includes('json')) {
@@ -96,23 +91,22 @@ export async function requestLoginLink(email: string, returnTo: string | null): 
   }
 }
 
-export type LogInResult = { status: 'logged-in'; returnTo: string | null } | { status: 'invalid-link' } | { status: 'error' }
+export type LogInResult = 'logged-in' | 'invalid-code' | 'error'
 
-/** Loguje tokenem z linku; link działa raz i przez 15 minut. */
-export async function logIn(token: string): Promise<LogInResult> {
+/** Loguje kodem z maila wysłanego na `email`; kod działa raz, przez 15 minut. */
+export async function logIn(email: string, code: string): Promise<LogInResult> {
   try {
     const response = await fetch('/api/account/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ email, code }),
     })
-    if (response.status === 401) return { status: 'invalid-link' }
-    if (!response.ok || !response.headers.get('Content-Type')?.includes('json')) return { status: 'error' }
-    const { email, returnTo } = (await response.json()) as { email: string; returnTo: string | null }
-    setSession({ status: 'logged-in', email })
-    return { status: 'logged-in', returnTo }
+    if (response.status === 401) return 'invalid-code'
+    if (!response.ok || !response.headers.get('Content-Type')?.includes('json')) return 'error'
+    setSession({ status: 'logged-in', email: ((await response.json()) as { email: string }).email })
+    return 'logged-in'
   } catch {
-    return { status: 'error' }
+    return 'error'
   }
 }
 

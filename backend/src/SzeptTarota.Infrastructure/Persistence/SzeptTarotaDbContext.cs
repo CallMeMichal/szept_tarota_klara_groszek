@@ -10,7 +10,7 @@ public sealed class SzeptTarotaDbContext(DbContextOptions<SzeptTarotaDbContext> 
 
     public DbSet<Account> Accounts => Set<Account>();
 
-    public DbSet<LoginLink> LoginLinks => Set<LoginLink>();
+    public DbSet<LoginCode> LoginCodes => Set<LoginCode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,14 +24,14 @@ public sealed class SzeptTarotaDbContext(DbContextOptions<SzeptTarotaDbContext> 
             account.HasIndex(a => a.Email).IsUnique();
         });
 
-        modelBuilder.Entity<LoginLink>(link =>
+        modelBuilder.Entity<LoginCode>(code =>
         {
-            link.ToTable("login_links");
-            link.HasKey(l => l.TokenHash);
-            link.Property(l => l.TokenHash).HasMaxLength(64);
-            link.Property(l => l.Email).HasMaxLength(200);
-            link.Property(l => l.ReturnTo).HasMaxLength(200);
-            link.HasIndex(l => new { l.Email, l.CreatedAt });
+            code.ToTable("login_codes");
+            code.HasKey(c => c.Id);
+            code.Property(c => c.Id).ValueGeneratedNever();
+            code.Property(c => c.Email).HasMaxLength(200);
+            code.Property(c => c.CodeHash).HasMaxLength(64);
+            code.HasIndex(c => new { c.Email, c.CreatedAt });
         });
 
         modelBuilder.Entity<Order>(order =>

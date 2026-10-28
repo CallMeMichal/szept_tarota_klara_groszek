@@ -2,7 +2,7 @@ using SzeptTarota.Domain.Accounts;
 
 namespace SzeptTarota.Application.Accounts;
 
-/// <summary>Konta i linki logowania w bazie.</summary>
+/// <summary>Konta i kody logowania w bazie.</summary>
 public interface IAccountStore
 {
     Task<Account?> FindAsync(Guid id, CancellationToken cancellationToken);
@@ -10,14 +10,20 @@ public interface IAccountStore
     /// <summary>Konto o tym adresie; zakłada je, jeśli jeszcze nie istnieje (także przy dwóch logowaniach naraz).</summary>
     Task<Account> GetOrCreateAsync(string email, DateTimeOffset now, CancellationToken cancellationToken);
 
-    /// <summary>Ile linków logowania wysłano na adres po <paramref name="since"/>.</summary>
-    Task<int> CountLoginLinksSinceAsync(string email, DateTimeOffset since, CancellationToken cancellationToken);
+    /// <summary>Ile kodów logowania wysłano na adres po <paramref name="since"/>.</summary>
+    Task<int> CountLoginCodesSinceAsync(string email, DateTimeOffset since, CancellationToken cancellationToken);
 
-    Task AddLoginLinkAsync(LoginLink link, CancellationToken cancellationToken);
+    Task AddLoginCodeAsync(LoginCode code, CancellationToken cancellationToken);
+
+    /// <summary>Najnowszy kod wysłany na adres, o ile nie był jeszcze użyty i nie wygasł.</summary>
+    Task<LoginCode?> FindNewestActiveLoginCodeAsync(string email, DateTimeOffset now, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Oznacza link jako użyty i go zwraca, o ile nie był jeszcze użyty i nie wygasł. Atomowo, więc
-    /// dwa równoczesne kliknięcia tego samego linku logują najwyżej raz.
+    /// Oznacza kod jako użyty, o ile nie był jeszcze użyty i ma mniej niż <paramref name="maxFailedAttempts"/> błędnych
+    /// prób. Atomowo, więc dwa równoczesne wpisania tego samego kodu logują najwyżej raz.
     /// </summary>
-    Task<LoginLink?> UseLoginLinkAsync(string tokenHash, DateTimeOffset now, CancellationToken cancellationToken);
+    Task<bool> UseLoginCodeAsync(Guid id, int maxFailedAttempts, DateTimeOffset now, CancellationToken cancellationToken);
+
+    /// <summary>Dolicza błędną próbę wpisania kodu.</summary>
+    Task AddFailedLoginAttemptAsync(Guid id, CancellationToken cancellationToken);
 }

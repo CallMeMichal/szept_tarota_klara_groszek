@@ -40,9 +40,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("ConnectionStrings:Database", _database.GetConnectionString());
         builder.UseSetting("Database:ApplyMigrationsOnStartup", "true");
         // Wszystkie zapytania z testów idą z jednego „adresu”, więc limity formularza
-        // kontaktowego i linków logowania podnosimy; testy limitów ustawiają własne.
+        // kontaktowego i kodów logowania podnosimy; testy limitów ustawiają własne.
         builder.UseSetting("Contact:RateLimit:PermitLimit", "1000");
-        builder.UseSetting("Account:LoginLinkRateLimit:PermitLimit", "1000");
+        builder.UseSetting("Account:LoginCodeRateLimit:PermitLimit", "1000");
         builder.UseSetting("Shop:SiteUrl", SiteUrl);
         builder.UseSetting("Shop:KlaraEmail", KlaraEmail);
 

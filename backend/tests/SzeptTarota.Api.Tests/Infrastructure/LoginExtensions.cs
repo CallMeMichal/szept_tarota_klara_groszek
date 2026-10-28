@@ -9,17 +9,17 @@ namespace SzeptTarota.Api.Tests.Infrastructure;
 public static partial class LoginExtensions
 {
     /// <summary>
-    /// Klient zalogowany na <paramref name="email"/> tak jak w przeglądarce: prosi o link logowania,
-    /// odczytuje go z maila i loguje się nim. Klient zapamiętuje ciasteczko sesji.
+    /// Klient zalogowany na <paramref name="email"/> tak jak w przeglądarce: prosi o kod logowania,
+    /// odczytuje go z maila i wpisuje. Klient zapamiętuje ciasteczko sesji.
     /// </summary>
     public static async Task<HttpClient> LoggedInClient(
         this WebApplicationFactory<Program> api, FakeEmailSender emails, string email)
     {
         var client = api.CreateBrowser();
-        var requested = await client.PostAsJsonAsync("/api/account/login-link", new { email });
+        var requested = await client.PostAsJsonAsync("/api/account/login-code", new { email });
         Assert.Equal(HttpStatusCode.Accepted, requested.StatusCode);
 
-        var loggedIn = await client.PostAsJsonAsync("/api/account/login", new { token = emails.LoginTokenFor(email) });
+        var loggedIn = await client.PostAsJsonAsync("/api/account/login", new { email, code = emails.LoginCodeFor(email) });
         Assert.Equal(HttpStatusCode.OK, loggedIn.StatusCode);
         return client;
     }
@@ -28,17 +28,17 @@ public static partial class LoginExtensions
     public static HttpClient CreateBrowser(this WebApplicationFactory<Program> api) =>
         api.CreateDefaultClient(new BrowserCookies());
 
-    /// <summary>Token z ostatniego linku logowania wysłanego na <paramref name="email"/>.</summary>
-    public static string LoginTokenFor(this FakeEmailSender emails, string email)
+    /// <summary>Kod z ostatniego maila z kodem logowania wysłanego na <paramref name="email"/>.</summary>
+    public static string LoginCodeFor(this FakeEmailSender emails, string email)
     {
         var html = emails.Sent
-            .Last(m => string.Equals(m.To, email.Trim(), StringComparison.OrdinalIgnoreCase) && m.Subject.Contains("Zaloguj"))
+            .Last(m => string.Equals(m.To, email.Trim(), StringComparison.OrdinalIgnoreCase) && m.Subject.Contains("Kod logowania"))
             .Html;
-        var match = LoginLink().Match(html);
-        Assert.True(match.Success, $"Brak linku logowania w mailu: {html}");
-        return match.Groups["token"].Value;
+        var match = LoginCode().Match(html);
+        Assert.True(match.Success, $"Brak kodu logowania w mailu: {html}");
+        return match.Groups["code"].Value;
     }
 
-    [GeneratedRegex("""href="https://szept-tarota\.test/logowanie/link\?token=(?<token>[A-Za-z0-9_-]+)""")]
-    private static partial Regex LoginLink();
+    [GeneratedRegex("<strong[^>]*>(?<code>[0-9]{6})</strong>")]
+    private static partial Regex LoginCode();
 }

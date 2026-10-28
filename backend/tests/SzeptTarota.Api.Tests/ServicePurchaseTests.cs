@@ -12,7 +12,7 @@ namespace SzeptTarota.Api.Tests;
 [Collection(ApiCollection.Name)]
 public class ServicePurchaseTests : IAsyncLifetime
 {
-    // Każdy test na własny adres: linków logowania na jeden adres jest najwyżej kilka na 15 minut.
+    // Każdy test na własny adres: kodów logowania na jeden adres są najwyżej 3 na 15 minut.
     private readonly string _email = $"anna-{Guid.NewGuid():N}@example.com";
 
     private readonly ApiFactory _factory;

@@ -44,9 +44,13 @@ namespace SzeptTarota.Infrastructure.Persistence.Migrations
                     b.ToTable("accounts", (string)null);
                 });
 
-            modelBuilder.Entity("SzeptTarota.Domain.Accounts.LoginLink", b =>
+            modelBuilder.Entity("SzeptTarota.Domain.Accounts.LoginCode", b =>
                 {
-                    b.Property<string>("TokenHash")
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
@@ -61,18 +65,17 @@ namespace SzeptTarota.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ReturnTo")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                    b.Property<int>("FailedAttempts")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("UsedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("TokenHash");
+                    b.HasKey("Id");
 
                     b.HasIndex("Email", "CreatedAt");
 
-                    b.ToTable("login_links", (string)null);
+                    b.ToTable("login_codes", (string)null);
                 });
 
             modelBuilder.Entity("SzeptTarota.Domain.Orders.Order", b =>

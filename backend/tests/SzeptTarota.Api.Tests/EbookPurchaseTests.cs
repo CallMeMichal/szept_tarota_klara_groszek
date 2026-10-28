@@ -13,7 +13,7 @@ namespace SzeptTarota.Api.Tests;
 [Collection(ApiCollection.Name)]
 public class EbookPurchaseTests : IAsyncLifetime
 {
-    // Każdy test na własny adres: linków logowania na jeden adres jest najwyżej kilka na 15 minut.
+    // Każdy test na własny adres: kodów logowania na jeden adres są najwyżej 3 na 15 minut.
     private readonly string _email = $"anna-{Guid.NewGuid():N}@example.com";
 
     private static readonly string[] RequiredConsents = ["termsAndPrivacy"];
@@ -127,10 +127,13 @@ public class EbookPurchaseTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Answers_service_unavailable_until_Klaras_email_is_configured()
+    public async Task Answers_service_unavailable_until_the_site_address_and_Klaras_email_are_configured()
     {
-        // Bez adresu strony nie da się nawet zalogować (AccountTests), więc tu brakuje tylko adresu Klary.
-        await using var unconfigured = _api.WithWebHostBuilder(builder => builder.UseSetting("Shop:KlaraEmail", ""));
+        await using var unconfigured = _api.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("Shop:SiteUrl", "");
+            builder.UseSetting("Shop:KlaraEmail", "");
+        });
         var client = await unconfigured.LoggedInClient(_factory.Emails, _email);
 
         var response = await client.PostAsJsonAsync(

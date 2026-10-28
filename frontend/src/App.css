@@ -2147,6 +2147,23 @@ main {
   justify-content: center;
 }
 
+.checkout-form__field .login-form__code {
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+}
+
+.login-form__actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+  }
+}
+
 .checkout-form__note {
   margin: 0;
   color: var(--mist);

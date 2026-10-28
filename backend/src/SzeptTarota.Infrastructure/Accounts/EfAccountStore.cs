@@ -5,7 +5,7 @@ using SzeptTarota.Infrastructure.Persistence;
 
 namespace SzeptTarota.Infrastructure.Accounts;
 
-/// <summary>Konta i linki logowania w PostgreSQL.</summary>
+/// <summary>Konta i kody logowania w PostgreSQL; zmiany stanu kodów to pojedyncze warunkowe UPDATE-y.</summary>
 public sealed class EfAccountStore(SzeptTarotaDbContext db) : IAccountStore
 {
     public Task<Account?> FindAsync(Guid id, CancellationToken cancellationToken) =>
@@ -20,23 +20,28 @@ public sealed class EfAccountStore(SzeptTarotaDbContext db) : IAccountStore
         return await db.Accounts.AsNoTracking().SingleAsync(a => a.Email == email, cancellationToken);
     }
 
-    public Task<int> CountLoginLinksSinceAsync(string email, DateTimeOffset since, CancellationToken cancellationToken) =>
-        db.LoginLinks.CountAsync(l => l.Email == email && l.CreatedAt > since, cancellationToken);
+    public Task<int> CountLoginCodesSinceAsync(string email, DateTimeOffset since, CancellationToken cancellationToken) =>
+        db.LoginCodes.CountAsync(c => c.Email == email && c.CreatedAt > since, cancellationToken);
 
-    public async Task AddLoginLinkAsync(LoginLink link, CancellationToken cancellationToken)
+    public async Task AddLoginCodeAsync(LoginCode code, CancellationToken cancellationToken)
     {
-        db.LoginLinks.Add(link);
+        db.LoginCodes.Add(code);
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<LoginLink?> UseLoginLinkAsync(string tokenHash, DateTimeOffset now, CancellationToken cancellationToken)
-    {
-        var used = await db.LoginLinks
-            .Where(l => l.TokenHash == tokenHash && l.UsedAt == null && l.ExpiresAt > now)
-            .ExecuteUpdateAsync(l => l.SetProperty(x => x.UsedAt, now), cancellationToken);
+    public Task<LoginCode?> FindNewestActiveLoginCodeAsync(string email, DateTimeOffset now, CancellationToken cancellationToken) =>
+        db.LoginCodes.AsNoTracking()
+            .Where(c => c.Email == email && c.UsedAt == null && c.ExpiresAt > now)
+            .OrderByDescending(c => c.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        return used == 1
-            ? await db.LoginLinks.AsNoTracking().SingleAsync(l => l.TokenHash == tokenHash, cancellationToken)
-            : null;
-    }
+    public async Task<bool> UseLoginCodeAsync(Guid id, int maxFailedAttempts, DateTimeOffset now, CancellationToken cancellationToken) =>
+        await db.LoginCodes
+            .Where(c => c.Id == id && c.UsedAt == null && c.FailedAttempts < maxFailedAttempts)
+            .ExecuteUpdateAsync(c => c.SetProperty(x => x.UsedAt, now), cancellationToken) == 1;
+
+    public Task AddFailedLoginAttemptAsync(Guid id, CancellationToken cancellationToken) =>
+        db.LoginCodes
+            .Where(c => c.Id == id)
+            .ExecuteUpdateAsync(c => c.SetProperty(x => x.FailedAttempts, x => x.FailedAttempts + 1), cancellationToken);
 }

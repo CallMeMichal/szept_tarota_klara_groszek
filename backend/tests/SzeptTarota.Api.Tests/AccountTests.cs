@@ -17,7 +17,7 @@ public class AccountTests
     }
 
     [Fact]
-    public async Task The_link_from_the_email_logs_the_Klient_in_to_their_Konto()
+    public async Task The_code_from_the_email_logs_the_Klient_in_to_their_Konto()
     {
         var email = NewEmail();
 
@@ -28,7 +28,17 @@ public class AccountTests
     }
 
     [Fact]
-    public async Task The_Konto_email_is_the_address_the_link_was_sent_to_in_lower_case()
+    public async Task The_code_is_6_digits()
+    {
+        var email = NewEmail();
+
+        await RequestCode(email);
+
+        Assert.Matches("^[0-9]{6}$", _factory.Emails.LoginCodeFor(email));
+    }
+
+    [Fact]
+    public async Task The_Konto_email_is_the_address_the_code_was_sent_to_in_lower_case()
     {
         var email = NewEmail();
 
@@ -39,37 +49,104 @@ public class AccountTests
     }
 
     [Fact]
-    public async Task A_login_link_works_only_once()
+    public async Task A_login_code_works_only_once()
     {
         var email = NewEmail();
-        await RequestLink(email);
-        var token = _factory.Emails.LoginTokenFor(email);
+        await RequestCode(email);
+        var code = _factory.Emails.LoginCodeFor(email);
 
-        var first = await LogIn(_factory.CreateBrowser(), token);
-        var second = await LogIn(_factory.CreateBrowser(), token);
+        var first = await LogIn(_factory.CreateBrowser(), email, code);
+        var second = await LogIn(_factory.CreateBrowser(), email, code);
 
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, second.StatusCode);
     }
 
     [Fact]
-    public async Task A_login_link_expires_after_15_minutes()
+    public async Task A_login_code_expires_after_15_minutes()
     {
         var email = NewEmail();
-        await RequestLink(email);
+        await RequestCode(email);
         _factory.Time.Advance(TimeSpan.FromMinutes(15));
 
         var client = _factory.CreateBrowser();
-        var response = await LogIn(client, _factory.Emails.LoginTokenFor(email));
+        var response = await LogIn(client, email, _factory.Emails.LoginCodeFor(email));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/account")).StatusCode);
     }
 
     [Fact]
-    public async Task A_made_up_token_does_not_log_in()
+    public async Task A_code_works_only_for_the_address_it_was_sent_to()
     {
-        var response = await LogIn(_factory.CreateBrowser(), "zmyslony-token");
+        var email = NewEmail();
+        await RequestCode(email);
+
+        var response = await LogIn(_factory.CreateBrowser(), NewEmail(), _factory.Emails.LoginCodeFor(email));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task After_5_wrong_codes_even_the_right_one_no_longer_works()
+    {
+        var email = NewEmail();
+        await RequestCode(email);
+        var code = _factory.Emails.LoginCodeFor(email);
+        var wrong = code == "000000" ? "111111" : "000000";
+
+        for (var i = 0; i < 5; i++)
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, (await LogIn(_factory.CreateBrowser(), email, wrong)).StatusCode);
+        }
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await LogIn(_factory.CreateBrowser(), email, code)).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_few_wrong_codes_still_leave_the_right_one_working()
+    {
+        var email = NewEmail();
+        await RequestCode(email);
+        var code = _factory.Emails.LoginCodeFor(email);
+        var wrong = code == "000000" ? "111111" : "000000";
+
+        for (var i = 0; i < 4; i++)
+        {
+            await LogIn(_factory.CreateBrowser(), email, wrong);
+        }
+
+        Assert.Equal(HttpStatusCode.OK, (await LogIn(_factory.CreateBrowser(), email, code)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Only_the_newest_code_works()
+    {
+        var email = NewEmail();
+        await RequestCode(email);
+        var older = _factory.Emails.LoginCodeFor(email);
+        await RequestCode(email);
+        var newer = _factory.Emails.LoginCodeFor(email);
+
+        // Kody są losowe, więc mogą się powtórzyć; wtedy nie ma czego sprawdzać.
+        if (older != newer)
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, (await LogIn(_factory.CreateBrowser(), email, older)).StatusCode);
+        }
+
+        Assert.Equal(HttpStatusCode.OK, (await LogIn(_factory.CreateBrowser(), email, newer)).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("12345")]
+    [InlineData("abcdef")]
+    public async Task A_malformed_code_does_not_log_in(string code)
+    {
+        var email = NewEmail();
+        await RequestCode(email);
+
+        var response = await LogIn(_factory.CreateBrowser(), email, code);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -94,9 +171,9 @@ public class AccountTests
     }
 
     [Fact]
-    public async Task An_invalid_email_gets_an_error_and_no_link()
+    public async Task An_invalid_email_gets_an_error_and_no_code()
     {
-        var response = await _factory.CreateBrowser().PostAsJsonAsync("/api/account/login-link", new { email = "to nie jest email" });
+        var response = await _factory.CreateBrowser().PostAsJsonAsync("/api/account/login-code", new { email = "to nie jest email" });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var problem = await response.Content.ReadFromJsonAsync<ValidationProblemResponse>();
@@ -105,54 +182,18 @@ public class AccountTests
     }
 
     [Fact]
-    public async Task After_logging_in_the_Klient_returns_to_the_page_they_came_from()
-    {
-        var email = NewEmail();
-        await RequestLink(email, returnTo: "/koszyk");
-
-        var response = await LogIn(_factory.CreateBrowser(), _factory.Emails.LoginTokenFor(email));
-
-        Assert.Equal("/koszyk", (await response.Content.ReadFromJsonAsync<LoggedInResponse>())!.ReturnTo);
-    }
-
-    [Theory]
-    [InlineData("https://zla-strona.example")]
-    [InlineData("//zla-strona.example")]
-    [InlineData(@"/\zla-strona.example")]
-    public async Task The_link_never_leads_to_another_site(string returnTo)
-    {
-        var email = NewEmail();
-        await RequestLink(email, returnTo);
-
-        var response = await LogIn(_factory.CreateBrowser(), _factory.Emails.LoginTokenFor(email));
-
-        Assert.Null((await response.Content.ReadFromJsonAsync<LoggedInResponse>())!.ReturnTo);
-    }
-
-    [Fact]
-    public async Task Answers_service_unavailable_until_the_site_address_is_configured()
-    {
-        await using var unconfigured = _factory.WithWebHostBuilder(builder => builder.UseSetting("Shop:SiteUrl", ""));
-
-        var response = await unconfigured.CreateClient().PostAsJsonAsync("/api/account/login-link", new { email = NewEmail() });
-
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
-        Assert.Empty(_factory.Emails.Sent);
-    }
-
-    [Fact]
-    public async Task One_address_gets_at_most_3_login_links_per_15_minutes()
+    public async Task One_address_gets_at_most_3_login_codes_per_15_minutes()
     {
         var email = NewEmail();
 
         for (var i = 0; i < 4; i++)
         {
-            await RequestLink(email);
+            await RequestCode(email);
         }
 
         Assert.Equal(3, _factory.Emails.Sent.Count(m => m.To == email));
         _factory.Time.Advance(TimeSpan.FromMinutes(15));
-        await RequestLink(email);
+        await RequestCode(email);
         Assert.Equal(4, _factory.Emails.Sent.Count(m => m.To == email));
     }
 
@@ -161,40 +202,38 @@ public class AccountTests
     {
         _factory.Emails.Configured = false;
 
-        var response = await _factory.CreateBrowser().PostAsJsonAsync("/api/account/login-link", new { email = NewEmail() });
+        var response = await _factory.CreateBrowser().PostAsJsonAsync("/api/account/login-code", new { email = NewEmail() });
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
     }
 
     [Fact]
-    public async Task Limits_how_many_login_links_one_address_can_ask_for()
+    public async Task Limits_how_many_login_codes_one_address_can_ask_for()
     {
         await using var strictLimit = _factory.WithWebHostBuilder(builder =>
-            builder.UseSetting("Account:LoginLinkRateLimit:PermitLimit", "1"));
+            builder.UseSetting("Account:LoginCodeRateLimit:PermitLimit", "1"));
         var client = strictLimit.CreateClient();
 
-        var first = await client.PostAsJsonAsync("/api/account/login-link", new { email = NewEmail() });
-        var second = await client.PostAsJsonAsync("/api/account/login-link", new { email = NewEmail() });
+        var first = await client.PostAsJsonAsync("/api/account/login-code", new { email = NewEmail() });
+        var second = await client.PostAsJsonAsync("/api/account/login-code", new { email = NewEmail() });
 
         Assert.Equal(HttpStatusCode.Accepted, first.StatusCode);
         Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
         Assert.Single(_factory.Emails.Sent);
     }
 
-    private async Task RequestLink(string email, string? returnTo = null)
+    private async Task RequestCode(string email)
     {
-        var response = await _factory.CreateBrowser().PostAsJsonAsync("/api/account/login-link", new { email, returnTo });
+        var response = await _factory.CreateBrowser().PostAsJsonAsync("/api/account/login-code", new { email });
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
     }
 
-    private static Task<HttpResponseMessage> LogIn(HttpClient client, string token) =>
-        client.PostAsJsonAsync("/api/account/login", new { token });
+    private static Task<HttpResponseMessage> LogIn(HttpClient client, string email, string code) =>
+        client.PostAsJsonAsync("/api/account/login", new { email, code });
 
     private static string NewEmail() => $"klient-{Guid.NewGuid():N}@example.com";
 
     private sealed record AccountResponse(string Email);
-
-    private sealed record LoggedInResponse(string Email, string? ReturnTo);
 
     private sealed record ValidationProblemResponse(Dictionary<string, string[]> Errors);
 }

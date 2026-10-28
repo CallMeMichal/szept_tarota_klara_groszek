@@ -133,7 +133,7 @@ function LoginPrompt() {
     <div className="checkout-form" aria-labelledby="login-prompt-title">
       <h2 id="login-prompt-title">Zaloguj się, żeby zapłacić</h2>
       <p className="checkout-form__note">
-        Zamówienia trafiają na Twoje Konto. Wystarczy adres email: wyślę na niego link logowania, bez hasła. Koszyk
+        Zamówienia trafiają na Twoje Konto. Wystarczy adres email: wyślę na niego kod logowania, bez hasła. Koszyk
         poczeka.
       </p>
       <Link className="button button--primary" to={loginPathFor(cartPath)}>
