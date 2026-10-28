@@ -50,7 +50,9 @@ export function CartPage() {
   const session = useSession()
   const loggedIn = session.status === 'logged-in'
 
-  useEffect(() => window.scrollTo({ top: 0 }), [])
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [])
 
   if (items.length === 0) {
     return (

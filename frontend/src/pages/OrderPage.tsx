@@ -28,7 +28,9 @@ export function OrderPage() {
   const state = useOrder(id)
   const paid = state.status === 'ok' && state.order.status === 'paid'
 
-  useEffect(() => window.scrollTo({ top: 0 }), [])
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [])
 
   // Kupione Produkty nie powinny czekać w Koszyku na drugą płatność.
   useEffect(() => {

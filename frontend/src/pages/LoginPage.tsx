@@ -16,7 +16,9 @@ export function LoginPage() {
   const returnTo = localPathOrNull(searchParams.get('dalej'))
   const [status, setStatus] = useState<State>({ state: 'idle' })
 
-  useEffect(() => window.scrollTo({ top: 0 }), [])
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

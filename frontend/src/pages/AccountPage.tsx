@@ -17,7 +17,9 @@ export function AccountPage() {
   usePageTitle('Konto')
   const session = useSession()
 
-  useEffect(() => window.scrollTo({ top: 0 }), [])
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [])
 
   if (session.status === 'logged-out') return <Navigate to={loginPathFor(accountPath)} replace />
 

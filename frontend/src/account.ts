@@ -58,7 +58,9 @@ function subscribe(listener: () => void) {
     loaded = true
     void loadSession()
   }
-  return () => listeners.delete(listener)
+  return () => {
+    listeners.delete(listener)
+  }
 }
 
 /** Czy Klient jest zalogowany; sesję sprawdza raz, przy pierwszym użyciu. */
