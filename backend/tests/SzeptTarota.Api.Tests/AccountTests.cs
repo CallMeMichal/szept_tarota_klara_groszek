@@ -104,6 +104,33 @@ public class AccountTests
     }
 
     [Fact]
+    public async Task Many_wrong_codes_sent_at_once_still_get_only_5_attempts()
+    {
+        var email = NewEmail();
+        await RequestCode(email);
+        var code = _factory.Emails.LoginCodeFor(email);
+        var wrong = code == "000000" ? "111111" : "000000";
+
+        await Task.WhenAll(Enumerable.Range(0, 20).Select(_ => LogIn(_factory.CreateBrowser(), email, wrong)));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await LogIn(_factory.CreateBrowser(), email, code)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Limits_how_many_login_attempts_one_address_can_make()
+    {
+        await using var strictLimit = _factory.WithWebHostBuilder(builder =>
+            builder.UseSetting("Account:LoginRateLimit:PermitLimit", "1"));
+        var client = strictLimit.CreateClient();
+
+        var first = await LogIn(client, NewEmail(), "123456");
+        var second = await LogIn(client, NewEmail(), "123456");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, first.StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
+    }
+
+    [Fact]
     public async Task A_few_wrong_codes_still_leave_the_right_one_working()
     {
         var email = NewEmail();

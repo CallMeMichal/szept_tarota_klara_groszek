@@ -2,7 +2,7 @@ namespace SzeptTarota.Domain.Accounts;
 
 /// <summary>
 /// Jednorazowy kod logowania wysłany na <see cref="Email"/>. W bazie leży tylko skrót kodu. Kod jest krótki, więc
-/// po kilku błędnych próbach (<see cref="FailedAttempts"/>) przestaje działać, żeby nie dało się go zgadnąć.
+/// po kilku próbach wpisania (<see cref="Attempts"/>) przestaje działać, żeby nie dało się go zgadnąć.
 /// </summary>
 public sealed class LoginCode
 {
@@ -35,5 +35,6 @@ public sealed class LoginCode
     /// <summary>Kiedy kod został użyty; użyty kod nie loguje drugi raz.</summary>
     public DateTimeOffset? UsedAt { get; private set; }
 
-    public int FailedAttempts { get; private set; }
+    /// <summary>Ile razy próbowano wpisać ten kod (także poprawnie).</summary>
+    public int Attempts { get; private set; }
 }

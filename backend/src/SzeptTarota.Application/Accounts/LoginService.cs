@@ -18,12 +18,12 @@ public sealed class LoginService(IAccountStore accounts, IEmailSender emails, Ti
     /// <summary>
     /// Najwięcej kodów na jeden adres w czasie <see cref="CodeLifetime"/>. Limit na adres IP (AccountEndpoints) nie chroni
     /// skrzynki, na którą proszą o kody z wielu adresów, więc ponad ten limit prośba jest przyjmowana, ale mail nie wychodzi.
-    /// Razem z <see cref="MaxFailedAttempts"/> ogranicza też zgadywanie: najwyżej 15 prób na 15 minut wobec miliona kodów.
+    /// Razem z <see cref="MaxAttempts"/> ogranicza też zgadywanie: najwyżej 15 prób na 15 minut wobec miliona kodów.
     /// </summary>
     public const int MaxCodesPerEmail = 3;
 
-    /// <summary>Po tylu błędnych próbach kod przestaje działać i trzeba poprosić o nowy.</summary>
-    public const int MaxFailedAttempts = 5;
+    /// <summary>Po tylu próbach wpisania kod przestaje działać i trzeba poprosić o nowy.</summary>
+    public const int MaxAttempts = 5;
 
     private const int MaxEmailLength = 200;
 
@@ -58,8 +58,8 @@ public sealed class LoginService(IAccountStore accounts, IEmailSender emails, Ti
     }
 
     /// <summary>
-    /// Konto, do którego loguje kod; <c>null</c>, gdy kod jest zły, wygasł, był już użyty albo po zbyt wielu błędnych
-    /// próbach. Działa tylko najnowszy kod wysłany na adres.
+    /// Konto, do którego loguje kod; <c>null</c>, gdy kod jest zły, wygasł, był już użyty albo po zbyt wielu próbach.
+    /// Działa tylko najnowszy kod wysłany na adres.
     /// </summary>
     public async Task<Account?> LogInAsync(string? email, string? code, CancellationToken cancellationToken)
     {
@@ -69,20 +69,16 @@ public sealed class LoginService(IAccountStore accounts, IEmailSender emails, Ti
         }
 
         var now = time.GetUtcNow();
+        // Próbę doliczamy, zanim porównamy kod, więc równoczesne zgadnięcia nie zobaczą wszystkie zera prób.
         if (await accounts.FindNewestActiveLoginCodeAsync(address, now, cancellationToken) is not { } loginCode
-            || loginCode.FailedAttempts >= MaxFailedAttempts)
-        {
-            return null;
-        }
-
-        if (!CryptographicOperations.FixedTimeEquals(
+            || !await accounts.TryStartLoginAttemptAsync(loginCode.Id, MaxAttempts, cancellationToken)
+            || !CryptographicOperations.FixedTimeEquals(
                 Encoding.ASCII.GetBytes(loginCode.CodeHash), Encoding.ASCII.GetBytes(Hash(loginCode.Id, trimmed))))
         {
-            await accounts.AddFailedLoginAttemptAsync(loginCode.Id, cancellationToken);
             return null;
         }
 
-        return await accounts.UseLoginCodeAsync(loginCode.Id, MaxFailedAttempts, now, cancellationToken)
+        return await accounts.UseLoginCodeAsync(loginCode.Id, now, cancellationToken)
             ? await accounts.GetOrCreateAsync(address, now, cancellationToken)
             : null;
     }

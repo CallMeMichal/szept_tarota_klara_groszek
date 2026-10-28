@@ -143,12 +143,7 @@ export function LoginPage() {
 
   return (
     <section className="section login-page" aria-labelledby="login-title">
-      <p className="eyebrow">Konto</p>
       <h1 id="login-title">Zaloguj się</h1>
-      <p className="section__lead">
-        Podaj swój adres email, a wyślę Ci kod do logowania. Bez hasła: jeśli logujesz się pierwszy raz, Konto założy
-        się samo.
-      </p>
       <form key="email" className="checkout-form login-form" onSubmit={(event) => void submitEmail(event)}>
         <label className="checkout-form__field">
           <span>Email</span>

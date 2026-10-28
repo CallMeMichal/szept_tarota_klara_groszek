@@ -27,7 +27,7 @@ builder.Services.AddProductCatalog(catalogDirectory);
 builder.Services.AddEbookStorage(
     builder.Configuration["EbookStorage:Directory"] ?? Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
 builder.Services.AddContactRateLimiting(builder.Configuration);
-builder.Services.AddLoginCodeRateLimiting(builder.Configuration);
+builder.Services.AddLoginRateLimiting(builder.Configuration);
 builder.Services.AddAccountAuthentication();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));

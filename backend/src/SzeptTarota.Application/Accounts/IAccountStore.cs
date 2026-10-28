@@ -19,11 +19,12 @@ public interface IAccountStore
     Task<LoginCode?> FindNewestActiveLoginCodeAsync(string email, DateTimeOffset now, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Oznacza kod jako użyty, o ile nie był jeszcze użyty i ma mniej niż <paramref name="maxFailedAttempts"/> błędnych
-    /// prób. Atomowo, więc dwa równoczesne wpisania tego samego kodu logują najwyżej raz.
+    /// Dolicza próbę wpisania kodu, o ile nie był jeszcze użyty i miał mniej niż <paramref name="maxAttempts"/> prób;
+    /// <c>false</c>, gdy prób już nie ma. Atomowo, więc nawet wiele równoczesnych zgadnięć dostaje razem najwyżej
+    /// <paramref name="maxAttempts"/> prób.
     /// </summary>
-    Task<bool> UseLoginCodeAsync(Guid id, int maxFailedAttempts, DateTimeOffset now, CancellationToken cancellationToken);
+    Task<bool> TryStartLoginAttemptAsync(Guid id, int maxAttempts, CancellationToken cancellationToken);
 
-    /// <summary>Dolicza błędną próbę wpisania kodu.</summary>
-    Task AddFailedLoginAttemptAsync(Guid id, CancellationToken cancellationToken);
+    /// <summary>Oznacza kod jako użyty, o ile jeszcze nie był; atomowo, więc kod loguje najwyżej raz.</summary>
+    Task<bool> UseLoginCodeAsync(Guid id, DateTimeOffset now, CancellationToken cancellationToken);
 }

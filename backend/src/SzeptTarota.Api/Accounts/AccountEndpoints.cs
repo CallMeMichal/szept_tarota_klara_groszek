@@ -16,6 +16,7 @@ namespace SzeptTarota.Api.Accounts;
 public static class AccountEndpoints
 {
     private const string LoginCodeRateLimitPolicy = "login-code";
+    private const string LoginRateLimitPolicy = "login";
 
     /// <summary>
     /// Sesja Klienta w ciasteczku (frontend i API pod jednym originem). Endpointy wymagające logowania
@@ -45,21 +46,25 @@ public static class AccountEndpoints
     }
 
     /// <summary>
-    /// Limit kodów logowania z jednego adresu IP, żeby nikt nie zasypywał cudzej skrzynki mailami.
-    /// Domyślnie 5 na 10 minut; zmienia się w <c>Account:LoginCodeRateLimit:PermitLimit</c> i <c>WindowMinutes</c>.
+    /// Limity z jednego adresu IP: prośby o kod (domyślnie 5 na 10 minut, <c>Account:LoginCodeRateLimit</c>), żeby nikt
+    /// nie zasypywał cudzej skrzynki mailami, i próby logowania (domyślnie 20 na 10 minut, <c>Account:LoginRateLimit</c>),
+    /// żeby nikt nie zgadywał kodów wielu adresów naraz. Każdy ma <c>PermitLimit</c> i <c>WindowMinutes</c>.
     /// </summary>
-    public static IServiceCollection AddLoginCodeRateLimiting(this IServiceCollection services, IConfiguration configuration)
-    {
-        var permitLimit = configuration.GetValue("Account:LoginCodeRateLimit:PermitLimit", 5);
-        var window = TimeSpan.FromMinutes(configuration.GetValue("Account:LoginCodeRateLimit:WindowMinutes", 10));
-
-        return services.AddRateLimiter(options =>
+    public static IServiceCollection AddLoginRateLimiting(this IServiceCollection services, IConfiguration configuration) =>
+        services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            options.AddPolicy(LoginCodeRateLimitPolicy, context => RateLimitPartition.GetFixedWindowLimiter(
-                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                _ => new FixedWindowRateLimiterOptions { PermitLimit = permitLimit, Window = window }));
+            AddPerIpPolicy(options, LoginCodeRateLimitPolicy, configuration.GetSection("Account:LoginCodeRateLimit"), defaultLimit: 5);
+            AddPerIpPolicy(options, LoginRateLimitPolicy, configuration.GetSection("Account:LoginRateLimit"), defaultLimit: 20);
         });
+
+    private static void AddPerIpPolicy(RateLimiterOptions options, string policy, IConfiguration settings, int defaultLimit)
+    {
+        var permitLimit = settings.GetValue("PermitLimit", defaultLimit);
+        var window = TimeSpan.FromMinutes(settings.GetValue("WindowMinutes", 10));
+        options.AddPolicy(policy, context => RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = permitLimit, Window = window }));
     }
 
     public static IEndpointRouteBuilder MapAccountEndpoints(this IEndpointRouteBuilder api)
@@ -104,6 +109,7 @@ public static class AccountEndpoints
                     new AuthenticationProperties { IsPersistent = true });
                 return TypedResults.Ok(new AccountResponse(loggedIn.Email));
             })
+            .RequireRateLimiting(LoginRateLimitPolicy)
             .WithName("LogIn");
 
         account.MapPost("/logout", async (HttpContext context) =>

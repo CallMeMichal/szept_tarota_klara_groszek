@@ -43,6 +43,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         // kontaktowego i kodów logowania podnosimy; testy limitów ustawiają własne.
         builder.UseSetting("Contact:RateLimit:PermitLimit", "1000");
         builder.UseSetting("Account:LoginCodeRateLimit:PermitLimit", "1000");
+        builder.UseSetting("Account:LoginRateLimit:PermitLimit", "1000");
         builder.UseSetting("Shop:SiteUrl", SiteUrl);
         builder.UseSetting("Shop:KlaraEmail", KlaraEmail);
 

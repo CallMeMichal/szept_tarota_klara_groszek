@@ -35,13 +35,13 @@ public sealed class EfAccountStore(SzeptTarotaDbContext db) : IAccountStore
             .OrderByDescending(c => c.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
 
-    public async Task<bool> UseLoginCodeAsync(Guid id, int maxFailedAttempts, DateTimeOffset now, CancellationToken cancellationToken) =>
+    public async Task<bool> TryStartLoginAttemptAsync(Guid id, int maxAttempts, CancellationToken cancellationToken) =>
         await db.LoginCodes
-            .Where(c => c.Id == id && c.UsedAt == null && c.FailedAttempts < maxFailedAttempts)
-            .ExecuteUpdateAsync(c => c.SetProperty(x => x.UsedAt, now), cancellationToken) == 1;
+            .Where(c => c.Id == id && c.UsedAt == null && c.Attempts < maxAttempts)
+            .ExecuteUpdateAsync(c => c.SetProperty(x => x.Attempts, x => x.Attempts + 1), cancellationToken) == 1;
 
-    public Task AddFailedLoginAttemptAsync(Guid id, CancellationToken cancellationToken) =>
-        db.LoginCodes
-            .Where(c => c.Id == id)
-            .ExecuteUpdateAsync(c => c.SetProperty(x => x.FailedAttempts, x => x.FailedAttempts + 1), cancellationToken);
+    public async Task<bool> UseLoginCodeAsync(Guid id, DateTimeOffset now, CancellationToken cancellationToken) =>
+        await db.LoginCodes
+            .Where(c => c.Id == id && c.UsedAt == null)
+            .ExecuteUpdateAsync(c => c.SetProperty(x => x.UsedAt, now), cancellationToken) == 1;
 }
