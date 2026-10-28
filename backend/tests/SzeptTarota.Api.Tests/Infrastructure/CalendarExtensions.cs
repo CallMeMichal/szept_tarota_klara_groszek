@@ -33,10 +33,10 @@ public static class CalendarExtensions
     }
 
     /// <summary>
-    /// Dni od dzisiaj dla <see cref="OfferTerminy"/>: daleko od dni z testów Terminów i za każdym razem dalej. Zegar
+    /// Dni od dzisiaj dla <see cref="OfferTerminy"/>: dalej niż dni z testów Terminów, ale w dwuletnim horyzoncie strony, i za każdym razem dalej. Zegar
     /// też idzie tylko do przodu, więc każde wywołanie dostaje nowy dzień, bez opłaconych już Terminów.
     /// </summary>
-    private static int s_daysAhead = 1000;
+    private static int s_daysAhead = 500;
 
     /// <summary>
     /// Klara łączy kalendarz i udostępnia nowy dzień, 8:00–20:00. Zwraca cztery wolne Terminy tego dnia, które pasują

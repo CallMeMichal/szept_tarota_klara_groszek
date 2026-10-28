@@ -21,13 +21,29 @@ public sealed class AvailabilityService(
     private static readonly TimeSpan Margin = TimeSpan.FromDays(1);
 
     /// <summary>
+    /// Najdalszy początek Terminu, jaki strona w ogóle sprawdza. To nie zasada Klary, tylko ochrona przed absurdalnymi
+    /// datami z zapytań (przepełnienie dat, ogromne zapytania do Google).
+    /// </summary>
+    private static readonly TimeSpan Horizon = TimeSpan.FromDays(2 * 366);
+
+    /// <summary>
     /// Wolne Terminy Produktu zaczynające się w dniach od <paramref name="from"/> do <paramref name="to"/> (włącznie),
     /// w czasie polskim; <c>null</c>, gdy kalendarza Klary nie da się teraz odczytać.
     /// </summary>
     public async Task<IReadOnlyList<Appointment>?> FreeAsync(
         Product product, DateOnly from, DateOnly to, CancellationToken cancellationToken)
     {
-        var (start, end) = (MidnightInWarsaw(from), MidnightInWarsaw(to.AddDays(1)));
+        // Dni przycinamy do horyzontu, zanim cokolwiek z nich policzymy, żeby skrajne daty nie przepełniły dat.
+        var now = time.GetUtcNow();
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now, Warsaw).Date);
+        var lastDay = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(now + Horizon, Warsaw).Date);
+        if (from > lastDay || to < today)
+        {
+            return [];
+        }
+
+        var start = MidnightInWarsaw(from < today ? today : from);
+        var end = MidnightInWarsaw((to > lastDay ? lastDay : to).AddDays(1));
         if (await LoadAsync(start, end, cancellationToken) is not { } availability)
         {
             return null;
@@ -65,6 +81,13 @@ public sealed class AvailabilityService(
             blocks.Select(e => new Appointment(e.Start, e.End)),
             mainCalendar.Where(e => e.Busy).Select(e => new Appointment(e.Start, e.End)).Concat(paid),
             time.GetUtcNow());
+    }
+
+    /// <summary>Czy Termin zaczynający się o <paramref name="start"/> w ogóle może być wolny: w przyszłości i w horyzoncie.</summary>
+    public bool IsWithinHorizon(DateTimeOffset start)
+    {
+        var now = time.GetUtcNow();
+        return start > now && start <= now + Horizon;
     }
 
     /// <summary>Termin Produktu zaczynający się o <paramref name="start"/>.</summary>

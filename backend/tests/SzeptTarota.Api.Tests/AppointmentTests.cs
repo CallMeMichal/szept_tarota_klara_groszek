@@ -191,7 +191,7 @@ public class AppointmentTests : IAsyncLifetime
     {
         Calendar.RevokeAccess();
 
-        var response = await _api.CreateClient().GetAsync(AppointmentsUrl(FakeProductCatalog.SessionSlug, "2026-02-01", "2026-02-28"));
+        var response = await _api.CreateClient().GetAsync(AppointmentsUrl(FakeProductCatalog.SessionSlug, Day(1), Day(30)));
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
     }
@@ -271,6 +271,21 @@ public class AppointmentTests : IAsyncLifetime
         Assert.Empty(cart.Items[0].Errors);
         Assert.Equal("appointmentUnavailable", Assert.Single(cart.Items[1].Errors).Code);
         Assert.Equal(24900, cart.Total);
+    }
+
+    [Fact]
+    public async Task Absurd_dates_are_not_Terminy_and_do_not_break_the_API()
+    {
+        var cart = await ValidateCart(
+            Session(DateTimeOffset.MinValue),
+            Session(DateTimeOffset.MaxValue),
+            Session(At(0, 10).AddYears(50)));
+        var listed = await FreeTerminy(FakeProductCatalog.SessionSlug, "0001-01-01", "0001-01-31");
+        var farListed = await FreeTerminy(FakeProductCatalog.SessionSlug, "9999-12-01", "9999-12-31");
+
+        Assert.All(cart.Items, line => Assert.Equal("appointmentUnavailable", Assert.Single(line.Errors).Code));
+        Assert.Empty(listed.Appointments);
+        Assert.Empty(farListed.Appointments);
     }
 
     [Fact]

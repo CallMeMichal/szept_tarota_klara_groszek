@@ -41,15 +41,31 @@ public sealed class CartValidator(IProductCatalog catalog, AvailabilityService a
             Appointment? appointment = null;
             if (product.RequiresAppointment)
             {
-                appointment = item.AppointmentStart is { } start ? AvailabilityService.AppointmentAt(product, start) : null;
-                if (AppointmentError(appointment, availability) is { } error)
+                if (item.AppointmentStart is not { } start)
                 {
-                    errors.Add(error);
+                    errors.Add(CartError.AppointmentMissing);
+                }
+                else if (!availabilityService.IsWithinHorizon(start))
+                {
+                    // Miniony albo absurdalnie odległy; liczenie końca takiego Terminu mogłoby przepełnić datę.
+                    errors.Add(CartError.AppointmentUnavailable);
                 }
                 else
                 {
-                    // Kolejne pozycje tego Koszyka nie mogą zająć tego samego czasu.
-                    availability!.Occupy(appointment!);
+                    appointment = AvailabilityService.AppointmentAt(product, start);
+                    if (availability is null)
+                    {
+                        errors.Add(CartError.AppointmentUnverifiable);
+                    }
+                    else if (!availability.IsFree(appointment))
+                    {
+                        errors.Add(CartError.AppointmentUnavailable);
+                    }
+                    else
+                    {
+                        // Kolejne pozycje tego Koszyka nie mogą zająć tego samego czasu.
+                        availability.Occupy(appointment);
+                    }
                 }
             }
 
@@ -75,19 +91,15 @@ public sealed class CartValidator(IProductCatalog catalog, AvailabilityService a
     private async Task<Availability?> LoadAvailabilityAsync(IReadOnlyList<CartItem> items, CancellationToken cancellationToken)
     {
         var starts = items
-            .Where(i => i.AppointmentStart is not null && catalog.FindBySlug(i.Slug) is { RequiresAppointment: true })
-            .Select(i => i.AppointmentStart!.Value)
+            .Where(i => catalog.FindBySlug(i.Slug) is { RequiresAppointment: true })
+            .Select(i => i.AppointmentStart)
+            .OfType<DateTimeOffset>()
+            .Where(availabilityService.IsWithinHorizon)
             .ToList();
         return starts.Count == 0
             ? null
             : await availabilityService.LoadAsync(starts.Min(), starts.Max().AddTicks(1), cancellationToken);
     }
-
-    private static CartError? AppointmentError(Appointment? appointment, Availability? availability) =>
-        appointment is null ? CartError.AppointmentMissing
-        : availability is null ? CartError.AppointmentUnverifiable
-        : !availability.IsFree(appointment) ? CartError.AppointmentUnavailable
-        : null;
 }
 
 /// <summary>
