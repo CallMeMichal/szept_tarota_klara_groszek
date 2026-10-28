@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import arrowPrimary from '../assets/home/arrow-up-right-primary.svg'
 import {
@@ -16,10 +16,10 @@ import {
 import { checkoutStatusMessage, useCheckout } from '../checkout.ts'
 import { CheckoutForm } from '../components/CheckoutForm.tsx'
 import { ProductImage } from '../components/ProductImage.tsx'
-import { ServiceFormFields } from '../components/ServiceFormFields.tsx'
+import { ServiceStepsDialog } from '../components/ServiceStepsDialog.tsx'
 import { formatPrice, kindLabels, productPath, type FormField } from '../catalog.ts'
 import { homeSectionPath, homeSections } from '../homeSections.ts'
-import { formatAnswer, submitServiceForm, type FormAnswers } from '../serviceForm.ts'
+import { formatAnswer, type FormAnswers } from '../serviceForm.ts'
 
 type Validation =
   | { status: 'loading' }
@@ -248,54 +248,14 @@ type CartLineFormProps = {
 }
 
 /**
- * Odpowiedzi z formularza Usługi w pozycji Koszyka i odnośnik do ich poprawienia.
- * Błędy z serwera pokazujemy w formularzu po jego otwarciu.
+ * Dane z formularza Usługi w pozycji Koszyka. „Popraw dane” otwiera to samo
+ * okienko z krokami co dodawanie do Koszyka, z wpisanymi danymi i błędami
+ * z ostatniego sprawdzenia Koszyka.
  */
 function CartLineForm({ item, name, fields, serverErrors }: CartLineFormProps) {
-  const [editing, setEditing] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string> | null>(null)
   const answers: FormAnswers = item.form ?? {}
-  const idPrefix = `pozycja-${item.id}`
-
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    const { answers: corrected, errors: formErrors, valid } = submitServiceForm(event, fields)
-    setErrors(formErrors)
-    if (!valid) return
-
-    updateCartItemForm(item.id, corrected)
-    setErrors(null)
-    setEditing(false)
-  }
-
-  if (editing) {
-    return (
-      <form
-        className="cart-line__form service-form"
-        onSubmit={onSubmit}
-        noValidate
-        aria-label={`Formularz: ${name}`}
-      >
-        <ServiceFormFields idPrefix={idPrefix} fields={fields} values={answers} errors={errors ?? serverErrors} />
-        <div className="cart-line__form-actions">
-          <button type="submit" className="button button--primary">
-            Zapisz formularz
-          </button>
-          <button
-            type="button"
-            className="button button--ghost"
-            onClick={() => {
-              setErrors(null)
-              setEditing(false)
-            }}
-          >
-            Anuluj
-          </button>
-        </div>
-      </form>
-    )
-  }
-
   const filled = fields.filter((field) => answers[field.key])
+
   return (
     <div className="cart-line__form">
       {filled.length > 0 && (
@@ -308,10 +268,21 @@ function CartLineForm({ item, name, fields, serverErrors }: CartLineFormProps) {
           ))}
         </dl>
       )}
-      <button type="button" className="cart-line__edit" onClick={() => setEditing(true)}>
-        {filled.length > 0 ? 'Popraw dane' : 'Uzupełnij dane'}
-        <span className="visually-hidden"> {name}</span>
-      </button>
+      <ServiceStepsDialog
+        productName={name}
+        fields={fields}
+        initialAnswers={answers}
+        initialErrors={serverErrors}
+        triggerClassName="cart-line__edit"
+        triggerContent={
+          <>
+            {filled.length > 0 ? 'Popraw dane' : 'Uzupełnij dane'}
+            <span className="visually-hidden"> {name}</span>
+          </>
+        }
+        finishLabel="Zapisz zmiany"
+        onFinish={(corrected) => updateCartItemForm(item.id, corrected)}
+      />
     </div>
   )
 }

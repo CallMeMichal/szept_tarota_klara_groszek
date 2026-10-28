@@ -1897,12 +1897,6 @@ main {
   margin-top: 0;
 }
 
-.cart-line__form-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
 .cart-line__answers {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
