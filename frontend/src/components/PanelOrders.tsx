@@ -1,10 +1,12 @@
-import { Link, useSearchParams } from 'react-router'
-import { dayKey, formatTime } from '../appointments.ts'
-import { formatPrice, type ProductSummary } from '../catalog.ts'
-import { panelOrderPath, panelOrdersUrl, type OrderFilter, type PanelOrder } from '../panel.ts'
+import { useState } from 'react'
+import { useSearchParams } from 'react-router'
+import { formatPaidAt } from '../account.ts'
+import { dayKey, formatAppointment, formatTime } from '../appointments.ts'
+import { formatPrice, kindLabels, type ProductSummary } from '../catalog.ts'
+import { panelOrdersUrl, type OrderFilter, type PanelOrder, type PanelOrderDetails } from '../panel.ts'
 import { useApi } from '../useApi.ts'
 
-/** Parametry filtra w adresie panelu, żeby powrót ze szczegółów Zamówienia go zachował. */
+/** Parametry filtra w adresie panelu, żeby filtr przetrwał odświeżenie strony. */
 const filterParams = { from: 'od', to: 'do', product: 'produkt' } as const satisfies Record<keyof OrderFilter, string>
 
 const weekdayFormat = new Intl.DateTimeFormat('pl-PL', { timeZone: 'UTC', weekday: 'long' })
@@ -13,7 +15,7 @@ const dateFormat = new Intl.DateTimeFormat('pl-PL', { timeZone: 'UTC', day: 'num
 
 /**
  * Opłacone Zamówienia wszystkich Klientów, od najnowszego, pogrupowane po dniu zapłaty (czas polski), z filtrami po
- * dniu zapłaty i Produkcie. Cały wiersz Zamówienia prowadzi do jego szczegółów.
+ * dniu zapłaty i Produkcie. Kliknięty wiersz rozwija się w miejscu i pokazuje Terminy i odpowiedzi z formularzy.
  */
 export function PanelOrders() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -25,6 +27,7 @@ export function PanelOrders() {
   const orders = useApi<PanelOrder[]>(panelOrdersUrl(filter))
   const products = useApi<ProductSummary[]>('/api/products')
   const filtered = Object.values(filter).some((value) => value !== '')
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set())
 
   const setFilter = (key: keyof OrderFilter, value: string) =>
     setSearchParams(
@@ -35,6 +38,13 @@ export function PanelOrders() {
       },
       { replace: true },
     )
+
+  const toggle = (id: string) =>
+    setExpanded((open) => {
+      const next = new Set(open)
+      if (!next.delete(id)) next.add(id)
+      return next
+    })
 
   return (
     <div className="panel-orders">
@@ -98,6 +108,14 @@ export function PanelOrders() {
           {filtered ? 'Żadne opłacone Zamówienie nie pasuje do filtrów.' : 'Nie ma jeszcze opłaconych Zamówień.'}
         </p>
       )}
+      {orders.status === 'ok' && orders.data.length > 0 && (
+        <div className="panel-orders__columns" aria-hidden="true">
+          <span>Godzina</span>
+          <span>Klient</span>
+          <span>Produkty</span>
+          <span>Kwota</span>
+        </div>
+      )}
       {orders.status === 'ok' &&
         groupByDay(orders.data).map(([day, dayOrders]) => (
           <section key={day} className="panel-orders__day" aria-label={dateFormat.format(utcDate(day))}>
@@ -110,39 +128,105 @@ export function PanelOrders() {
               <span className="panel-orders__day-total">{formatPrice(sum(dayOrders))}</span>
             </header>
             <ul className="panel-orders__list">
-              {dayOrders.map((order) => (
-                <li key={order.id}>
-                  <Link
-                    className="panel-order-row"
-                    to={panelOrderPath(order.id)}
-                    state={{ listSearch: searchParams.toString() }}
-                  >
-                    <time className="panel-order-row__time" dateTime={order.paidAt}>
-                      {formatTime(order.paidAt)}
-                    </time>
-                    <span className="panel-order-row__customer">
-                      <span className="panel-order-row__name">{order.customerName}</span>
-                      <span className="panel-order-row__email">{order.email}</span>
-                    </span>
-                    <span className="panel-order-row__products">
-                      {order.items.map((line, index) => (
-                        <span key={index}>
-                          {line.quantity > 1 && `${line.quantity} × `}
-                          {line.name}
-                        </span>
-                      ))}
-                    </span>
-                    <strong className="panel-order-row__total">{formatPrice(order.total)}</strong>
-                    <span className="panel-order-row__chevron" aria-hidden="true">
-                      ›
-                    </span>
-                  </Link>
-                </li>
-              ))}
+              {dayOrders.map((order) => {
+                const open = expanded.has(order.id)
+                return (
+                  <li key={order.id} className={`panel-order${open ? ' is-open' : ''}`}>
+                    <button
+                      type="button"
+                      className="panel-order-row"
+                      aria-expanded={open}
+                      aria-controls={`zamowienie-${order.id}`}
+                      onClick={() => toggle(order.id)}
+                    >
+                      <time className="panel-order-row__time" dateTime={order.paidAt}>
+                        {formatTime(order.paidAt)}
+                      </time>
+                      <span className="panel-order-row__customer">
+                        <span className="panel-order-row__name">{order.customerName}</span>
+                        <span className="panel-order-row__email">{order.email}</span>
+                      </span>
+                      <span className="panel-order-row__products">
+                        {order.items.map((line) => `${line.quantity > 1 ? `${line.quantity} × ` : ''}${line.name}`).join(', ')}
+                      </span>
+                      <strong className="panel-order-row__total">{formatPrice(order.total)}</strong>
+                      <svg
+                        className="panel-order-row__chevron"
+                        viewBox="0 0 24 24"
+                        width={18}
+                        height={18}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
+                    </button>
+                    {open && (
+                      <div id={`zamowienie-${order.id}`} className="panel-order__details">
+                        <OrderDetails id={order.id} />
+                      </div>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </section>
         ))}
     </div>
+  )
+}
+
+/** Rozwinięte Zamówienie: dane z płatności i każdy Produkt z Terminem i odpowiedziami z formularza Usługi. */
+function OrderDetails({ id }: { id: string }) {
+  const order = useApi<PanelOrderDetails>(`/api/panel/orders/${encodeURIComponent(id)}`)
+
+  if (order.status === 'loading') return <p className="panel-order__status">Wczytuję szczegóły…</p>
+  if (order.status !== 'ok') {
+    return <p className="panel-order__status">Nie udało się wczytać szczegółów. Zwiń i rozwiń ponownie.</p>
+  }
+
+  const { email, paidAt, items } = order.data
+  return (
+    <>
+      <p className="panel-order__meta">
+        <a href={`mailto:${email}`}>{email}</a>
+        <span>Zapłacone {formatPaidAt(paidAt)}</span>
+      </p>
+      <ul className="panel-order__items">
+        {items.map((line, index) => (
+          <li key={index} className="panel-order-item">
+            <div className="panel-order-item__header">
+              <span className="panel-order-item__name">
+                {line.quantity > 1 && `${line.quantity} × `}
+                {line.name}
+              </span>
+              <span className="panel-order-item__kind">{kindLabels[line.kind]}</span>
+              <strong className="panel-order-item__price">{formatPrice(line.price * line.quantity)}</strong>
+            </div>
+            {line.appointment && (
+              <p className="panel-order-item__appointment">
+                <span>Termin</span>
+                {formatAppointment(line.appointment)}
+              </p>
+            )}
+            {line.formAnswers.length > 0 && (
+              <dl className="panel-order-item__answers">
+                {line.formAnswers.map((answer) => (
+                  <div key={answer.key}>
+                    <dt>{answer.label}</dt>
+                    <dd>{answer.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </li>
+        ))}
+      </ul>
+    </>
   )
 }
 

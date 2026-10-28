@@ -32,27 +32,6 @@ export const offer = {
   lead: 'Analizy, Rytuały, Sesje i Kursy, każde przygotowane indywidualnie dla Ciebie.',
 }
 
-export const testimonials = {
-  title: 'Opinie',
-  items: [
-    {
-      quote:
-        'Analiza od Klary trafiła w punkt. Dostałam odpowiedzi na pytania, których bałam się zadać na głos.',
-      author: 'Anna',
-    },
-    {
-      quote:
-        'Sesja Reiki była dla mnie chwilą prawdziwego wyciszenia. Czułam się zaopiekowana od pierwszej minuty.',
-      author: 'Marta',
-    },
-    {
-      quote:
-        'Klara mówi o kartach z ogromną wrażliwością. Wróciłam już trzeci raz i na pewno nie ostatni.',
-      author: 'Kasia',
-    },
-  ],
-}
-
 export const faq = {
   eyebrow: 'Warto wiedzieć',
   titleLines: ['Najczęstsze', 'pytania'],

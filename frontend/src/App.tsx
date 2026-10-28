@@ -6,7 +6,7 @@ import { CartToast } from './components/CartToast.tsx'
 import { SiteFooter } from './components/SiteFooter.tsx'
 import { SiteHeader } from './components/SiteHeader.tsx'
 import { homeSections, linkedSectionIds } from './homeSections.ts'
-import { panelAvailabilityPath, panelOrderPath, panelOrdersPath } from './panel.ts'
+import { panelAvailabilityPath, panelOrdersPath } from './panel.ts'
 import { AccountPage } from './pages/AccountPage.tsx'
 import { CartPage } from './pages/CartPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
@@ -14,7 +14,6 @@ import { LoginPage } from './pages/LoginPage.tsx'
 import { NotFoundPage } from './pages/NotFoundPage.tsx'
 import { OrderPage } from './pages/OrderPage.tsx'
 import { PanelOrders } from './components/PanelOrders.tsx'
-import { PanelOrderDetails } from './pages/PanelOrderPage.tsx'
 import { PanelAvailability, PanelHome, PanelPage } from './pages/PanelPage.tsx'
 import { ProductPage } from './pages/ProductPage.tsx'
 
@@ -27,7 +26,6 @@ function App() {
         <Route path={panelPath} element={<PanelPage />}>
           <Route index element={<PanelHome />} />
           <Route path={panelOrdersPath} element={<PanelOrders />} />
-          <Route path={panelOrderPath(':id')} element={<PanelOrderDetails />} />
           <Route path={panelAvailabilityPath} element={<PanelAvailability />} />
         </Route>
         <Route element={<SiteLayout />}>

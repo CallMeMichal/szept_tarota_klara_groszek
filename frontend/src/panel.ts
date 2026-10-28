@@ -135,8 +135,6 @@ export function panelOrdersUrl({ from, to, product }: OrderFilter) {
   return query ? `/api/panel/orders?${query}` : '/api/panel/orders'
 }
 
-/** Strona szczegółów Zamówienia w panelu. */
-export const panelOrderPath = (id: string) => `${panelOrdersPath}/${id}`
 
 /** Opłacone Zamówienie na liście; `email` to adres podany przy płatności, `price` to cena jednej sztuki. */
 export type PanelOrder = {

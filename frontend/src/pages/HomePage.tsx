@@ -18,7 +18,6 @@ import {
   hero,
   instagram,
   offer,
-  testimonials,
 } from '../content/home.ts'
 import {
   homeSectionPath,
@@ -29,7 +28,6 @@ import {
 
 // Sekcje pod Ofertą: przesuwają się w dół, gdy Produkty dojdą z API.
 const sectionsBelowOffer: HomeSectionId[] = [
-  homeSections.testimonials,
   homeSections.faq,
   homeSections.contact,
 ]
@@ -146,22 +144,6 @@ export function HomePage({ section }: HomePageProps) {
       <HomeSection id={homeSections.offer} title={offer.title}>
         <p className="section__lead">{offer.lead}</p>
         <OfferCatalog onLoaded={() => setOfferLoaded(true)} />
-      </HomeSection>
-
-      <HomeSection
-        id={homeSections.testimonials}
-        title={testimonials.title}
-      >
-        <ul className="testimonials">
-          {testimonials.items.map((item) => (
-            <li key={item.author}>
-              <figure>
-                <blockquote>„{item.quote}”</blockquote>
-                <figcaption>{item.author}</figcaption>
-              </figure>
-            </li>
-          ))}
-        </ul>
       </HomeSection>
 
       <section id={homeSections.faq} className="faq" aria-labelledby="faq-title">

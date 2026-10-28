@@ -4,7 +4,6 @@ export const homeSections = {
   start: 'start',
   about: 'o-mnie',
   offer: 'oferta',
-  testimonials: 'opinie',
   faq: 'faq',
   contact: 'kontakt',
 } as const
@@ -29,7 +28,6 @@ export function homeSectionPath(sectionId: HomeSectionId) {
 export const homeNavItems: { id: HomeSectionId; label: string }[] = [
   { id: homeSections.about, label: 'O mnie' },
   { id: homeSections.offer, label: 'Oferta' },
-  { id: homeSections.testimonials, label: 'Opinie' },
   { id: homeSections.faq, label: 'FAQ' },
   { id: homeSections.contact, label: 'Kontakt' },
 ]
