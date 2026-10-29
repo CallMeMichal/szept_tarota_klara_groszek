@@ -276,6 +276,10 @@ public static class AccountEndpoints
         Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? throw new InvalidOperationException("Brak Konta w sesji; endpoint musi wymagać logowania."));
 
+    /// <summary>Konto zalogowanego Klienta albo <c>null</c> dla niezalogowanego odwiedzającego.</summary>
+    public static Guid? OptionalAccountId(this ClaimsPrincipal user) =>
+        Guid.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+
     /// <summary>
     /// Sesja Konta. Imię i nazwisko i zdjęcie profilu są tylko po logowaniu przez Google (Kod logowania ich nie zna);
     /// zdjęcie tylko z adresu HTTPS, bo trafia do <c>img</c> na stronie.

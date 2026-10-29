@@ -191,6 +191,59 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
         return created?.Id ?? throw new HttpRequestException("Google nie zwrócił identyfikatora wydarzenia.");
     }
 
+    public async Task<GoogleAppointmentEvent> CreateAppointmentEventAsync(
+        string refreshToken, AppointmentEventRequest request, CancellationToken cancellationToken)
+    {
+        var accessToken = await AccessTokenAsync(refreshToken, cancellationToken);
+        var url = QueryHelpers.AddQueryString(EventsUrl(GoogleCalendarIds.Primary), new Dictionary<string, string?>
+        {
+            // Bez tego Google pomija conferenceData i nie tworzy spotkania Meet.
+            ["conferenceDataVersion"] = "1",
+            // Zaproszenie z linkiem do Klienta wysyła Google.
+            ["sendUpdates"] = "all",
+        });
+        using var create = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Headers = { Authorization = new AuthenticationHeaderValue("Bearer", accessToken) },
+            Content = JsonContent.Create(new
+            {
+                id = request.Id,
+                summary = request.Summary,
+                description = request.Description,
+                start = new { dateTime = request.Start.ToString("O") },
+                end = new { dateTime = request.End.ToString("O") },
+                attendees = new[] { new { email = request.GuestEmail, displayName = request.GuestName } },
+                conferenceData = new
+                {
+                    createRequest = new { requestId = request.Id, conferenceSolutionKey = new { type = "hangoutsMeet" } },
+                },
+            }),
+        };
+        using var response = await http.SendAsync(create, cancellationToken);
+        await ThrowIfAccessLostAsync(response, cancellationToken);
+
+        // Wydarzenie o tym identyfikatorze już jest (ponowione powiadomienie o płatności): bierzemy dodane wcześniej.
+        if (response.StatusCode == HttpStatusCode.Conflict)
+        {
+            using var get = new HttpRequestMessage(HttpMethod.Get, $"{EventsUrl(GoogleCalendarIds.Primary)}/{Uri.EscapeDataString(request.Id)}")
+            {
+                Headers = { Authorization = new AuthenticationHeaderValue("Bearer", accessToken) },
+            };
+            using var existing = await http.SendAsync(get, cancellationToken);
+            await ThrowIfAccessLostAsync(existing, cancellationToken);
+            existing.EnsureSuccessStatusCode();
+            return ToAppointmentEvent(await existing.Content.ReadFromJsonAsync<EventEntry>(cancellationToken));
+        }
+
+        response.EnsureSuccessStatusCode();
+        return ToAppointmentEvent(await response.Content.ReadFromJsonAsync<EventEntry>(cancellationToken));
+    }
+
+    private static GoogleAppointmentEvent ToAppointmentEvent(EventEntry? entry) =>
+        entry is { Id: { } id }
+            ? new GoogleAppointmentEvent(id, entry.HangoutLink)
+            : throw new HttpRequestException("Google nie zwrócił wydarzenia.");
+
     public async Task DeleteEventAsync(string refreshToken, string calendarId, string eventId, CancellationToken cancellationToken)
     {
         var accessToken = await AccessTokenAsync(refreshToken, cancellationToken);
@@ -286,7 +339,8 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
         [property: JsonPropertyName("start")] EventTime? Start,
         [property: JsonPropertyName("end")] EventTime? End,
         [property: JsonPropertyName("transparency")] string? Transparency,
-        [property: JsonPropertyName("attendees")] List<EventAttendee>? Attendees);
+        [property: JsonPropertyName("attendees")] List<EventAttendee>? Attendees,
+        [property: JsonPropertyName("hangoutLink")] string? HangoutLink = null);
 
     private sealed record EventTime(
         [property: JsonPropertyName("dateTime")] DateTimeOffset? DateTime,

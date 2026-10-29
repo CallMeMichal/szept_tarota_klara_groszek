@@ -4,7 +4,8 @@ namespace SzeptTarota.Application.Appointments;
 public sealed record Appointment(DateTimeOffset Start, DateTimeOffset End);
 
 /// <summary>
-/// Dostępność Klary w wczytanym okresie: bloki „Dostępna” i zajęte okresy (główny kalendarz, opłacone Terminy).
+/// Dostępność Klary w wczytanym okresie: bloki „Dostępna”, zajęte okresy z głównego kalendarza i Terminy zajęte przez
+/// Klientów (opłacone i zablokowane na czas płatności).
 /// Strona niczego nie dokłada od siebie: blok dzieli się od jego początku na kolejne Terminy o długości Usługi, a Termin
 /// jest wolny, gdy zaczyna się w przyszłości i nie nachodzi na żaden zajęty okres (stykać się może, np. 12–13 i 13–14).
 /// </summary>
@@ -12,12 +13,14 @@ public sealed class Availability
 {
     private readonly IReadOnlyList<Appointment> _blocks;
     private readonly List<Appointment> _busy;
+    private readonly IReadOnlyList<Appointment> _taken;
     private readonly DateTimeOffset _now;
 
-    public Availability(IEnumerable<Appointment> blocks, IEnumerable<Appointment> busy, DateTimeOffset now)
+    public Availability(IEnumerable<Appointment> blocks, IEnumerable<Appointment> busy, IEnumerable<Appointment> taken, DateTimeOffset now)
     {
         _blocks = Merge(blocks);
         _busy = busy.ToList();
+        _taken = taken.ToList();
         _now = now;
     }
 
@@ -47,8 +50,14 @@ public sealed class Availability
         return duration > TimeSpan.Zero
             && appointment.Start > _now
             && _blocks.Any(b => b.Start <= appointment.Start && appointment.End <= b.End && (appointment.Start - b.Start).Ticks % duration.Ticks == 0)
-            && !_busy.Any(b => appointment.Start < b.End && b.Start < appointment.End);
+            && !_busy.Any(b => Overlap(appointment, b))
+            && !IsTaken(appointment);
     }
+
+    /// <summary>Czy Termin nachodzi na Termin, który opłacił albo właśnie opłaca inny Klient.</summary>
+    public bool IsTaken(Appointment appointment) => _taken.Any(t => Overlap(appointment, t));
+
+    private static bool Overlap(Appointment a, Appointment b) => a.Start < b.End && b.Start < a.End;
 
     /// <summary>Zajmuje Termin, np. wybrany już przy innej pozycji tego samego Koszyka.</summary>
     public void Occupy(Appointment appointment) => _busy.Add(appointment);

@@ -38,6 +38,10 @@ _Avoid_: spotkanie, konsultacja, wizyta
 Konkretna data, godzina i długość spotkania online Klary z Klientem przy Usłudze albo Sesji, wybrane przez Klienta przy zakupie spośród wolnych godzin, które Klara udostępniła. Każda Usługa i Sesja ma Termin; jego długość wynika z Produktu (na razie 60 minut).
 _Avoid_: slot, rezerwacja, wizyta
 
+**Blokada Terminu**:
+Zajęcie wybranego Terminu na 15 minut od rozpoczęcia płatności, żeby nikt inny go w tym czasie nie kupił. Po zapłacie Termin zostaje zajęty na stałe; po wygaśnięciu blokady albo sesji płatności wraca do puli. Własna blokada nie zajmuje Terminu temu samemu Klientowi, gdy wraca z przerwanej płatności.
+_Avoid_: rezerwacja, lock (w tekstach na stronie)
+
 **Kalendarz Sesji**:
 Osobny kalendarz Google Klary z blokami „Dostępna”, czyli godzinami, w których przyjmuje Terminy Usług i Sesji; wybiera go w panelu i tam zaznacza bloki (może też wpisywać je wprost w Google Calendar). Jej główny kalendarz jest odczytywany tylko jako zajętość.
 _Avoid_: kalendarz dostępności, grafik

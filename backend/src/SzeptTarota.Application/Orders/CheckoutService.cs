@@ -1,6 +1,7 @@
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
 using SzeptTarota.Application.Accounts;
+using SzeptTarota.Application.Appointments;
 using SzeptTarota.Application.Cart;
 using SzeptTarota.Application.Payments;
 using SzeptTarota.Domain.Orders;
@@ -9,7 +10,8 @@ namespace SzeptTarota.Application.Orders;
 
 /// <summary>
 /// Rozpoczęcie płatności przez zalogowanego Klienta: ponownie sprawdza Koszyk, dane Klienta i zgody, tworzy
-/// Zamówienie na jego Konto, oczekujące na płatność, i zakłada dla niego sesję płatności w bramce. Potwierdzenie
+/// Zamówienie na jego Konto, oczekujące na płatność, blokuje jego Terminy na <see cref="HoldDuration"/> i zakłada dla
+/// niego sesję płatności w bramce. Potwierdzenie
 /// idzie na e-mail z formularza: domyślnie adres Konta, ale Klient może podać inny.
 /// </summary>
 /// <exception cref="ShopNotConfiguredException">Gdy brakuje konfiguracji sekcji <c>Shop</c>.</exception>
@@ -17,6 +19,7 @@ namespace SzeptTarota.Application.Orders;
 public sealed class CheckoutService(
     CartValidator cartValidator,
     IAccountStore accounts,
+    IAppointmentStore appointments,
     IPaymentGateway paymentGateway,
     IOrderStore orders,
     TimeProvider time,
@@ -24,6 +27,9 @@ public sealed class CheckoutService(
 {
     private const int MaxEmailLength = 200;
     private const int MaxNameLength = 200;
+
+    /// <summary>Jak długo wybrane Terminy czekają na płatność, zanim wrócą do puli.</summary>
+    public static readonly TimeSpan HoldDuration = TimeSpan.FromMinutes(15);
 
     public async Task<CheckoutResult> StartAsync(CheckoutCommand command, CancellationToken cancellationToken)
     {
@@ -33,7 +39,7 @@ public sealed class CheckoutService(
         }
 
         // Klient płaci dokładnie tyle, ile widział: każda zmiana ceny od ostatniego sprawdzenia wraca do Koszyka.
-        var cart = await cartValidator.ValidateAsync(command.Items, cancellationToken);
+        var cart = await cartValidator.ValidateAsync(command.Items, account.Id, cancellationToken);
         if (!cart.IsValid || cart.Lines.Any(l => l.Product!.PreviousPrice is not null))
         {
             return new CheckoutResult.CartChanged(cart);
@@ -72,28 +78,49 @@ public sealed class CheckoutService(
             throw new ShopNotConfiguredException();
         }
 
-        var siteUrl = shop.SiteUrl.TrimEnd('/');
-        var session = await paymentGateway.CreateCheckoutAsync(
-            new PaymentSessionRequest(
+        // Baza przepuszcza tylko jedną z równoczesnych płatności za ten sam czas; przegrana nic nie tworzy.
+        var holds = lines
+            .Select((line, index) => (line, index))
+            .Where(l => l.line is { AppointmentStart: not null, AppointmentEnd: not null })
+            .Select(l => new OrderAppointment(
+                Guid.NewGuid(), orderId, account.Id, l.index, l.line.AppointmentStart!.Value, l.line.AppointmentEnd!.Value, now + HoldDuration))
+            .ToList();
+        if (holds.Count > 0 && await appointments.TryHoldAsync(holds, now, cancellationToken) is { } takenIndex)
+        {
+            return new CheckoutResult.CartChanged(cart.WithError(holds[takenIndex].LineIndex, CartError.AppointmentTaken));
+        }
+
+        try
+        {
+            var siteUrl = shop.SiteUrl.TrimEnd('/');
+            var session = await paymentGateway.CreateCheckoutAsync(
+                new PaymentSessionRequest(
+                    orderId,
+                    email,
+                    lines.Select(l => new CheckoutLine(l.Name, l.Price, l.Quantity)).ToList(),
+                    SuccessUrl: new Uri($"{siteUrl}/zamowienie/{orderId}"),
+                    CancelUrl: new Uri($"{siteUrl}/koszyk?platnosc=przerwana")),
+                cancellationToken);
+
+            var order = new Order(
                 orderId,
+                account.Id,
                 email,
-                lines.Select(l => new CheckoutLine(l.Name, l.Price, l.Quantity)).ToList(),
-                SuccessUrl: new Uri($"{siteUrl}/zamowienie/{orderId}"),
-                CancelUrl: new Uri($"{siteUrl}/koszyk?platnosc=przerwana")),
-            cancellationToken);
+                command.Name!.Trim(),
+                lines,
+                cart.RequiredConsents.Select(c => new AcceptedConsent(c.Key, c.Text, now)).ToList(),
+                session.Id,
+                now);
+            await orders.AddAsync(order, cancellationToken);
 
-        var order = new Order(
-            orderId,
-            account.Id,
-            email,
-            command.Name!.Trim(),
-            lines,
-            cart.RequiredConsents.Select(c => new AcceptedConsent(c.Key, c.Text, now)).ToList(),
-            session.Id,
-            now);
-        await orders.AddAsync(order, cancellationToken);
-
-        return new CheckoutResult.Started(orderId, session.RedirectUrl);
+            return new CheckoutResult.Started(orderId, session.RedirectUrl);
+        }
+        catch
+        {
+            // Bez Zamówienia nikt za te Terminy nie zapłaci.
+            await appointments.ReleaseAsync(orderId, now, CancellationToken.None);
+            throw;
+        }
     }
 
     private static Dictionary<string, string[]> ValidateCustomer(CheckoutCommand command)

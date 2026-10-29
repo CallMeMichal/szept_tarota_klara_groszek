@@ -44,6 +44,15 @@ public interface IGoogleCalendar
     Task<string> CreateFreeEventAsync(
         string refreshToken, string calendarId, string summary, DateTimeOffset start, DateTimeOffset end, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Dodaje do głównego kalendarza Klary wydarzenie opłaconego Terminu z Klientem jako gościem i nowym spotkaniem
+    /// Google Meet; zaproszenie i przypomnienia wysyła Klientowi Google. Wydarzenie o tym samym identyfikatorze
+    /// powstaje tylko raz: przy ponownym wywołaniu wraca to już dodane.
+    /// </summary>
+    /// <exception cref="GoogleCalendarAccessLostException">Gdy refresh token już nie działa (cofnięta zgoda, wygasł).</exception>
+    /// <exception cref="GoogleCalendarNotConfiguredException">Gdy brakuje kluczy klienta OAuth.</exception>
+    Task<GoogleAppointmentEvent> CreateAppointmentEventAsync(string refreshToken, AppointmentEventRequest request, CancellationToken cancellationToken);
+
     /// <summary>Usuwa wydarzenie z kalendarza <paramref name="calendarId"/>; usunięte już wcześniej nie jest błędem.</summary>
     /// <exception cref="GoogleCalendarAccessLostException">Gdy refresh token już nie działa (cofnięta zgoda, wygasł).</exception>
     /// <exception cref="GoogleCalendarNotConfiguredException">Gdy brakuje kluczy klienta OAuth.</exception>
@@ -67,6 +76,22 @@ public sealed record GoogleCalendarInfo(string Id, string Name, bool Primary, bo
 /// pokazywać „Dostępna” (przezroczyste) albo Klara odrzuciła zaproszenie.
 /// </summary>
 public sealed record GoogleCalendarEvent(string Id, DateTimeOffset Start, DateTimeOffset End, bool Busy);
+
+/// <summary>
+/// Wydarzenie opłaconego Terminu. <see cref="Id"/> to stały identyfikator wydarzenia w Google (32 znaki 0-9a-f),
+/// dzięki któremu ponowione powiadomienie o płatności nie doda go drugi raz.
+/// </summary>
+public sealed record AppointmentEventRequest(
+    string Id,
+    string Summary,
+    string Description,
+    DateTimeOffset Start,
+    DateTimeOffset End,
+    string GuestEmail,
+    string GuestName);
+
+/// <summary>Dodane wydarzenie Terminu i link do spotkania Google Meet (brak, gdy Google go jeszcze nie utworzył).</summary>
+public sealed record GoogleAppointmentEvent(string Id, string? MeetLink);
 
 public sealed class GoogleCalendarNotConfiguredException()
     : InvalidOperationException("Brak konfiguracji 'Google:ClientId' albo 'Google:ClientSecret'.");

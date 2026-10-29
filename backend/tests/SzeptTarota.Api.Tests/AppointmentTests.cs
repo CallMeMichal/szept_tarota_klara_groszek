@@ -317,12 +317,10 @@ public class AppointmentTests : IAsyncLifetime
             acceptedConsents = new[] { "termsAndPrivacy" },
         });
         Assert.Equal(HttpStatusCode.OK, checkout.StatusCode);
-        var stillFree = await FreeTerminy(FakeProductCatalog.SessionSlug, Day(32), Day(32));
         await PayFor(Assert.Single(_factory.Payments.Sessions).Session.Id);
 
         var free = await FreeTerminy(FakeProductCatalog.SessionSlug, Day(32), Day(32));
 
-        Assert.Contains(At(32, 11, 0), stillFree.Appointments.Select(a => a.Start));
         Assert.Equal([At(32, 10, 0), At(32, 12, 0)], free.Appointments.Select(a => a.Start));
         var toKlara = Assert.Single(_factory.Emails.Sent, m => m.To == ApiFactory.KlaraEmail).Html;
         var day = At(32, 11).ToString("d MMMM yyyy", CultureInfo.GetCultureInfo("pl-PL"));

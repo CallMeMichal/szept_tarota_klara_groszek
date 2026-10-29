@@ -1,17 +1,16 @@
 using SzeptTarota.Application.Calendar;
-using SzeptTarota.Application.Orders;
 
 namespace SzeptTarota.Application.Appointments;
 
 /// <summary>
 /// Dostępność, którą Klara zaznacza w panelu (ADR 0002): każdy blok to wydarzenie „Dostępna” w jej Kalendarzu Sesji
 /// w Google, więc widzi i poprawia je też w Google Calendar. Panel pokazuje obok zajęte godziny (główny kalendarz,
-/// opłacone Terminy), żeby wiedziała, czego Klienci i tak nie dostaną. Godziny z panelu są w czasie polskim.
+/// Terminy opłacone i zablokowane na czas płatności), żeby wiedziała, czego Klienci i tak nie dostaną. Godziny z panelu są w czasie polskim.
 /// </summary>
 public sealed class AvailabilityBlockService(
     ICalendarConnectionStore connections,
     IGoogleCalendar google,
-    IOrderStore orders,
+    IAppointmentStore appointments,
     TimeProvider time)
 {
     /// <summary>Tytuł bloku w Google Calendar.</summary>
@@ -47,10 +46,10 @@ public sealed class AvailabilityBlockService(
         {
             var blocks = await google.ListEventsAsync(refreshToken, calendarId, start, end, cancellationToken);
             var mainCalendar = await google.ListEventsAsync(refreshToken, GoogleCalendarIds.Primary, start, end, cancellationToken);
-            var paid = await orders.ListPaidAppointmentsAsync(start, end, cancellationToken);
+            var taken = await appointments.ListTakenAsync(start, end, now, exceptAccountId: null, cancellationToken);
             return new AvailabilityResult<AvailabilityWeek>.Ok(new AvailabilityWeek(
                 blocks.OrderBy(e => e.Start).Select(e => new AvailabilityBlock(e.Id, InWarsaw(e.Start), InWarsaw(e.End))).ToList(),
-                mainCalendar.Where(e => e.Busy).Select(e => new Appointment(e.Start, e.End)).Concat(paid)
+                mainCalendar.Where(e => e.Busy).Select(e => new Appointment(e.Start, e.End)).Concat(taken)
                     .OrderBy(p => p.Start)
                     .Select(AvailabilityService.InWarsaw)
                     .ToList()));
@@ -154,7 +153,7 @@ public sealed class AvailabilityBlockService(
 /// <summary>Blok „Dostępna” w Kalendarzu Sesji: identyfikator wydarzenia w Google, początek i koniec.</summary>
 public sealed record AvailabilityBlock(string Id, DateTimeOffset Start, DateTimeOffset End);
 
-/// <summary>Bloki „Dostępna” i zajęte okresy (główny kalendarz, opłacone Terminy) w wybranych dniach, od najwcześniejszych.</summary>
+/// <summary>Bloki „Dostępna” i zajęte okresy (główny kalendarz, Terminy Klientów) w wybranych dniach, od najwcześniejszych.</summary>
 public sealed record AvailabilityWeek(IReadOnlyList<AvailabilityBlock> Blocks, IReadOnlyList<Appointment> Busy);
 
 public abstract record AvailabilityResult<T>

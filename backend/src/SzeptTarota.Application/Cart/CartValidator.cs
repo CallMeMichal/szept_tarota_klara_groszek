@@ -17,10 +17,11 @@ public sealed class CartValidator(IProductCatalog catalog, AvailabilityService a
 
     private static readonly IReadOnlyDictionary<string, string> NoFormErrors = new Dictionary<string, string>();
 
-    public async Task<CartValidation> ValidateAsync(IReadOnlyList<CartItem> items, CancellationToken cancellationToken)
+    /// <param name="accountId">Zalogowany Klient; jego własne blokady z przerwanej płatności nie zajmują mu Terminów.</param>
+    public async Task<CartValidation> ValidateAsync(IReadOnlyList<CartItem> items, Guid? accountId, CancellationToken cancellationToken)
     {
         var lines = new List<CartLine>(items.Count);
-        var availability = await LoadAvailabilityAsync(items, cancellationToken);
+        var availability = await LoadAvailabilityAsync(items, accountId, cancellationToken);
 
         foreach (var item in items)
         {
@@ -59,7 +60,7 @@ public sealed class CartValidator(IProductCatalog catalog, AvailabilityService a
                     }
                     else if (!availability.IsFree(appointment))
                     {
-                        errors.Add(CartError.AppointmentUnavailable);
+                        errors.Add(availability.IsTaken(appointment) ? CartError.AppointmentTaken : CartError.AppointmentUnavailable);
                     }
                     else
                     {
@@ -88,7 +89,7 @@ public sealed class CartValidator(IProductCatalog catalog, AvailabilityService a
     }
 
     /// <summary>Dostępność Klary w okresie wybranych Terminów; <c>null</c>, gdy nie ma Terminów albo kalendarza nie da się odczytać.</summary>
-    private async Task<Availability?> LoadAvailabilityAsync(IReadOnlyList<CartItem> items, CancellationToken cancellationToken)
+    private async Task<Availability?> LoadAvailabilityAsync(IReadOnlyList<CartItem> items, Guid? accountId, CancellationToken cancellationToken)
     {
         var starts = items
             .Where(i => catalog.FindBySlug(i.Slug) is { RequiresAppointment: true })
@@ -98,7 +99,7 @@ public sealed class CartValidator(IProductCatalog catalog, AvailabilityService a
             .ToList();
         return starts.Count == 0
             ? null
-            : await availabilityService.LoadAsync(starts.Min(), starts.Max().AddTicks(1), cancellationToken);
+            : await availabilityService.LoadAsync(starts.Min(), starts.Max().AddTicks(1), accountId, cancellationToken);
     }
 }
 
@@ -117,6 +118,14 @@ public sealed record CartItem(
 public sealed record CartValidation(IReadOnlyList<CartLine> Lines, int Total, IReadOnlyList<Consent> RequiredConsents)
 {
     public bool IsValid => Lines.Count > 0 && Lines.All(l => l.Errors.Count == 0);
+
+    /// <summary>Ten sam Koszyk z błędem pozycji <paramref name="index"/>, której nie da się już kupić.</summary>
+    public CartValidation WithError(int index, CartError error)
+    {
+        var lines = Lines.Select((l, i) => i == index ? l with { Errors = [.. l.Errors, error] } : l).ToList();
+        var purchasable = lines.Where(l => l.Errors.Count == 0).ToList();
+        return this with { Lines = lines, Total = purchasable.Sum(l => l.Product!.Price * l.Quantity) };
+    }
 }
 
 /// <summary>
@@ -158,6 +167,10 @@ public sealed record CartError(string Code, string Message)
 
     public static readonly CartError AppointmentUnavailable =
         new("appointmentUnavailable", "Ten Termin jest już zajęty albo niedostępny. Wybierz inny.");
+
+    /// <summary>Termin opłacił albo właśnie opłaca inny Klient.</summary>
+    public static readonly CartError AppointmentTaken =
+        new("appointmentTaken", "Ten termin jest już zajęty, wybierz inny.");
 
     public static readonly CartError AppointmentUnverifiable =
         new("appointmentUnverifiable", "Nie udało się teraz sprawdzić Terminu w kalendarzu. Spróbuj ponownie za chwilę.");

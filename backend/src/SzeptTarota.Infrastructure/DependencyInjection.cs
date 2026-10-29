@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SzeptTarota.Application;
 using SzeptTarota.Application.Accounts;
+using SzeptTarota.Application.Appointments;
 using SzeptTarota.Application.Calendar;
 using SzeptTarota.Application.Catalog;
 using SzeptTarota.Application.Contact;
@@ -38,6 +39,7 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IOrderStore, EfOrderStore>();
+        services.AddScoped<IAppointmentStore, EfAppointmentStore>();
         services.AddScoped<IAccountStore, EfAccountStore>();
         services.AddScoped<ICalendarConnectionStore, EfCalendarConnectionStore>();
 

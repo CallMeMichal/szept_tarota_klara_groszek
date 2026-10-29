@@ -25,10 +25,14 @@ public sealed class FakePaymentGateway : IPaymentGateway
             throw new PaymentGatewayNotConfiguredException();
         }
 
-        var id = $"cs_test_{_sessions.Count + 1}_{Guid.NewGuid():N}";
-        var session = new CheckoutSession(id, new Uri($"https://checkout.stripe.test/pay/{id}"));
-        _sessions.Add((request, session));
-        return Task.FromResult(session);
+        // Równoczesne płatności w testach blokad Terminów.
+        lock (_sessions)
+        {
+            var id = $"cs_test_{_sessions.Count + 1}_{Guid.NewGuid():N}";
+            var session = new CheckoutSession(id, new Uri($"https://checkout.stripe.test/pay/{id}"));
+            _sessions.Add((request, session));
+            return Task.FromResult(session);
+        }
     }
 
     public PaymentEvent? ReadWebhook(string payload, string? signature)

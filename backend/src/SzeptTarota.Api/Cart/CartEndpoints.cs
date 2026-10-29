@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
+using SzeptTarota.Api.Accounts;
 using SzeptTarota.Application.Appointments;
 using SzeptTarota.Application.Cart;
 using SzeptTarota.Domain.Catalog;
@@ -13,7 +15,7 @@ public static class CartEndpoints
     public static IEndpointRouteBuilder MapCartEndpoints(this IEndpointRouteBuilder api)
     {
         api.MapPost("/cart/validate", async Task<Results<Ok<CartResponse>, ValidationProblem>> (
-                CartRequest request, CartValidator validator, CancellationToken cancellationToken) =>
+                CartRequest request, ClaimsPrincipal user, CartValidator validator, CancellationToken cancellationToken) =>
             {
                 if (request.Items is null || request.Items.Count > MaxItems
                     || request.Items.Any(i => string.IsNullOrWhiteSpace(i?.Slug)))
@@ -24,7 +26,7 @@ public static class CartEndpoints
                     });
                 }
 
-                var validation = await validator.ValidateAsync(request.Items.Select(i => i!.ToCartItem()).ToList(), cancellationToken);
+                var validation = await validator.ValidateAsync(request.Items.Select(i => i!.ToCartItem()).ToList(), user.OptionalAccountId(), cancellationToken);
                 return TypedResults.Ok(CartResponse.From(validation));
             })
             .WithName("ValidateCart");

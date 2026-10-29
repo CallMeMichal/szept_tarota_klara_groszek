@@ -9,6 +9,8 @@ public sealed class SzeptTarotaDbContext(DbContextOptions<SzeptTarotaDbContext> 
 {
     public DbSet<Order> Orders => Set<Order>();
 
+    public DbSet<OrderAppointment> OrderAppointments => Set<OrderAppointment>();
+
     public DbSet<Account> Accounts => Set<Account>();
 
     public DbSet<LoginCode> LoginCodes => Set<LoginCode>();
@@ -61,6 +63,18 @@ public sealed class SzeptTarotaDbContext(DbContextOptions<SzeptTarotaDbContext> 
 
             order.ComplexCollection(o => o.Lines, lines => lines.ToJson());
             order.ComplexCollection(o => o.Consents, consents => consents.ToJson());
+        });
+
+        modelBuilder.Entity<OrderAppointment>(appointment =>
+        {
+            appointment.ToTable("order_appointments");
+            appointment.HasKey(a => a.Id);
+            appointment.Property(a => a.Id).ValueGeneratedNever();
+            appointment.Property(a => a.CalendarEventId).HasMaxLength(1024);
+            appointment.Property(a => a.MeetLink).HasMaxLength(1024);
+            appointment.HasIndex(a => a.OrderId);
+            // Ograniczenie wykluczające nachodzące na siebie niezwolnione Terminy jest w migracji AddOrderAppointments,
+            // bo EF Core nie umie go opisać.
         });
     }
 }

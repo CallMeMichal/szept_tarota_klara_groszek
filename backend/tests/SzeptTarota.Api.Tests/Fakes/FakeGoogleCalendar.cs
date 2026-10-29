@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Microsoft.AspNetCore.WebUtilities;
 using SzeptTarota.Application.Calendar;
 
@@ -9,7 +9,8 @@ namespace SzeptTarota.Api.Tests.Fakes;
 /// Google odesłałby przeglądarkę na stronę; za kod strona dostaje refresh token, a z nim listę <see cref="Calendars"/>.
 /// <see cref="RevokeAccess"/> udaje cofnięcie zgody: wydane dotąd tokeny przestają działać. Wydarzenia leżą w pamięci
 /// po kalendarzach; test dodaje je przez <see cref="AddAvailableBlock"/> i <see cref="AddMainCalendarEvent"/>, a strona
-/// przez <see cref="CreateFreeEventAsync"/>.
+/// przez <see cref="CreateFreeEventAsync"/> i <see cref="CreateAppointmentEventAsync"/>; te drugie trafiają też do
+/// <see cref="AppointmentEvents"/> z gościem, opisem i linkiem Meet.
 /// </summary>
 public sealed class FakeGoogleCalendar : IGoogleCalendar
 {
@@ -26,6 +27,20 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
 
     /// <summary>Wydarzenia po identyfikatorach kalendarzy.</summary>
     private readonly ConcurrentDictionary<string, List<GoogleCalendarEvent>> _events = new();
+
+    private readonly List<CreatedAppointmentEvent> _appointmentEvents = [];
+
+    /// <summary>Wydarzenia opłaconych Terminów w głównym kalendarzu Klary, od najwcześniej dodanego.</summary>
+    public IReadOnlyList<CreatedAppointmentEvent> AppointmentEvents
+    {
+        get
+        {
+            lock (_appointmentEvents)
+            {
+                return [.. _appointmentEvents];
+            }
+        }
+    }
 
     /// <summary>Kalendarze na koncie Google Klary.</summary>
     public List<GoogleCalendarInfo> Calendars { get; } = [MainCalendar, SessionsCalendar, HolidaysCalendar];
@@ -73,11 +88,15 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
         Calendars.Clear();
         Calendars.AddRange([MainCalendar, SessionsCalendar, HolidaysCalendar]);
         _events.Clear();
+        lock (_appointmentEvents)
+        {
+            _appointmentEvents.Clear();
+        }
     }
 
-    private string AddEvent(string calendarId, DateTimeOffset start, DateTimeOffset end, bool busy)
+    private string AddEvent(string calendarId, DateTimeOffset start, DateTimeOffset end, bool busy, string? id = null)
     {
-        var id = $"event-{Guid.NewGuid():N}";
+        id ??= $"event-{Guid.NewGuid():N}";
         var events = _events.GetOrAdd(calendarId, _ => []);
         lock (events)
         {
@@ -127,6 +146,24 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
         return Task.FromResult(AddEvent(Resolve(calendarId), start, end, busy: false));
     }
 
+    public Task<GoogleAppointmentEvent> CreateAppointmentEventAsync(
+        string refreshToken, AppointmentEventRequest request, CancellationToken cancellationToken)
+    {
+        EnsureActive(refreshToken);
+        lock (_appointmentEvents)
+        {
+            // Jak Google: drugie wydarzenie o tym samym identyfikatorze nie powstaje.
+            if (_appointmentEvents.Find(e => e.Request.Id == request.Id) is not { } created)
+            {
+                created = new CreatedAppointmentEvent(request, $"https://meet.google.com/{request.Id[..10]}");
+                _appointmentEvents.Add(created);
+                AddEvent(MainCalendar.Id, request.Start, request.End, busy: true, request.Id);
+            }
+
+            return Task.FromResult(new GoogleAppointmentEvent(created.Request.Id, created.MeetLink));
+        }
+    }
+
     public Task DeleteEventAsync(string refreshToken, string calendarId, string eventId, CancellationToken cancellationToken)
     {
         EnsureActive(refreshToken);
@@ -151,3 +188,6 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
 
     private bool IsActive(string refreshToken) => _tokens.TryGetValue(refreshToken, out var active) && active;
 }
+
+/// <summary>Wydarzenie opłaconego Terminu dodane przez stronę i link Meet, który Google do niego utworzył.</summary>
+public sealed record CreatedAppointmentEvent(AppointmentEventRequest Request, string MeetLink);
