@@ -32,6 +32,6 @@ public interface IAppointmentStore
     /// <summary>Zwalnia nieopłacone blokady Zamówienia (wygasła sesja płatności albo nie udało się jej założyć).</summary>
     Task ReleaseAsync(Guid orderId, DateTimeOffset now, CancellationToken cancellationToken);
 
-    /// <summary>Zapisuje wydarzenie Terminu w kalendarzu Klary i link Meet przy Terminie.</summary>
-    Task SaveCalendarEventAsync(Guid id, string calendarEventId, string? meetLink, CancellationToken cancellationToken);
+    /// <summary>Zapisuje przy Terminie jego wydarzenie w kalendarzu Klary, link Meet i identyfikator iCalendar.</summary>
+    Task SaveCalendarEventAsync(Guid id, string calendarEventId, string? meetLink, string? calendarEventUid, CancellationToken cancellationToken);
 }

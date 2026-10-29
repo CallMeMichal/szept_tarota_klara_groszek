@@ -46,8 +46,8 @@ public interface IGoogleCalendar
 
     /// <summary>
     /// Dodaje do głównego kalendarza Klary wydarzenie opłaconego Terminu z Klientem jako gościem i nowym spotkaniem
-    /// Google Meet; zaproszenie i przypomnienia wysyła Klientowi Google. Wydarzenie o tym samym identyfikatorze
-    /// powstaje tylko raz: przy ponownym wywołaniu wraca to już dodane.
+    /// Google Meet. Google nie wysyła Klientowi osobnego maila: Termin do zapisania w kalendarzu jest w mailu strony.
+    /// Wydarzenie o tym samym identyfikatorze powstaje tylko raz: przy ponownym wywołaniu wraca to już dodane.
     /// </summary>
     /// <exception cref="GoogleCalendarAccessLostException">Gdy refresh token już nie działa (cofnięta zgoda, wygasł).</exception>
     /// <exception cref="GoogleCalendarNotConfiguredException">Gdy brakuje kluczy klienta OAuth.</exception>
@@ -90,8 +90,11 @@ public sealed record AppointmentEventRequest(
     string GuestEmail,
     string GuestName);
 
-/// <summary>Dodane wydarzenie Terminu i link do spotkania Google Meet (brak, gdy Google go jeszcze nie utworzył).</summary>
-public sealed record GoogleAppointmentEvent(string Id, string? MeetLink);
+/// <summary>
+/// Dodane wydarzenie Terminu, link do spotkania Google Meet (brak, gdy Google go jeszcze nie utworzył) i identyfikator
+/// wydarzenia w plikach kalendarza (iCalendar), po którym kalendarze rozpoznają, że to to samo wydarzenie.
+/// </summary>
+public sealed record GoogleAppointmentEvent(string Id, string? MeetLink, string? ICalUid);
 
 public sealed class GoogleCalendarNotConfiguredException()
     : InvalidOperationException("Brak konfiguracji 'Google:ClientId' albo 'Google:ClientSecret'.");

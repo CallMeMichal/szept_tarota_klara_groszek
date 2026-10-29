@@ -16,7 +16,10 @@ public static class OrderEmails
     private static readonly CultureInfo Polish = CultureInfo.GetCultureInfo("pl-PL");
     private static readonly TimeZoneInfo Warsaw = TimeZoneInfo.FindSystemTimeZoneById("Europe/Warsaw");
 
-    /// <summary>Potwierdzenie dla Klienta: Terminy z linkami Meet, podsumowanie Zamówienia i Ebooki w załączniku.</summary>
+    /// <summary>
+    /// Potwierdzenie dla Klienta: Terminy z linkami Meet, podsumowanie Zamówienia, a w załącznikach Ebooki i każdy
+    /// Termin jako plik kalendarza do zapisania jednym kliknięciem.
+    /// </summary>
     public static EmailMessage ToKlient(Order order, IReadOnlyList<EmailAttachment> ebooks, IReadOnlyList<OrderAppointment> appointments)
     {
         var firstName = order.CustomerName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
@@ -32,7 +35,22 @@ public static class OrderEmails
             .ToString();
 
         var html = Page("Twoje Zamówienie jest opłacone.", body, $"Numer Zamówienia: {order.Id}");
-        return new EmailMessage(order.Email, "Twoje Zamówienie w Szept Tarota", html, ebooks, $"zamowienie-{order.Id}-klient");
+        return new EmailMessage(
+            order.Email, "Twoje Zamówienie w Szept Tarota", html, [.. ebooks, .. CalendarFiles(order, appointments)], $"zamowienie-{order.Id}-klient");
+    }
+
+    /// <summary>Plik kalendarza każdego Terminu, który Klient ma; bez tych, które zajął w międzyczasie ktoś inny.</summary>
+    private static IEnumerable<EmailAttachment> CalendarFiles(Order order, IReadOnlyList<OrderAppointment> appointments)
+    {
+        var kept = appointments.Where(a => a.ReleasedAt is null).OrderBy(a => a.LineIndex).ToList();
+        return kept.Select((appointment, number) => TerminCalendarFile.Create(
+            kept.Count == 1 ? "termin.ics" : $"termin-{number + 1}.ics",
+            appointment.CalendarEventUid ?? $"{appointment.Id:N}@szept-tarota",
+            $"{order.Lines[appointment.LineIndex].Name} (Szept Tarota)",
+            appointment.Start,
+            appointment.End,
+            appointment.MeetLink,
+            order.PaidAt ?? order.CreatedAt));
     }
 
     /// <summary>
@@ -72,7 +90,7 @@ public static class OrderEmails
                     .Append(Field("Link do spotkania", Link(link)));
                 if (!forKlara)
                 {
-                    body.Append(Note("Zaproszenie z przypomnieniami wyśle Ci też Kalendarz Google."));
+                    body.Append(Note("Termin jest też w załączniku: zapisz go w swoim kalendarzu jednym kliknięciem."));
                 }
             }
             else if (AppointmentProblem(appointment, forKlara) is { } problem)

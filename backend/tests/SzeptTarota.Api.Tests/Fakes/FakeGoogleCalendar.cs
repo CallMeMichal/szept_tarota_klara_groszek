@@ -172,7 +172,7 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
                 AddEvent(MainCalendar.Id, request.Start, request.End, busy: true, request.Id);
             }
 
-            return new GoogleAppointmentEvent(created.Request.Id, created.MeetLink);
+            return new GoogleAppointmentEvent(created.Request.Id, created.MeetLink, created.ICalUid);
         }
     }
 
@@ -202,4 +202,8 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
 }
 
 /// <summary>Wydarzenie opłaconego Terminu dodane przez stronę i link Meet, który Google do niego utworzył.</summary>
-public sealed record CreatedAppointmentEvent(AppointmentEventRequest Request, string MeetLink);
+public sealed record CreatedAppointmentEvent(AppointmentEventRequest Request, string MeetLink)
+{
+    /// <summary>Identyfikator wydarzenia w plikach kalendarza (iCalendar), który nadaje Google.</summary>
+    public string ICalUid => $"{Request.Id}@google.com";
+}

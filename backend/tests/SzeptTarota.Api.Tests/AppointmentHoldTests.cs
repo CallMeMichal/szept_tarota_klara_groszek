@@ -173,6 +173,31 @@ public class AppointmentHoldTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_Klients_mail_carries_the_Termin_as_a_calendar_file_to_save_in_one_click()
+    {
+        var anna = await Klient();
+        var orderId = await OrderIdOf(await anna.StartCheckout(Session(_terminy[0])));
+
+        await SendWebhook(orderId, PaymentOutcome.Paid);
+
+        var created = Assert.Single(Calendar.AppointmentEvents);
+        var toAnna = Assert.Single(_factory.Emails.Sent, m => m.To == anna.Email && m.Subject.Contains("Zamówienie"));
+        var file = Assert.Single(toAnna.Attachments);
+        Assert.StartsWith("text/calendar", file.ContentType);
+        Assert.EndsWith(".ics", file.FileName);
+        // Długie linie pliku kalendarza są łamane: nowa linia i spacja.
+        var ics = System.Text.Encoding.UTF8.GetString(file.Content).Replace("\r\n ", "");
+        Assert.Contains("METHOD:PUBLISH", ics);
+        // Ten sam identyfikator co wydarzenie w Google, więc kalendarz Klienta nie pokaże go dwa razy.
+        Assert.Contains($"UID:{created.ICalUid}", ics);
+        Assert.Contains($"DTSTART:{_terminy[0].UtcDateTime:yyyyMMdd'T'HHmmss'Z'}", ics);
+        Assert.Contains($"DTEND:{_terminy[0].AddMinutes(60).UtcDateTime:yyyyMMdd'T'HHmmss'Z'}", ics);
+        Assert.Contains("SUMMARY:Sesja Reiki", ics);
+        Assert.Contains(created.MeetLink, ics);
+        Assert.Empty(Assert.Single(_factory.Emails.Sent, m => m.To == ApiFactory.KlaraEmail).Attachments);
+    }
+
+    [Fact]
     public async Task Simultaneous_payment_notifications_are_handled_one_after_another()
     {
         // Przy BLIK-u Stripe wysyła „completed” i „async_payment_succeeded” naraz.
@@ -217,7 +242,9 @@ public class AppointmentHoldTests : IAsyncLifetime
 
         var booked = Assert.Single(Calendar.AppointmentEvents);
         Assert.Equal(maria.Email, booked.Request.GuestEmail);
-        var toAnna = Assert.Single(_factory.Emails.Sent, m => m.To == anna.Email && m.Subject.Contains("Zamówienie")).Html;
+        var mailToAnna = Assert.Single(_factory.Emails.Sent, m => m.To == anna.Email && m.Subject.Contains("Zamówienie"));
+        Assert.Empty(mailToAnna.Attachments);
+        var toAnna = mailToAnna.Html;
         Assert.Contains("ktoś inny", toAnna);
         Assert.DoesNotContain("meet.google.com", toAnna);
         var toKlara = _factory.Emails.Sent.Where(m => m.To == ApiFactory.KlaraEmail).Select(m => m.Html).ToList();

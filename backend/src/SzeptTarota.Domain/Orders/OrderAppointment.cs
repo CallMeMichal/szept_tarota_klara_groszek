@@ -51,11 +51,15 @@ public sealed class OrderAppointment
     /// <summary>Link do spotkania Google Meet z wydarzenia w kalendarzu.</summary>
     public string? MeetLink { get; private set; }
 
+    /// <summary>Identyfikator tego wydarzenia w plikach kalendarza (iCalendar), nadany przez Google.</summary>
+    public string? CalendarEventUid { get; private set; }
+
     public bool IsPaid => HeldUntil is null && ReleasedAt is null;
 
-    public void AddedToCalendar(string calendarEventId, string? meetLink)
+    public void AddedToCalendar(string calendarEventId, string? meetLink, string? calendarEventUid)
     {
         CalendarEventId = calendarEventId;
         MeetLink = meetLink;
+        CalendarEventUid = calendarEventUid;
     }
 }

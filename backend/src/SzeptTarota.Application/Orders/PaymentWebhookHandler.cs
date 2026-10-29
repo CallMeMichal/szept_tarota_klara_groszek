@@ -116,8 +116,8 @@ public sealed class PaymentWebhookHandler(
                 return;
             }
 
-            appointment.AddedToCalendar(created.Id, created.MeetLink);
-            await appointments.SaveCalendarEventAsync(appointment.Id, created.Id, created.MeetLink, cancellationToken);
+            appointment.AddedToCalendar(created.Id, created.MeetLink, created.ICalUid);
+            await appointments.SaveCalendarEventAsync(appointment.Id, created.Id, created.MeetLink, created.ICalUid, cancellationToken);
         }
     }
 

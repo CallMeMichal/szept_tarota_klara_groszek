@@ -72,6 +72,7 @@ public sealed class SzeptTarotaDbContext(DbContextOptions<SzeptTarotaDbContext> 
             appointment.Property(a => a.Id).ValueGeneratedNever();
             appointment.Property(a => a.CalendarEventId).HasMaxLength(1024);
             appointment.Property(a => a.MeetLink).HasMaxLength(1024);
+            appointment.Property(a => a.CalendarEventUid).HasMaxLength(1024);
             appointment.HasIndex(a => a.OrderId);
             // Ograniczenie wykluczające nachodzące na siebie niezwolnione Terminy jest w migracji AddOrderAppointments,
             // bo EF Core nie umie go opisać.

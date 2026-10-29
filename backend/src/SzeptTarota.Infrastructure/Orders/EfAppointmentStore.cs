@@ -109,12 +109,14 @@ public sealed class EfAppointmentStore(SzeptTarotaDbContext db) : IAppointmentSt
             .ExecuteUpdateAsync(a => a.SetProperty(x => x.ReleasedAt, nowUtc), cancellationToken);
     }
 
-    public Task SaveCalendarEventAsync(Guid id, string calendarEventId, string? meetLink, CancellationToken cancellationToken) =>
+    public Task SaveCalendarEventAsync(
+        Guid id, string calendarEventId, string? meetLink, string? calendarEventUid, CancellationToken cancellationToken) =>
         db.OrderAppointments
             .Where(a => a.Id == id)
             .ExecuteUpdateAsync(a => a
                 .SetProperty(x => x.CalendarEventId, calendarEventId)
-                .SetProperty(x => x.MeetLink, meetLink), cancellationToken);
+                .SetProperty(x => x.MeetLink, meetLink)
+                .SetProperty(x => x.CalendarEventUid, calendarEventUid), cancellationToken);
 
     /// <summary>Transakcja, w której tylko ona zajmuje teraz Terminy; blokada znika z jej końcem.</summary>
     private async Task<IDbContextTransaction> BeginTakingAsync(CancellationToken cancellationToken)

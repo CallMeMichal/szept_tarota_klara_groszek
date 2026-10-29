@@ -199,8 +199,8 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
         {
             // Bez tego Google pomija conferenceData i nie tworzy spotkania Meet.
             ["conferenceDataVersion"] = "1",
-            // Zaproszenie z linkiem do Klienta wysyła Google.
-            ["sendUpdates"] = "all",
+            // Termin z linkiem dostaje Klient w mailu strony, razem z plikiem kalendarza; drugi mail od Google by dublował.
+            ["sendUpdates"] = "none",
         });
         using var create = new HttpRequestMessage(HttpMethod.Post, url)
         {
@@ -241,7 +241,7 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
 
     private static GoogleAppointmentEvent ToAppointmentEvent(EventEntry? entry) =>
         entry is { Id: { } id }
-            ? new GoogleAppointmentEvent(id, entry.HangoutLink)
+            ? new GoogleAppointmentEvent(id, entry.HangoutLink, entry.ICalUid)
             : throw new HttpRequestException("Google nie zwrócił wydarzenia.");
 
     public async Task DeleteEventAsync(string refreshToken, string calendarId, string eventId, CancellationToken cancellationToken)
@@ -340,7 +340,8 @@ public sealed class GoogleCalendarClient(HttpClient http, IOptions<GoogleCalenda
         [property: JsonPropertyName("end")] EventTime? End,
         [property: JsonPropertyName("transparency")] string? Transparency,
         [property: JsonPropertyName("attendees")] List<EventAttendee>? Attendees,
-        [property: JsonPropertyName("hangoutLink")] string? HangoutLink = null);
+        [property: JsonPropertyName("hangoutLink")] string? HangoutLink = null,
+        [property: JsonPropertyName("iCalUID")] string? ICalUid = null);
 
     private sealed record EventTime(
         [property: JsonPropertyName("dateTime")] DateTimeOffset? DateTime,

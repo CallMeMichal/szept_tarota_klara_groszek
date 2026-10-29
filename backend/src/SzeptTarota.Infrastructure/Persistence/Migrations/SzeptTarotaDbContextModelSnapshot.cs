@@ -201,6 +201,10 @@ namespace SzeptTarota.Infrastructure.Persistence.Migrations
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
+                    b.Property<string>("CalendarEventUid")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
                     b.Property<DateTimeOffset>("End")
                         .HasColumnType("timestamp with time zone");
 
