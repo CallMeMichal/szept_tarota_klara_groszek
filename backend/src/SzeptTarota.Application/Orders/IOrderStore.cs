@@ -18,6 +18,12 @@ public interface IOrderStore
     /// <summary>Opłacone Zamówienia wszystkich Klientów pasujące do filtra (panel Klary), od najnowszego.</summary>
     Task<IReadOnlyList<Order>> ListAllPaidAsync(PaidOrderFilter filter, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Czeka, aż nikt inny nie obsługuje Zamówienia, i zajmuje je do zwolnienia wyniku. Bramka wysyła kilka
+    /// powiadomień o jednej płatności naraz (przy BLIK-u zawsze), a obsłużyć ma je jedno, po kolei.
+    /// </summary>
+    Task<IAsyncDisposable> LockAsync(Guid id, CancellationToken cancellationToken);
+
     Task<Order?> FindByPaymentSessionAsync(string paymentSessionId, CancellationToken cancellationToken);
 
     /// <summary>

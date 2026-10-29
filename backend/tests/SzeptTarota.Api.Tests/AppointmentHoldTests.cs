@@ -173,15 +173,21 @@ public class AppointmentHoldTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_repeated_payment_notification_adds_the_Termin_to_the_calendar_once()
+    public async Task Simultaneous_payment_notifications_are_handled_one_after_another()
     {
+        // Przy BLIK-u Stripe wysyła „completed” i „async_payment_succeeded” naraz.
         var anna = await Klient();
         var orderId = await OrderIdOf(await anna.StartCheckout(Session(_terminy[0])));
+        Calendar.AppointmentEventDelay = TimeSpan.FromMilliseconds(300);
 
-        await Task.WhenAll(SendWebhook(orderId, PaymentOutcome.Paid), SendWebhook(orderId, PaymentOutcome.Paid));
-        await SendWebhook(orderId, PaymentOutcome.Paid);
+        var simultaneous = await Task.WhenAll(Enumerable.Range(0, 3).Select(_ => SendWebhook(orderId, PaymentOutcome.Paid)));
+        var later = await SendWebhook(orderId, PaymentOutcome.Paid);
 
+        Assert.All(simultaneous.Append(later), r => Assert.Equal(HttpStatusCode.OK, r.StatusCode));
         Assert.Single(Calendar.AppointmentEvents);
+        Assert.Equal(1, Calendar.AppointmentEventCalls);
+        Assert.Single(_factory.Emails.Sent, m => m.To == anna.Email && m.Subject.Contains("Zamówienie"));
+        Assert.Single(_factory.Emails.Sent, m => m.To == ApiFactory.KlaraEmail);
     }
 
     [Fact]

@@ -42,6 +42,14 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
         }
     }
 
+    private int _appointmentEventCalls;
+
+    /// <summary>Ile razy strona prosiła o dodanie wydarzenia Terminu, także już dodanego.</summary>
+    public int AppointmentEventCalls => _appointmentEventCalls;
+
+    /// <summary>Jak długo Google dodaje wydarzenie Terminu; równoczesne prośby mogą się wtedy minąć.</summary>
+    public TimeSpan AppointmentEventDelay { get; set; }
+
     /// <summary>Kalendarze na koncie Google Klary.</summary>
     public List<GoogleCalendarInfo> Calendars { get; } = [MainCalendar, SessionsCalendar, HolidaysCalendar];
 
@@ -88,6 +96,8 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
         Calendars.Clear();
         Calendars.AddRange([MainCalendar, SessionsCalendar, HolidaysCalendar]);
         _events.Clear();
+        _appointmentEventCalls = 0;
+        AppointmentEventDelay = TimeSpan.Zero;
         lock (_appointmentEvents)
         {
             _appointmentEvents.Clear();
@@ -146,10 +156,12 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
         return Task.FromResult(AddEvent(Resolve(calendarId), start, end, busy: false));
     }
 
-    public Task<GoogleAppointmentEvent> CreateAppointmentEventAsync(
+    public async Task<GoogleAppointmentEvent> CreateAppointmentEventAsync(
         string refreshToken, AppointmentEventRequest request, CancellationToken cancellationToken)
     {
         EnsureActive(refreshToken);
+        Interlocked.Increment(ref _appointmentEventCalls);
+        await Task.Delay(AppointmentEventDelay, cancellationToken);
         lock (_appointmentEvents)
         {
             // Jak Google: drugie wydarzenie o tym samym identyfikatorze nie powstaje.
@@ -160,7 +172,7 @@ public sealed class FakeGoogleCalendar : IGoogleCalendar
                 AddEvent(MainCalendar.Id, request.Start, request.End, busy: true, request.Id);
             }
 
-            return Task.FromResult(new GoogleAppointmentEvent(created.Request.Id, created.MeetLink));
+            return new GoogleAppointmentEvent(created.Request.Id, created.MeetLink);
         }
     }
 

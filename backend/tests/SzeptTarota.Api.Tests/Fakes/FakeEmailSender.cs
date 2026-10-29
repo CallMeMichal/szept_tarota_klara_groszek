@@ -35,9 +35,15 @@ public sealed class FakeEmailSender : IEmailSender
 
         lock (_sent)
         {
-            if (message.IdempotencyKey is null || _sent.All(m => m.IdempotencyKey != message.IdempotencyKey))
+            var earlier = message.IdempotencyKey is null ? null : _sent.Find(m => m.IdempotencyKey == message.IdempotencyKey);
+            if (earlier is null)
             {
                 _sent.Add(message);
+            }
+            else if (earlier.Html != message.Html || earlier.Subject != message.Subject || earlier.To != message.To)
+            {
+                // Jak Resend: ten sam klucz z inną treścią to błąd 409, nie pominięty mail.
+                throw new HttpRequestException("Resend odrzucił maila (409): invalid_idempotent_request");
             }
         }
 

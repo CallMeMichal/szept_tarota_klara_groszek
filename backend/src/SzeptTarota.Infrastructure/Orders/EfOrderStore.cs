@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SzeptTarota.Application.Orders;
 using SzeptTarota.Domain.Orders;
 using SzeptTarota.Infrastructure.Persistence;
@@ -43,6 +44,52 @@ public sealed class EfOrderStore(SzeptTarotaDbContext db) : IOrderStore
         }
 
         return await orders.OrderByDescending(o => o.PaidAt).ToListAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Blokada doradcza PostgreSQL na osobnym połączeniu, więc nie miesza się z transakcjami kontekstu, w których
+    /// zajmuje się Terminy. Trzyma ją sesja połączenia, a pula połączeń jej nie zwalnia, więc zwalniamy ją wprost.
+    /// </summary>
+    public async Task<IAsyncDisposable> LockAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var connection = new NpgsqlConnection(db.Database.GetConnectionString());
+        try
+        {
+            await connection.OpenAsync(cancellationToken);
+            await using var command = new NpgsqlCommand("SELECT pg_advisory_lock($1)", connection)
+            {
+                Parameters = { new NpgsqlParameter { Value = LockKey(id) } },
+            };
+            await command.ExecuteNonQueryAsync(cancellationToken);
+            return new OrderLock(connection, LockKey(id));
+        }
+        catch
+        {
+            await connection.DisposeAsync();
+            throw;
+        }
+    }
+
+    /// <summary>Klucz blokady z identyfikatora Zamówienia; zderzenie z innym kluczem tylko by kazało poczekać.</summary>
+    private static long LockKey(Guid id) => BitConverter.ToInt64(id.ToByteArray());
+
+    private sealed class OrderLock(NpgsqlConnection connection, long key) : IAsyncDisposable
+    {
+        public async ValueTask DisposeAsync()
+        {
+            try
+            {
+                await using var command = new NpgsqlCommand("SELECT pg_advisory_unlock($1)", connection)
+                {
+                    Parameters = { new NpgsqlParameter { Value = key } },
+                };
+                await command.ExecuteNonQueryAsync();
+            }
+            finally
+            {
+                await connection.DisposeAsync();
+            }
+        }
     }
 
     public Task<Order?> FindByPaymentSessionAsync(string paymentSessionId, CancellationToken cancellationToken) =>

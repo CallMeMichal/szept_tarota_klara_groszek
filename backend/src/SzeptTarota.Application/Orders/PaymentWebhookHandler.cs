@@ -38,8 +38,13 @@ public sealed class PaymentWebhookHandler(
         switch (paymentEvent.Outcome)
         {
             case PaymentOutcome.Paid:
-                await orders.MarkPaidAsync(order.Id, now, cancellationToken);
-                await NotifyAboutPaidOrderAsync(order, now, cancellationToken);
+                await using (await orders.LockAsync(order.Id, cancellationToken))
+                {
+                    await orders.MarkPaidAsync(order.Id, now, cancellationToken);
+                    // Czekając, inne powiadomienie mogło już dodać Terminy do kalendarza i wysłać maile.
+                    await NotifyAboutPaidOrderAsync(await orders.FindAsync(order.Id, cancellationToken) ?? order, now, cancellationToken);
+                }
+
                 break;
             case PaymentOutcome.Expired:
                 await orders.MarkExpiredAsync(order.Id, now, cancellationToken);
