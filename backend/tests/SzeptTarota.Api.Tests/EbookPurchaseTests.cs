@@ -267,7 +267,7 @@ public class EbookPurchaseTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Klara_sees_the_Klients_name_and_the_consents_with_the_time_they_were_accepted()
+    public async Task Klara_sees_the_Klients_name_in_the_Order_email_but_not_the_consents()
     {
         _factory.Time.SetUtcNow(new DateTimeOffset(2026, 3, 2, 17, 45, 0, TimeSpan.Zero));
         // Po takim skoku zegara sesja sprzed niego mogła wygasnąć.
@@ -281,8 +281,8 @@ public class EbookPurchaseTests : IAsyncLifetime
 
         var toKlara = Assert.Single(_factory.Emails.Sent, m => m.To == ApiFactory.KlaraEmail).Html;
         Assert.Contains("Anna &lt;Nowak&gt;", toKlara);
-        Assert.Contains("Akceptuję regulamin i politykę prywatności. (2 marca 2026, 18:45)", toKlara);
-        Assert.DoesNotContain("odstąpienia", toKlara);
+        // Zgody zostają w Zamówieniu; w mailu tylko by zaśmiecały.
+        Assert.DoesNotContain("Akceptuję regulamin", toKlara);
     }
 
     [Fact]

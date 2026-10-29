@@ -324,7 +324,7 @@ public class AppointmentTests : IAsyncLifetime
         Assert.Equal([At(32, 10, 0), At(32, 12, 0)], free.Appointments.Select(a => a.Start));
         var toKlara = Assert.Single(_factory.Emails.Sent, m => m.To == ApiFactory.KlaraEmail).Html;
         var day = At(32, 11).ToString("d MMMM yyyy", CultureInfo.GetCultureInfo("pl-PL"));
-        Assert.Contains($"Termin: {day}, 11:00–12:00", toKlara);
+        Assert.Contains($"{day}, 11:00–12:00", toKlara);
     }
 
     private static object Session(DateTimeOffset start) =>

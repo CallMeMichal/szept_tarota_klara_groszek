@@ -155,6 +155,8 @@ public class AccountTests
         var email = NewEmail();
         await RequestCode(email);
         var older = _factory.Emails.LoginCodeFor(email);
+        // Zegar w testach stoi; bez tego oba kody miałyby ten sam czas i „nowszy” byłby losowy.
+        _factory.Time.Advance(TimeSpan.FromSeconds(1));
         await RequestCode(email);
         var newer = _factory.Emails.LoginCodeFor(email);
 

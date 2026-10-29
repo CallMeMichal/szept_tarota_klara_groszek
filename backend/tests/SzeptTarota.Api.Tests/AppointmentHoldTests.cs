@@ -162,7 +162,7 @@ public class AppointmentHoldTests : IAsyncLifetime
         // Opłacony Termin zajmuje czas Klary w jej głównym kalendarzu.
         Assert.Contains(Calendar.EventsIn(FakeGoogleCalendar.MainCalendar.Id), e => e.Start == _terminy[0] && e.Busy);
 
-        var termin = $"Termin: {FormatDay(_terminy[0])}, 08:00–09:00";
+        var termin = $"{FormatDay(_terminy[0])}, 08:00–09:00";
         foreach (var to in new[] { anna.Email, ApiFactory.KlaraEmail })
         {
             var html = Assert.Single(_factory.Emails.Sent, m => m.To == to && m.Subject.Contains("Zamówienie")).Html;
@@ -238,7 +238,7 @@ public class AppointmentHoldTests : IAsyncLifetime
         var toKlara = Assert.Single(_factory.Emails.Sent, m => m.To == ApiFactory.KlaraEmail).Html;
         Assert.Contains("dodaj go ręcznie", toKlara);
         var toAnna = Assert.Single(_factory.Emails.Sent, m => m.To == anna.Email && m.Subject.Contains("Zamówienie")).Html;
-        Assert.Contains($"Termin: {FormatDay(_terminy[0])}, 08:00–09:00", toAnna);
+        Assert.Contains($"{FormatDay(_terminy[0])}, 08:00–09:00", toAnna);
         Assert.Contains("Link do spotkania wyślę Ci osobno", toAnna);
     }
 
