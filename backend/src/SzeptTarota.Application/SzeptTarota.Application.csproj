@@ -9,6 +9,12 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.14" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Grafiki maili: nagłówek i księżyc są tylko dla maili, okładki Produktów to te same pliki co na stronie. -->
+    <EmbeddedResource Include="Email\Images\*" LogicalName="Email/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\..\frontend\src\assets\products\*.webp" LogicalName="Products/%(Filename)%(Extension)" Link="Email\Products\%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

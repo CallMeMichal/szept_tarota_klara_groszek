@@ -20,6 +20,10 @@ public sealed record EmailMessage(
     string Subject,
     string Html,
     IReadOnlyList<EmailAttachment> Attachments,
-    string? IdempotencyKey = null);
+    string? IdempotencyKey = null,
+    IReadOnlyList<EmailImage>? Images = null);
+
+/// <summary>Grafika w treści maila; HTML wskazuje ją adresem <c>cid:</c> z <see cref="ContentId"/>.</summary>
+public sealed record EmailImage(string ContentId, string FileName, string ContentType, byte[] Content);
 
 public sealed record EmailAttachment(string FileName, string ContentType, byte[] Content);

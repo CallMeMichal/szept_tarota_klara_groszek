@@ -1,5 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using SzeptTarota.Application.Email;
 
@@ -20,6 +22,9 @@ public sealed class ResendOptions
 /// <summary>Wysyła maile przez API Resend (https://resend.com/docs/api-reference/emails/send-email).</summary>
 public sealed class ResendEmailSender(HttpClient http, IOptions<ResendOptions> options) : IEmailSender
 {
+    /// <summary>Bez pustych pól: zwykły załącznik nie ma <c>content_id</c>.</summary>
+    private static readonly JsonSerializerOptions SkipNulls = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+
     public static readonly Uri BaseAddress = new("https://api.resend.com/");
 
     public async Task SendAsync(EmailMessage message, CancellationToken cancellationToken)
@@ -39,13 +44,23 @@ public sealed class ResendEmailSender(HttpClient http, IOptions<ResendOptions> o
                 to = new[] { message.To },
                 subject = message.Subject,
                 html = message.Html,
-                attachments = message.Attachments.Select(a => new
-                {
-                    filename = a.FileName,
-                    content = Convert.ToBase64String(a.Content),
-                    content_type = a.ContentType,
-                }),
-            }),
+                attachments = message.Attachments
+                    .Select(a => new
+                    {
+                        filename = a.FileName,
+                        content = Convert.ToBase64String(a.Content),
+                        content_type = a.ContentType,
+                        content_id = (string?)null,
+                    })
+                    // Grafiki w treści to załączniki z content_id, do którego HTML odwołuje się przez „cid:”.
+                    .Concat((message.Images ?? []).Select(i => new
+                    {
+                        filename = i.FileName,
+                        content = Convert.ToBase64String(i.Content),
+                        content_type = i.ContentType,
+                        content_id = (string?)i.ContentId,
+                    })),
+            }, options: SkipNulls),
         };
 
         if (message.IdempotencyKey is not null)

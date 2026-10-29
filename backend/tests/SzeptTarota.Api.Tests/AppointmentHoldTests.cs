@@ -165,10 +165,17 @@ public class AppointmentHoldTests : IAsyncLifetime
         var termin = $"{FormatDay(_terminy[0])}, 08:00–09:00";
         foreach (var to in new[] { anna.Email, ApiFactory.KlaraEmail })
         {
-            var html = Assert.Single(_factory.Emails.Sent, m => m.To == to && m.Subject.Contains("Zamówienie")).Html;
+            var mail = Assert.Single(_factory.Emails.Sent, m => m.To == to && m.Subject.Contains("Zamówienie"));
+            var html = mail.Html;
             Assert.Contains(termin, html);
             Assert.Contains(session.MeetLink, html);
             Assert.Contains(service.MeetLink, html);
+
+            // Grafiki jadą w mailu: każda wskazana w treści jest dołączona, w tym okładka Mapy Duszy ze strony.
+            var images = (mail.Images ?? []).ToDictionary(i => i.ContentId);
+            var referenced = System.Text.RegularExpressions.Regex.Matches(html, "cid:([a-z0-9-]+)").Select(m => m.Groups[1].Value).Distinct().ToList();
+            Assert.All(referenced, cid => Assert.NotEmpty(Assert.Contains(cid, images).Content));
+            Assert.Contains($"produkt-{FakeProductCatalog.ServiceSlug}", referenced);
         }
     }
 

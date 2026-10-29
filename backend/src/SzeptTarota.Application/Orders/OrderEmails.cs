@@ -24,6 +24,7 @@ public static class OrderEmails
     {
         var firstName = order.CustomerName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
         var body = new StringBuilder()
+            .Append(Eyebrow("Zamówienie opłacone"))
             .Append(Heading("Dziękuję za zakup!"))
             .Append(Paragraph(
                 (firstName is null ? "" : $"Cześć {HtmlEncode(firstName)}, ") + "Twoje Zamówienie jest opłacone."
@@ -31,13 +32,26 @@ public static class OrderEmails
             .Append(TerminPanels(order, appointments, forKlara: false))
             .Append(SectionHeading("Twoje Zamówienie"))
             .Append(LinesTable(order, forKlara: false))
-            .Append(Paragraph("<br>Ściskam,<br>Klara, Szept Tarota"))
+            .Append(Paragraph(
+                "<br>Ściskam,<br><span style=\"font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:20px;color:#e2c17a;\">Klara</span>"))
             .ToString();
 
         var html = Page("Twoje Zamówienie jest opłacone.", body, $"Numer Zamówienia: {order.Id}");
         return new EmailMessage(
-            order.Email, "Twoje Zamówienie w Szept Tarota", html, [.. ebooks, .. CalendarFiles(order, appointments)], $"zamowienie-{order.Id}-klient");
+            order.Email,
+            "Twoje Zamówienie w Szept Tarota",
+            html,
+            [.. ebooks, .. CalendarFiles(order, appointments)],
+            $"zamowienie-{order.Id}-klient",
+            Images(order));
     }
+
+    /// <summary>Grafiki układu i okładki Produktów z Zamówienia, każda raz.</summary>
+    private static IReadOnlyList<EmailImage> Images(Order order) =>
+    [
+        .. EmailLayout.Images,
+        .. order.Lines.Select(l => l.Slug).Distinct().Select(EmailImages.Product).OfType<EmailImage>(),
+    ];
 
     /// <summary>Plik kalendarza każdego Terminu, który Klient ma; bez tych, które zajął w międzyczasie ktoś inny.</summary>
     private static IEnumerable<EmailAttachment> CalendarFiles(Order order, IReadOnlyList<OrderAppointment> appointments)
@@ -60,15 +74,16 @@ public static class OrderEmails
     public static EmailMessage ToKlara(Order order, string klaraEmail, IReadOnlyList<OrderAppointment> appointments)
     {
         var body = new StringBuilder()
+            .Append(Eyebrow($"Opłacone {FormatTime(order.PaidAt ?? order.CreatedAt)}"))
             .Append(Heading("Nowe Zamówienie"))
             .Append(Field("Klient", $"{HtmlEncode(order.CustomerName)}, {Link($"mailto:{order.Email}", order.Email)}"))
-            .Append(Field("Opłacone", HtmlEncode(FormatTime(order.PaidAt ?? order.CreatedAt))))
             .Append(TerminPanels(order, appointments, forKlara: true))
             .Append(SectionHeading("Zamówienie"))
             .Append(LinesTable(order, forKlara: true));
 
         var html = Page($"{order.CustomerName}: {FormatPrice(order.Total)}", body.ToString(), $"Numer Zamówienia: {order.Id}");
-        return new EmailMessage(klaraEmail, $"Nowe Zamówienie: {FormatPrice(order.Total)}", html, [], $"zamowienie-{order.Id}-klara");
+        return new EmailMessage(
+            klaraEmail, $"Nowe Zamówienie: {FormatPrice(order.Total)}", html, [], $"zamowienie-{order.Id}-klara", Images(order));
     }
 
     /// <summary>Blok każdego Terminu: kiedy, przycisk do Google Meet z linkiem albo co dalej, gdy linku nie ma.</summary>
@@ -83,7 +98,7 @@ public static class OrderEmails
             }
 
             var appointment = appointments.FirstOrDefault(a => a.LineIndex == index);
-            var body = new StringBuilder(Field("Kiedy", $"{HtmlEncode(FormatTermin(start, end))} <span style=\"color:#626675;\">(czas polski)</span>"));
+            var body = new StringBuilder(Field("Kiedy", $"{HtmlEncode(FormatTermin(start, end))} <span style=\"color:#a7a3bd;\">(czas polski)</span>"));
             if (appointment is { ReleasedAt: null, MeetLink: { } link })
             {
                 body.Append(Button(link, "Dołącz do spotkania w Google Meet"))
@@ -98,7 +113,7 @@ public static class OrderEmails
                 body.Append(Warning(problem));
             }
 
-            html.Append(Panel(forKlara ? "Termin" : "Twój Termin", line.Name, body.ToString()));
+            html.Append(Panel(forKlara ? "Termin" : "Twój Termin", line.Name, body.ToString(), EmailImages.Product(line.Slug)));
         }
 
         return html.ToString();
@@ -127,7 +142,7 @@ public static class OrderEmails
             var answers = forKlara && line.FormAnswers.Count > 0
                 ? string.Join("<br>", line.FormAnswers.Select(a => $"{HtmlEncode(a.Label)}: {MultilineText(a.Value)}"))
                 : null;
-            rows.Append(Row(quantity + HtmlEncode(line.Name), FormatPrice(line.Price * line.Quantity), answers));
+            rows.Append(Row(quantity + HtmlEncode(line.Name), FormatPrice(line.Price * line.Quantity), answers, EmailImages.Product(line.Slug)));
         }
 
         return Table(rows.ToString(), "Suma", FormatPrice(order.Total));
