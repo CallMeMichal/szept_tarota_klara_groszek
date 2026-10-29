@@ -20,7 +20,7 @@ public static class EmailLayout
     private const string Text = "#d8d3e6";
     private const string Muted = "#a7a3bd";
 
-    // Cormorant Garamond i Inter jak na stronie, gdzie program pocztowy pobiera czcionki; inaczej najbliższe systemowe.
+    // Cormorant Garamond i Inter, gdy są na urządzeniu; czcionek nie pobieramy z Google, bo zdradziłoby to adres Klienta.
     private const string Serif = "'Cormorant Garamond', Georgia, 'Times New Roman', serif";
     private const string Sans = "Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
@@ -42,7 +42,6 @@ public static class EmailLayout
             <!doctype html>
             <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
             <meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark">
-            <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;600&display=swap" rel="stylesheet">
             </head>
             <body style="margin:0;padding:0;background:{Night950};">
             <div style="display:none;max-height:0;overflow:hidden;">{HtmlEncode(preview)}</div>
