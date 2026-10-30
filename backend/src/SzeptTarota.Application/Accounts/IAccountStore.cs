@@ -7,6 +7,9 @@ public interface IAccountStore
 {
     Task<Account?> FindAsync(Guid id, CancellationToken cancellationToken);
 
+    /// <summary>Konto o tym adresie (małymi literami) albo <c>null</c>, gdy go nie ma.</summary>
+    Task<Account?> FindByEmailAsync(string email, CancellationToken cancellationToken);
+
     /// <summary>Konto o tym adresie; zakłada je, jeśli jeszcze nie istnieje (także przy dwóch logowaniach naraz).</summary>
     Task<Account> GetOrCreateAsync(string email, DateTimeOffset now, CancellationToken cancellationToken);
 

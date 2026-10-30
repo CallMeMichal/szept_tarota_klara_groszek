@@ -11,13 +11,14 @@ public sealed class Order
 {
     public Order(
         Guid id,
-        Guid accountId,
+        Guid? accountId,
         string email,
         string customerName,
         IReadOnlyList<OrderLine> lines,
         IReadOnlyList<AcceptedConsent> consents,
         string paymentSessionId,
-        DateTimeOffset createdAt)
+        DateTimeOffset createdAt,
+        bool accountCreated = false)
     {
         Id = id;
         AccountId = accountId;
@@ -28,6 +29,7 @@ public sealed class Order
         Total = lines.Sum(l => l.Price * l.Quantity);
         PaymentSessionId = paymentSessionId;
         CreatedAt = createdAt;
+        AccountCreated = accountCreated;
         Status = OrderStatus.PendingPayment;
     }
 
@@ -45,7 +47,7 @@ public sealed class Order
 
     public OrderStatus Status { get; private set; }
 
-    /// <summary>Konto Klienta, który złożył Zamówienie; brak tylko w Zamówieniach sprzed Kont.</summary>
+    /// <summary>Konto, do którego należy Zamówienie; brak w Zamówieniach bez Konta (ADR 0004) i sprzed Kont.</summary>
     public Guid? AccountId { get; private set; }
 
     /// <summary>Adres podany przy płatności (domyślnie adres Konta); na niego idzie potwierdzenie.</summary>
@@ -65,6 +67,9 @@ public sealed class Order
     public string PaymentSessionId { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
+
+    /// <summary>Czy Konto powstało przy tym Zamówieniu, bo Klient bez logowania poprosił o jego założenie.</summary>
+    public bool AccountCreated { get; private set; }
 
     public DateTimeOffset? PaidAt { get; private set; }
 

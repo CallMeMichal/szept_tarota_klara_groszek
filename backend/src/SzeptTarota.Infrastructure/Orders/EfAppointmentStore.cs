@@ -25,11 +25,10 @@ public sealed class EfAppointmentStore(SzeptTarotaDbContext db) : IAppointmentSt
     {
         // PostgreSQL przyjmuje tylko czas UTC.
         var nowUtc = now.ToUniversalTime();
-        var accountId = holds.Select(h => h.AccountId).FirstOrDefault();
         await using var transaction = await BeginTakingAsync(cancellationToken);
 
         await db.OrderAppointments
-            .Where(a => a.ReleasedAt == null && a.HeldUntil != null && (a.HeldUntil <= nowUtc || (accountId != null && a.AccountId == accountId)))
+            .Where(a => a.ReleasedAt == null && a.HeldUntil != null && a.HeldUntil <= nowUtc)
             .ExecuteUpdateAsync(a => a.SetProperty(x => x.ReleasedAt, nowUtc), cancellationToken);
 
         // Po jednej, żeby wiedzieć, która nachodzi na zajęty Termin.
@@ -54,12 +53,12 @@ public sealed class EfAppointmentStore(SzeptTarotaDbContext db) : IAppointmentSt
     }
 
     public async Task<IReadOnlyList<Appointment>> ListTakenAsync(
-        DateTimeOffset from, DateTimeOffset to, DateTimeOffset now, Guid? exceptAccountId, CancellationToken cancellationToken)
+        DateTimeOffset from, DateTimeOffset to, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var (fromUtc, toUtc, nowUtc) = (from.ToUniversalTime(), to.ToUniversalTime(), now.ToUniversalTime());
         return await db.OrderAppointments.AsNoTracking()
             .Where(a => a.ReleasedAt == null && a.Start < toUtc && a.End > fromUtc)
-            .Where(a => a.HeldUntil == null || (a.HeldUntil > nowUtc && (exceptAccountId == null || a.AccountId != exceptAccountId)))
+            .Where(a => a.HeldUntil == null || a.HeldUntil > nowUtc)
             .Select(a => new Appointment(a.Start, a.End))
             .ToListAsync(cancellationToken);
     }

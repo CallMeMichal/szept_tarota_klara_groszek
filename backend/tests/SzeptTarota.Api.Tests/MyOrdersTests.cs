@@ -29,15 +29,6 @@ public class MyOrdersTests : IAsyncLifetime
     public Task DisposeAsync() => _api.DisposeAsync().AsTask();
 
     [Fact]
-    public async Task Paying_requires_logging_in()
-    {
-        var response = await _api.CreateBrowser().PostAsJsonAsync("/api/checkout", Checkout(FakeProductCatalog.EbookSlug, 4900));
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-        Assert.Empty(_factory.Payments.Sessions);
-    }
-
-    [Fact]
     public async Task The_Order_goes_to_the_email_from_the_form_and_stays_in_the_Klients_Konto()
     {
         var klient = await _api.LoggedInClient(_factory.Emails, NewEmail());
@@ -98,20 +89,15 @@ public class MyOrdersTests : IAsyncLifetime
         await Pay(annasOrder);
 
         Assert.Empty(await MyOrders(maria));
-        Assert.Equal(HttpStatusCode.NotFound, (await maria.GetAsync($"/api/orders/{annasOrder}")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await anna.GetAsync($"/api/orders/{annasOrder}")).StatusCode);
+        Assert.Equal([annasOrder], (await MyOrders(anna)).Select(o => o.Id));
     }
 
     [Fact]
-    public async Task Without_logging_in_neither_My_Orders_nor_an_Order_is_visible()
+    public async Task Without_logging_in_My_Orders_are_not_visible()
     {
-        var klient = await _api.LoggedInClient(_factory.Emails, NewEmail());
-        var order = await Buy(klient, FakeProductCatalog.EbookSlug, 4900);
-        await Pay(order);
         var visitor = _api.CreateBrowser();
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.GetAsync("/api/account/orders")).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.GetAsync($"/api/orders/{order}")).StatusCode);
     }
 
     [Fact]

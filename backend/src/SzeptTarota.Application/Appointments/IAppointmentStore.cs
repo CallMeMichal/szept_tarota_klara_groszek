@@ -9,18 +9,17 @@ namespace SzeptTarota.Application.Appointments;
 public interface IAppointmentStore
 {
     /// <summary>
-    /// Zakłada blokady Terminów jednego Zamówienia: wszystkie albo żadnej. Najpierw zwalnia wygasłe blokady i
-    /// wcześniejsze nieopłacone blokady tego samego Konta (nowa płatność zastępuje przerwaną). Zwraca, która z
+    /// Zakłada blokady Terminów jednego Zamówienia: wszystkie albo żadnej. Najpierw zwalnia wygasłe blokady. Zwraca, która z
     /// <paramref name="holds"/> nachodzi na zajęty już Termin, albo <c>null</c>, gdy wszystkie założono.
     /// </summary>
     Task<int?> TryHoldAsync(IReadOnlyList<OrderAppointment> holds, DateTimeOffset now, CancellationToken cancellationToken);
 
     /// <summary>
     /// Zajęte Terminy (opłacone i aktywne blokady), które nachodzą na okres od <paramref name="from"/> do
-    /// <paramref name="to"/>, bez nieopłaconych blokad Konta <paramref name="exceptAccountId"/>.
+    /// <paramref name="to"/>.
     /// </summary>
     Task<IReadOnlyList<Appointment>> ListTakenAsync(
-        DateTimeOffset from, DateTimeOffset to, DateTimeOffset now, Guid? exceptAccountId, CancellationToken cancellationToken);
+        DateTimeOffset from, DateTimeOffset to, DateTimeOffset now, CancellationToken cancellationToken);
 
     /// <summary>
     /// Zamienia blokady opłaconego Zamówienia na Terminy bez wygaśnięcia, także te, które już wygasły albo zostały

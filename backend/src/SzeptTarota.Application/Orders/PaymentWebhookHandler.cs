@@ -76,7 +76,7 @@ public sealed class PaymentWebhookHandler(
             attachments.Add(new EmailAttachment(fileName, ContentTypeOf(fileName), content));
         }
 
-        await emails.SendAsync(OrderEmails.ToKlient(order, attachments, booked), cancellationToken);
+        await emails.SendAsync(OrderEmails.ToKlient(order, attachments, booked, shopOptions.Value.SiteUrl), cancellationToken);
         await emails.SendAsync(OrderEmails.ToKlara(order, shopOptions.Value.KlaraEmail, booked), cancellationToken);
         await orders.MarkNotificationsSentAsync(order.Id, now, cancellationToken);
     }

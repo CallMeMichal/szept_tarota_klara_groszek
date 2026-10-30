@@ -91,19 +91,44 @@ public class AppointmentHoldTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task A_Klient_who_interrupted_the_payment_can_pay_for_the_same_Termin_again()
+    public async Task Coming_back_from_Stripe_releases_the_Termin_at_once_and_ends_that_payment()
     {
         var anna = await Klient();
-        var maria = await Klient();
+        var orderId = await OrderIdOf(await anna.StartCheckout(Session(_terminy[0])));
+        var (request, session) = _factory.Payments.Sessions.Single(s => s.Request.OrderId == orderId);
+        Assert.Equal(new Uri($"{ApiFactory.SiteUrl}/koszyk?platnosc=przerwana&zamowienie={orderId}"), request.CancelUrl);
+
+        var cancelled = await anna.Client.PostAsync($"/api/orders/{orderId}/cancel-payment", null);
+        var again = await anna.StartCheckout(Session(_terminy[0]));
+
+        Assert.Equal(HttpStatusCode.NoContent, cancelled.StatusCode);
+        Assert.Contains(session.Id, _factory.Payments.ExpiredSessions);
+        Assert.Equal(HttpStatusCode.OK, again.StatusCode);
+    }
+
+    [Fact]
+    public async Task Without_coming_back_from_Stripe_the_Termin_stays_held_even_for_the_same_Klient()
+    {
+        var anna = await Klient();
         await anna.StartCheckout(Session(_terminy[0]));
 
         var cart = await anna.ValidateCart(Session(_terminy[0]));
-        var again = await anna.StartCheckout(Session(_terminy[0]));
-        var forMaria = await maria.ValidateCart(Session(_terminy[0]));
 
-        Assert.Empty(Assert.Single(cart.Items).Errors);
-        Assert.Equal(HttpStatusCode.OK, again.StatusCode);
-        Assert.Equal("appointmentTaken", Assert.Single(Assert.Single(forMaria.Items).Errors).Code);
+        Assert.Equal("appointmentTaken", Assert.Single(Assert.Single(cart.Items).Errors).Code);
+    }
+
+    [Fact]
+    public async Task Coming_back_after_the_payment_went_through_changes_nothing()
+    {
+        var anna = await Klient();
+        var orderId = await OrderIdOf(await anna.StartCheckout(Session(_terminy[0])));
+        await SendWebhook(orderId, PaymentOutcome.Paid);
+
+        var cancelled = await anna.Client.PostAsync($"/api/orders/{orderId}/cancel-payment", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, cancelled.StatusCode);
+        Assert.Empty(_factory.Payments.ExpiredSessions);
+        Assert.DoesNotContain(_terminy[0], await FreeStarts());
     }
 
     [Fact]

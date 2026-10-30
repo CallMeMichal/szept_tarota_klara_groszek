@@ -39,7 +39,7 @@ Konkretna data, godzina i długość spotkania online Klary z Klientem przy Usł
 _Avoid_: slot, rezerwacja, wizyta
 
 **Blokada Terminu**:
-Zajęcie wybranego Terminu na 15 minut od rozpoczęcia płatności, żeby nikt inny go w tym czasie nie kupił. Po zapłacie Termin zostaje zajęty na stałe; po wygaśnięciu blokady albo sesji płatności wraca do puli. Własna blokada nie zajmuje Terminu temu samemu Klientowi, gdy wraca z przerwanej płatności.
+Zajęcie wybranego Terminu na 15 minut od rozpoczęcia płatności, żeby nikt inny go w tym czasie nie kupił. Po zapłacie Termin zostaje zajęty na stałe; po wygaśnięciu blokady albo sesji płatności wraca do puli. Klient, który wraca z przerwanej płatności, zwalnia swoją blokadę od razu.
 _Avoid_: rezerwacja, lock (w tekstach na stronie)
 
 **Kalendarz Sesji**:
@@ -49,11 +49,11 @@ _Avoid_: kalendarz dostępności, grafik
 ## Sprzedaż
 
 **Klient**:
-Osoba z Kontem na stronie, która kupuje Produkty.
+Osoba, która kupuje Produkty na stronie, z Kontem albo bez niego.
 _Avoid_: kupujący, użytkownik, klientka (w kodzie i dokumentach; w tekstach na stronie wolno)
 
 **Konto**:
-Tożsamość Klienta na stronie, pod którą widzi swoje Zamówienia i zakupione Ebooki. Nie ma hasła: Klient loguje się Kodem logowania albo przez Google, a Konto zakłada się przy pierwszym logowaniu.
+Tożsamość Klienta na stronie, pod którą widzi swoje Zamówienia i zakupione Ebooki. Nie ma hasła: Klient loguje się Kodem logowania albo przez Google. Konto zakłada się przy pierwszym logowaniu albo przy zakupie, jeśli Klient zaznaczył, że chce je założyć.
 _Avoid_: profil, użytkownik, rejestracja
 
 **Kod logowania**:
@@ -65,5 +65,5 @@ Produkty wybrane przez Klienta przed zapłatą, razem z danymi z formularzy Usł
 _Avoid_: lista zakupów, cart
 
 **Zamówienie**:
-Jeden zakup jednego lub kilku Produktów przez Klienta, opłacony jedną płatnością.
+Jeden zakup jednego lub kilku Produktów przez Klienta, opłacony jedną płatnością. Należy do Konta, gdy Klient płacił zalogowany, gdy na podany adres istnieje Konto albo gdy Klient poprosił o założenie Konta; inaczej jest bez Konta.
 _Avoid_: transakcja, order, zakup

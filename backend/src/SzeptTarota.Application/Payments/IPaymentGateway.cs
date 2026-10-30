@@ -8,6 +8,13 @@ public interface IPaymentGateway
     Task<CheckoutSession> CreateCheckoutAsync(PaymentSessionRequest request, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Wygasza sesję płatności, za którą Klient jeszcze nie zapłacił, żeby nie dało się już jej dokończyć;
+    /// <c>true</c> także dla już wygasłej, <c>false</c>, gdy Klient jednak zapłacił.
+    /// </summary>
+    /// <exception cref="PaymentGatewayNotConfiguredException">Gdy nie ustawiono kluczy bramki.</exception>
+    Task<bool> ExpireCheckoutAsync(string sessionId, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Sprawdza podpis powiadomienia (webhooka) i odczytuje, co stało się z sesją płatności.
     /// Zwraca <c>null</c> dla powiadomień, które nie zmieniają Zamówienia.
     /// </summary>

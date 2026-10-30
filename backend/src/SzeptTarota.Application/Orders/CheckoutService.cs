@@ -4,15 +4,16 @@ using SzeptTarota.Application.Accounts;
 using SzeptTarota.Application.Appointments;
 using SzeptTarota.Application.Cart;
 using SzeptTarota.Application.Payments;
+using SzeptTarota.Domain.Accounts;
 using SzeptTarota.Domain.Orders;
 
 namespace SzeptTarota.Application.Orders;
 
 /// <summary>
-/// Rozpoczęcie płatności przez zalogowanego Klienta: ponownie sprawdza Koszyk, dane Klienta i zgody, tworzy
-/// Zamówienie na jego Konto, oczekujące na płatność, blokuje jego Terminy na <see cref="HoldDuration"/> i zakłada dla
-/// niego sesję płatności w bramce. Potwierdzenie
-/// idzie na e-mail z formularza: domyślnie adres Konta, ale Klient może podać inny.
+/// Rozpoczęcie płatności, z logowaniem albo bez (ADR 0004): ponownie sprawdza Koszyk, dane Klienta i zgody, tworzy
+/// Zamówienie oczekujące na płatność, blokuje jego Terminy na <see cref="HoldDuration"/> i zakłada dla niego sesję
+/// płatności w bramce. Zamówienie zalogowanego należy do jego Konta. Potwierdzenie idzie na e-mail z formularza:
+/// zalogowanemu domyślnie adres Konta, ale może podać inny.
 /// </summary>
 /// <exception cref="ShopNotConfiguredException">Gdy brakuje konfiguracji sekcji <c>Shop</c>.</exception>
 /// <exception cref="PaymentGatewayNotConfiguredException">Gdy brakuje kluczy bramki płatności.</exception>
@@ -33,13 +34,19 @@ public sealed class CheckoutService(
 
     public async Task<CheckoutResult> StartAsync(CheckoutCommand command, CancellationToken cancellationToken)
     {
-        if (await accounts.FindAsync(command.AccountId, cancellationToken) is not { } account)
+        Account? account = null;
+        if (command.AccountId is { } accountId)
         {
-            return new CheckoutResult.NotLoggedIn();
+            if (await accounts.FindAsync(accountId, cancellationToken) is not { } loggedIn)
+            {
+                return new CheckoutResult.NotLoggedIn();
+            }
+
+            account = loggedIn;
         }
 
         // Klient płaci dokładnie tyle, ile widział: każda zmiana ceny od ostatniego sprawdzenia wraca do Koszyka.
-        var cart = await cartValidator.ValidateAsync(command.Items, account.Id, cancellationToken);
+        var cart = await cartValidator.ValidateAsync(command.Items, cancellationToken);
         if (!cart.IsValid || cart.Lines.Any(l => l.Product!.PreviousPrice is not null))
         {
             return new CheckoutResult.CartChanged(cart);
@@ -83,7 +90,7 @@ public sealed class CheckoutService(
             .Select((line, index) => (line, index))
             .Where(l => l.line is { AppointmentStart: not null, AppointmentEnd: not null })
             .Select(l => new OrderAppointment(
-                Guid.NewGuid(), orderId, account.Id, l.index, l.line.AppointmentStart!.Value, l.line.AppointmentEnd!.Value, now + HoldDuration))
+                Guid.NewGuid(), orderId, l.index, l.line.AppointmentStart!.Value, l.line.AppointmentEnd!.Value, now + HoldDuration))
             .ToList();
         if (holds.Count > 0 && await appointments.TryHoldAsync(holds, now, cancellationToken) is { } takenIndex)
         {
@@ -99,18 +106,33 @@ public sealed class CheckoutService(
                     email,
                     lines.Select(l => new CheckoutLine(l.Name, l.Price, l.Quantity)).ToList(),
                     SuccessUrl: new Uri($"{siteUrl}/zamowienie/{orderId}"),
-                    CancelUrl: new Uri($"{siteUrl}/koszyk?platnosc=przerwana")),
+                    CancelUrl: new Uri($"{siteUrl}/koszyk?platnosc=przerwana&zamowienie={orderId}")),
                 cancellationToken);
+
+            // Kto nie zalogował się, ale ma Konto na ten adres, i tak dostaje Zamówienie na swoje Konto, a kto poprosił
+            // o Konto, dostaje je razem z Zamówieniem, nawet gdy potem nie zapłaci (ADR 0004).
+            var accountCreated = false;
+            if (account is null)
+            {
+                var accountEmail = email.ToLowerInvariant();
+                account = await accounts.FindByEmailAsync(accountEmail, cancellationToken);
+                if (account is null && command.CreateAccount)
+                {
+                    account = await accounts.GetOrCreateAsync(accountEmail, now, cancellationToken);
+                    accountCreated = true;
+                }
+            }
 
             var order = new Order(
                 orderId,
-                account.Id,
+                account?.Id,
                 email,
                 command.Name!.Trim(),
                 lines,
                 cart.RequiredConsents.Select(c => new AcceptedConsent(c.Key, c.Text, now)).ToList(),
                 session.Id,
-                now);
+                now,
+                accountCreated);
             await orders.AddAsync(order, cancellationToken);
 
             return new CheckoutResult.Started(orderId, session.RedirectUrl);
@@ -121,6 +143,23 @@ public sealed class CheckoutService(
             await appointments.ReleaseAsync(orderId, now, CancellationToken.None);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Klient wrócił ze Stripe, nie płacąc: sesja płatności wygasa, żeby nie dało się już jej dokończyć, a Terminy
+    /// Zamówienia od razu wracają do puli, zamiast czekać na koniec blokady (ADR 0004). Zapłaconego nie zmienia.
+    /// </summary>
+    public async Task CancelAsync(Guid orderId, CancellationToken cancellationToken)
+    {
+        if (await orders.FindAsync(orderId, cancellationToken) is not { Status: OrderStatus.PendingPayment } order
+            || !await paymentGateway.ExpireCheckoutAsync(order.PaymentSessionId, cancellationToken))
+        {
+            return;
+        }
+
+        var now = time.GetUtcNow();
+        await orders.MarkExpiredAsync(order.Id, now, cancellationToken);
+        await appointments.ReleaseAsync(order.Id, now, cancellationToken);
     }
 
     private static Dictionary<string, string[]> ValidateCustomer(CheckoutCommand command)
@@ -145,13 +184,18 @@ public sealed class CheckoutService(
     }
 }
 
-/// <summary>Dane z formularza płatności zalogowanego Klienta: Koszyk z cenami, które widział, e-mail, imię i nazwisko i zgody.</summary>
+/// <summary>
+/// Dane z formularza płatności: Koszyk z cenami, które Klient widział, e-mail, imię i nazwisko i zgody;
+/// <see cref="AccountId"/> to Konto zalogowanego Klienta (brak, gdy płaci bez logowania), a <see cref="CreateAccount"/>
+/// to prośba niezalogowanego o założenie Konta.
+/// </summary>
 public sealed record CheckoutCommand(
     IReadOnlyList<CartItem> Items,
-    Guid AccountId,
+    Guid? AccountId,
     string? Email,
     string? Name,
-    IReadOnlyCollection<string> AcceptedConsents);
+    IReadOnlyCollection<string> AcceptedConsents,
+    bool CreateAccount = false);
 
 public abstract record CheckoutResult
 {

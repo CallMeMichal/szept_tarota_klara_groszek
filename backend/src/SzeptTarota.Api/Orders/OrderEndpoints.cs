@@ -32,10 +32,11 @@ public static class OrderEndpoints
 
                 var command = new CheckoutCommand(
                     request.Items.Select(i => i!.ToCartItem()).ToList(),
-                    user.AccountId(),
+                    user.OptionalAccountId(),
                     request.Email,
                     request.Name,
-                    (request.AcceptedConsents ?? []).OfType<string>().ToHashSet());
+                    (request.AcceptedConsents ?? []).OfType<string>().ToHashSet(),
+                    request.CreateAccount ?? false);
 
                 try
                 {
@@ -55,20 +56,38 @@ public static class OrderEndpoints
                         statusCode: StatusCodes.Status503ServiceUnavailable);
                 }
             })
-            .RequireAuthorization()
             .WithName("StartCheckout");
 
-        // Cudze Zamówienie wygląda jak nieistniejące, żeby nie zdradzać, że taki identyfikator jest.
+        // Strona po płatności także bez logowania (ADR 0004): identyfikatora Zamówienia nie da się zgadnąć, a podsumowanie
+        // nie ma danych osobowych.
         api.MapGet("/orders/{id:guid}", async Task<Results<Ok<OrderSummaryResponse>, NotFound>> (
                 Guid id,
-                ClaimsPrincipal user,
                 IOrderStore orders,
                 CancellationToken cancellationToken) =>
-                await orders.FindAsync(id, cancellationToken) is { } order && order.AccountId == user.AccountId()
+                await orders.FindAsync(id, cancellationToken) is { } order
                     ? TypedResults.Ok(OrderSummaryResponse.From(order))
                     : TypedResults.NotFound())
-            .RequireAuthorization()
             .WithName("GetOrder");
+
+        // Powrót ze Stripe przyciskiem „wróć”: identyfikatora Zamówienia nie da się zgadnąć (ADR 0004).
+        api.MapPost("/orders/{id:guid}/cancel-payment", async Task<Results<NoContent, ProblemHttpResult>> (
+                Guid id,
+                CheckoutService checkout,
+                CancellationToken cancellationToken) =>
+            {
+                try
+                {
+                    await checkout.CancelAsync(id, cancellationToken);
+                    return TypedResults.NoContent();
+                }
+                catch (PaymentGatewayNotConfiguredException)
+                {
+                    return TypedResults.Problem(
+                        "Płatności nie są jeszcze skonfigurowane.",
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+                }
+            })
+            .WithName("CancelPayment");
 
         // Stripe podpisuje surową treść żądania, więc czytamy ją jako tekst, zanim cokolwiek ją sparsuje.
         api.MapPost("/payments/stripe/webhook", async Task<Results<Ok, BadRequest, ProblemHttpResult>> (
@@ -115,14 +134,15 @@ public sealed record CheckoutRequest(
     IReadOnlyList<CartItemRequest?>? Items,
     string? Email,
     string? Name,
-    IReadOnlyList<string?>? AcceptedConsents);
+    IReadOnlyList<string?>? AcceptedConsents,
+    bool? CreateAccount = null);
 
 /// <summary>Zamówienie czeka na płatność; przeglądarka przechodzi na <see cref="RedirectUrl"/> (Stripe Checkout).</summary>
 public sealed record CheckoutStartedResponse(Guid OrderId, Uri RedirectUrl);
 
 /// <summary>
-/// Podsumowanie Zamówienia na stronie z podziękowaniem (adres powrotu ze Stripe), widoczne tylko dla Konta,
-/// które je złożyło.
+/// Podsumowanie Zamówienia na stronie z podziękowaniem (adres powrotu ze Stripe) dla każdego z linkiem, więc bez
+/// danych osobowych: bez imienia, e-maila, odpowiedzi z formularzy i linków Meet.
 /// </summary>
 public sealed record OrderSummaryResponse(Guid Id, OrderStatus Status, IReadOnlyList<OrderLineResponse> Items, int Total)
 {

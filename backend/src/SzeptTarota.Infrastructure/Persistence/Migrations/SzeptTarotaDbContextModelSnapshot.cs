@@ -83,6 +83,9 @@ namespace SzeptTarota.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("AccountCreated")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid?>("AccountId")
                         .HasColumnType("uuid");
 
@@ -192,9 +195,6 @@ namespace SzeptTarota.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("SzeptTarota.Domain.Orders.OrderAppointment", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("AccountId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("CalendarEventId")

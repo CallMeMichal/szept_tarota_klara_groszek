@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { loginPathFor, useSession } from '../account.ts'
+import { useSession } from '../account.ts'
 import arrowPrimary from '../assets/home/arrow-up-right-primary.svg'
 import {
-  cartPath,
+  cancelPayment,
+  interruptedOrderParam,
   interruptedPaymentParam,
   maxQuantity,
   quantityOf,
@@ -39,17 +40,19 @@ export function CartPage() {
   // Zwiększenie wymusza ponowne sprawdzenie Koszyka, gdy serwer odrzuci płatność, bo coś się zmieniło.
   const [revision, setRevision] = useState(0)
   const [cartChanged, setCartChanged] = useState(false)
-  const validation = useCartValidation(items, revision)
+  const [searchParams] = useSearchParams()
+  const paymentInterrupted = searchParams.get(interruptedPaymentParam) === 'przerwana'
+  const interruptedOrder = paymentInterrupted ? searchParams.get(interruptedOrderParam) : null
+  // Koszyk sprawdzamy dopiero po zakończeniu przerwanej płatności, bo jej Terminy są do tego czasu zajęte.
+  const validation = useCartValidation(items, revision, usePaymentCancelled(interruptedOrder))
   const checkout = useCheckout(() => {
     setCartChanged(true)
     setRevision((r) => r + 1)
   })
-  const [searchParams] = useSearchParams()
-  const paymentInterrupted = searchParams.get(interruptedPaymentParam) === 'przerwana'
   const cart = validation.status === 'ok' ? validation.data : null
-  // Płacić można tylko po zalogowaniu; Koszyk w przeglądarce czeka na powrót z logowania.
+  // Płacić można bez logowania (ADR 0004); zalogowanemu wpisujemy z góry adres Konta.
   const session = useSession()
-  const loggedIn = session.status === 'logged-in'
+  const sessionKnown = session.status !== 'loading'
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
@@ -94,22 +97,22 @@ export function CartPage() {
             <h2 className="cart-panel__title">Produkty</h2>
             {cart ? <CheckedCartLines cart={cart} items={items} /> : <UncheckedCartLines items={items} />}
           </div>
-          {cart?.isValid && session.status === 'logged-in' && (
+          {cart?.isValid && sessionKnown && (
             <CheckoutForm
               id={checkoutFormId}
               consents={cart.requiredConsents}
-              email={session.email}
+              email={session.status === 'logged-in' ? session.email : ''}
+              offerAccount={session.status !== 'logged-in'}
               status={checkout.status}
               onSubmit={(event) => void checkout.submit(event, cart, items)}
             />
           )}
-          {cart?.isValid && (session.status === 'logged-out' || session.status === 'unavailable') && <LoginPrompt />}
         </div>
 
         <CartSummary
           count={items.reduce((sum, item) => sum + quantityOf(item), 0)}
           total={cart ? cart.total : items.reduce((sum, item) => sum + item.price * quantityOf(item), 0)}
-          payable={(cart?.isValid ?? false) && loggedIn}
+          payable={(cart?.isValid ?? false) && sessionKnown}
           sending={checkout.status.state === 'sending'}
           message={
             validation.status === 'loading'
@@ -118,9 +121,7 @@ export function CartPage() {
                 ? 'Nie udało się sprawdzić aktualnych cen. Pokazuję ceny z chwili dodania; sprawdzę je ponownie przed płatnością.'
                 : !validation.data.isValid
                   ? 'Popraw albo usuń z Koszyka pozycje z błędami, żeby przejść do płatności.'
-                  : !loggedIn && session.status !== 'loading'
-                    ? 'Zaloguj się, żeby przejść do płatności.'
-                    : checkoutStatusMessage(checkout.status)
+                  : checkoutStatusMessage(checkout.status)
           }
         />
       </div>
@@ -128,24 +129,29 @@ export function CartPage() {
   )
 }
 
-/** Zaproszenie do logowania w miejscu danych do zamówienia; po zalogowaniu Klient wraca do Koszyka. */
-function LoginPrompt() {
-  return (
-    <div className="checkout-form" aria-labelledby="login-prompt-title">
-      <h2 id="login-prompt-title">Zaloguj się, żeby zapłacić</h2>
-      <p className="checkout-form__note">
-        Zamówienia trafiają na Twoje Konto. Wystarczy adres email: wyślę na niego kod logowania, bez hasła. Koszyk
-        poczeka.
-      </p>
-      <Link className="button button--primary" to={loginPathFor(cartPath)}>
-        Zaloguj się
-      </Link>
-    </div>
-  )
+/**
+ * Po powrocie ze Stripe przyciskiem „wróć” kończy tamtą płatność, żeby jej Terminy od razu wróciły do puli;
+ * `true`, gdy już skończona albo nie było czego kończyć.
+ */
+function usePaymentCancelled(orderId: string | null): boolean {
+  const [cancelled, setCancelled] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (orderId === null) return
+    let active = true
+    void cancelPayment(orderId).then(() => {
+      if (active) setCancelled(orderId)
+    })
+    return () => {
+      active = false
+    }
+  }, [orderId])
+
+  return orderId === null || cancelled === orderId
 }
 
-/** Sprawdza Koszyk na serwerze przy każdej jego zmianie i przy każdej zmianie `revision`. */
-function useCartValidation(items: CartItem[], revision: number): Validation {
+/** Sprawdza Koszyk na serwerze przy każdej jego zmianie i przy każdej zmianie `revision`, gdy `ready`. */
+function useCartValidation(items: CartItem[], revision: number, ready: boolean): Validation {
   const [state, setState] = useState<{ items: CartItem[]; revision: number; result: Validation }>({
     items,
     revision,
@@ -153,7 +159,7 @@ function useCartValidation(items: CartItem[], revision: number): Validation {
   })
 
   useEffect(() => {
-    if (items.length === 0) return
+    if (items.length === 0 || !ready) return
     const controller = new AbortController()
     validateCart(items, controller.signal)
       .then((data): Validation => ({ status: 'ok', data }))
@@ -162,10 +168,10 @@ function useCartValidation(items: CartItem[], revision: number): Validation {
         if (!controller.signal.aborted) setState({ items, revision, result })
       })
     return () => controller.abort()
-  }, [items, revision])
+  }, [items, revision, ready])
 
   // Wynik dla poprzedniej zawartości Koszyka mógłby pokazać usuniętą pozycję.
-  return state.items === items && state.revision === revision ? state.result : { status: 'loading' }
+  return ready && state.items === items && state.revision === revision ? state.result : { status: 'loading' }
 }
 
 type CartSummaryProps = {

@@ -30,7 +30,7 @@ public sealed class AvailabilityService(
     /// w czasie polskim; <c>null</c>, gdy kalendarza Klary nie da się teraz odczytać.
     /// </summary>
     public async Task<IReadOnlyList<Appointment>?> FreeAsync(
-        Product product, DateOnly from, DateOnly to, Guid? accountId, CancellationToken cancellationToken)
+        Product product, DateOnly from, DateOnly to, CancellationToken cancellationToken)
     {
         // Dni przycinamy do horyzontu, zanim cokolwiek z nich policzymy, żeby skrajne daty nie przepełniły dat.
         var now = time.GetUtcNow();
@@ -43,7 +43,7 @@ public sealed class AvailabilityService(
 
         var start = MidnightInWarsaw(from < today ? today : from);
         var end = MidnightInWarsaw((to > lastDay ? lastDay : to).AddDays(1));
-        if (await LoadAsync(start, end, accountId, cancellationToken) is not { } availability)
+        if (await LoadAsync(start, end, cancellationToken) is not { } availability)
         {
             return null;
         }
@@ -54,10 +54,8 @@ public sealed class AvailabilityService(
     /// <summary>
     /// Dostępność Klary dla Terminów zaczynających się od <paramref name="from"/> do <paramref name="to"/>; <c>null</c>,
     /// gdy strona nie jest połączona z kalendarzem, Klara nie wybrała Kalendarza Sesji albo Google nie odpowiada.
-    /// Własne nieopłacone blokady Konta <paramref name="accountId"/> nie zajmują mu Terminów: po przerwanej płatności
-    /// może zapłacić za nie ponownie.
     /// </summary>
-    public async Task<Availability?> LoadAsync(DateTimeOffset from, DateTimeOffset to, Guid? accountId, CancellationToken cancellationToken)
+    public async Task<Availability?> LoadAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
     {
         if (await connections.FindAsync(cancellationToken) is not { RefreshToken: { } refreshToken, SessionCalendarId: { } sessionCalendarId })
         {
@@ -77,7 +75,7 @@ public sealed class AvailabilityService(
         }
 
         var now = time.GetUtcNow();
-        var taken = await appointments.ListTakenAsync(from - Margin, to + Margin, now, accountId, cancellationToken);
+        var taken = await appointments.ListTakenAsync(from - Margin, to + Margin, now, cancellationToken);
         return new Availability(
             // Każde wydarzenie w Kalendarzu Sesji to blok „Dostępna”, także oznaczone w Google jako wolne.
             blocks.Select(e => new Appointment(e.Start, e.End)),

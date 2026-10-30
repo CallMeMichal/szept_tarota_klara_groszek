@@ -38,6 +38,7 @@ export function useCheckout(onCartChanged: () => void) {
       email: text('email'),
       name: text('name'),
       acceptedConsents: data.getAll('consent').map(String),
+      createAccount: data.get('createAccount') === 'on',
     })
 
     switch (result.status) {
@@ -53,7 +54,7 @@ export function useCheckout(onCartChanged: () => void) {
         setStatus({ state: 'invalid', errors: result.errors })
         return
       case 'logged-out':
-        // Koszyk zamiast formularza pokaże wtedy zaproszenie do logowania.
+        // Konta z sesji już nie ma; po odświeżeniu sesji Klient zapłaci jak niezalogowany.
         setStatus({ state: 'idle' })
         sessionExpired()
         return

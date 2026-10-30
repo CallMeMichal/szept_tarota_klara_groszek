@@ -6,14 +6,16 @@ type CheckoutFormProps = {
   /** Identyfikator formularza; przycisk „Zapłać” w podsumowaniu wskazuje go atrybutem `form`. */
   id: string
   consents: Consent[]
-  /** Adres Konta zalogowanego Klienta, wpisany z góry w pole e-mail; Klient może go zmienić. */
+  /** Adres Konta zalogowanego Klienta, wpisany z góry w pole e-mail (Klient może go zmienić); pusty bez logowania. */
   email: string
+  /** Niezalogowany Klient może poprosić o założenie Konta (ADR 0004). */
+  offerAccount: boolean
   status: CheckoutStatus
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }
 
 /** Imię i nazwisko, e-mail i wymagane zgody. Przycisk wysyłki jest w podsumowaniu Koszyka. */
-export function CheckoutForm({ id, consents, email, status, onSubmit }: CheckoutFormProps) {
+export function CheckoutForm({ id, consents, email, offerAccount, status, onSubmit }: CheckoutFormProps) {
   const errors = status.state === 'invalid' ? status.errors : {}
 
   return (
@@ -26,6 +28,12 @@ export function CheckoutForm({ id, consents, email, status, onSubmit }: Checkout
       <Field label="Email" name="email" error={errors.email}>
         <input name="email" type="email" autoComplete="email" required maxLength={200} defaultValue={email} />
       </Field>
+      {offerAccount && (
+        <label className="checkout-form__consent">
+          <input type="checkbox" name="createAccount" />
+          <span>Chcę założyć Konto</span>
+        </label>
+      )}
 
       <fieldset className="checkout-form__group">
         <legend>Zgody</legend>

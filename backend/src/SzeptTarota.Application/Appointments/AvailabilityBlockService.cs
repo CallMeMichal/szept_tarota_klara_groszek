@@ -46,7 +46,7 @@ public sealed class AvailabilityBlockService(
         {
             var blocks = await google.ListEventsAsync(refreshToken, calendarId, start, end, cancellationToken);
             var mainCalendar = await google.ListEventsAsync(refreshToken, GoogleCalendarIds.Primary, start, end, cancellationToken);
-            var taken = await appointments.ListTakenAsync(start, end, now, exceptAccountId: null, cancellationToken);
+            var taken = await appointments.ListTakenAsync(start, end, now, cancellationToken);
             return new AvailabilityResult<AvailabilityWeek>.Ok(new AvailabilityWeek(
                 blocks.OrderBy(e => e.Start).Select(e => new AvailabilityBlock(e.Id, InWarsaw(e.Start), InWarsaw(e.End))).ToList(),
                 mainCalendar.Where(e => e.Busy).Select(e => new Appointment(e.Start, e.End)).Concat(taken)

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { loginPathFor, sessionExpired } from '../account.ts'
-import { cartPath, clearCart, orderPath, type OrderSummary } from '../cart.ts'
+import { cartPath, clearCart, type OrderSummary } from '../cart.ts'
 import { formatPrice, kindLabels, productPath } from '../catalog.ts'
 import { homeSectionPath, homeSections } from '../homeSections.ts'
 import { usePageTitle } from '../usePageTitle.ts'
@@ -14,8 +13,6 @@ type State =
   | { status: 'loading' }
   | { status: 'ok'; order: OrderSummary; polls: number }
   | { status: 'not-found' }
-  /** Zamówienie widzi tylko zalogowane Konto, które je złożyło. */
-  | { status: 'logged-out' }
   | { status: 'error' }
 
 /**
@@ -45,21 +42,12 @@ export function OrderPage() {
         <>
           <p className="eyebrow">Zamówienie</p>
           <h1 id="order-title">
-            {state.status === 'loading'
-              ? 'Sprawdzam Zamówienie…'
-              : state.status === 'logged-out'
-                ? 'Zaloguj się, żeby zobaczyć Zamówienie'
-                : 'Nie znalazłam tego Zamówienia'}
+            {state.status === 'loading' ? 'Sprawdzam Zamówienie…' : 'Nie znalazłam tego Zamówienia'}
           </h1>
           {state.status === 'error' && (
             <p className="section__lead">
               Nie udało się sprawdzić Zamówienia. Jeśli zapłaciłaś lub zapłaciłeś, potwierdzenie przyjdzie mailem.
             </p>
-          )}
-          {state.status === 'logged-out' && (
-            <Link className="button button--primary" to={loginPathFor(orderPath(id))}>
-              Zaloguj się
-            </Link>
           )}
           {(state.status === 'not-found' || state.status === 'error') && (
             <Link className="button button--primary" to={homeSectionPath(homeSections.offer)}>
@@ -148,10 +136,6 @@ function useOrder(id: string): State {
         .then(async (response): Promise<State> => {
           const isJson = response.headers.get('Content-Type')?.includes('json')
           if (response.status === 404) return { status: 'not-found' }
-          if (response.status === 401) {
-            sessionExpired()
-            return { status: 'logged-out' }
-          }
           if (!response.ok || !isJson) return { status: 'error' }
           return { status: 'ok', order: (await response.json()) as OrderSummary, polls }
         })

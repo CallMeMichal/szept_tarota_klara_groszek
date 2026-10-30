@@ -8,11 +8,10 @@ namespace SzeptTarota.Domain.Orders;
 public sealed class OrderAppointment
 {
     public OrderAppointment(
-        Guid id, Guid orderId, Guid? accountId, int lineIndex, DateTimeOffset start, DateTimeOffset end, DateTimeOffset? heldUntil)
+        Guid id, Guid orderId, int lineIndex, DateTimeOffset start, DateTimeOffset end, DateTimeOffset? heldUntil)
     {
         Id = id;
         OrderId = orderId;
-        AccountId = accountId;
         LineIndex = lineIndex;
         Start = start;
         End = end;
@@ -28,9 +27,6 @@ public sealed class OrderAppointment
     public Guid Id { get; private set; }
 
     public Guid OrderId { get; private set; }
-
-    /// <summary>Konto Klienta; jego własne blokady nie zajmują mu Terminów, gdy wraca z przerwanej płatności.</summary>
-    public Guid? AccountId { get; private set; }
 
     /// <summary>Numer pozycji w <see cref="Order.Lines"/>, od zera.</summary>
     public int LineIndex { get; private set; }

@@ -1,6 +1,4 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
-using SzeptTarota.Api.Accounts;
 using SzeptTarota.Application.Appointments;
 using SzeptTarota.Application.Catalog;
 using SzeptTarota.Domain.Catalog;
@@ -28,7 +26,6 @@ public static class ProductEndpoints
                 string slug,
                 string? from,
                 string? to,
-                ClaimsPrincipal user,
                 IProductCatalog catalog,
                 AvailabilityService availability,
                 CancellationToken cancellationToken) =>
@@ -43,7 +40,7 @@ public static class ProductEndpoints
                     return TypedResults.ValidationProblem(errors);
                 }
 
-                return await availability.FreeAsync(product, days.From, days.To, user.OptionalAccountId(), cancellationToken) is { } free
+                return await availability.FreeAsync(product, days.From, days.To, cancellationToken) is { } free
                     ? TypedResults.Ok(new FreeAppointmentsResponse(product.DurationMinutes!.Value, free))
                     : TypedResults.Problem(
                         "Kalendarz Klary jest chwilowo niedostępny. Spróbuj ponownie później.",

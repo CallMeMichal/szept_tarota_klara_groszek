@@ -11,6 +11,9 @@ public sealed class EfAccountStore(SzeptTarotaDbContext db) : IAccountStore
     public Task<Account?> FindAsync(Guid id, CancellationToken cancellationToken) =>
         db.Accounts.AsNoTracking().SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
 
+    public Task<Account?> FindByEmailAsync(string email, CancellationToken cancellationToken) =>
+        db.Accounts.AsNoTracking().SingleOrDefaultAsync(a => a.Email == email, cancellationToken);
+
     public async Task<Account> GetOrCreateAsync(string email, DateTimeOffset now, CancellationToken cancellationToken)
     {
         // ON CONFLICT zamiast sprawdzenia i wstawienia: dwa równoczesne pierwsze logowania dostają to samo Konto.

@@ -57,7 +57,7 @@ public class EbookPurchaseTests : IAsyncLifetime
             [("Tarot dla początkujących", 4900), ("Rytuały Księżyca", 3900)],
             request.Lines.Select(l => (l.Name, l.Price)));
         Assert.Equal(new Uri($"{ApiFactory.SiteUrl}/zamowienie/{started.OrderId}"), request.SuccessUrl);
-        Assert.Equal(new Uri($"{ApiFactory.SiteUrl}/koszyk?platnosc=przerwana"), request.CancelUrl);
+        Assert.Equal(new Uri($"{ApiFactory.SiteUrl}/koszyk?platnosc=przerwana&zamowienie={started.OrderId}"), request.CancelUrl);
 
         var order = await GetOrder(started.OrderId);
         Assert.Equal("pendingPayment", order.Status);

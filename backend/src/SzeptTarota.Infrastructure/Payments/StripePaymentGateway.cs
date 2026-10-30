@@ -65,6 +65,34 @@ public sealed class StripePaymentGateway(IOptions<StripeOptions> options, TimePr
         return new CheckoutSession(session.Id, new Uri(session.Url));
     }
 
+    public async Task<bool> ExpireCheckoutAsync(string sessionId, CancellationToken cancellationToken)
+    {
+        var secretKey = options.Value.SecretKey;
+        if (string.IsNullOrWhiteSpace(secretKey))
+        {
+            throw new PaymentGatewayNotConfiguredException();
+        }
+
+        // Wygasić można tylko otwartą sesję; już wygasła też nie da się zapłacić, a zapłaconej nie ruszamy.
+        var sessions = new SessionService(new StripeClient(secretKey));
+        var session = await sessions.GetAsync(sessionId, cancellationToken: cancellationToken);
+        if (session.Status != "open")
+        {
+            return session.Status == "expired";
+        }
+
+        try
+        {
+            await sessions.ExpireAsync(sessionId, cancellationToken: cancellationToken);
+            return true;
+        }
+        catch (StripeException)
+        {
+            // Sesja zamknęła się między sprawdzeniem a wygaszeniem (np. Klient jednak zapłacił): o tym zdecyduje webhook.
+            return false;
+        }
+    }
+
     public PaymentEvent? ReadWebhook(string payload, string? signature)
     {
         var webhookSecret = options.Value.WebhookSecret;

@@ -15,6 +15,9 @@ public sealed class FakePaymentGateway : IPaymentGateway
 
     public IReadOnlyList<(PaymentSessionRequest Request, CheckoutSession Session)> Sessions => _sessions;
 
+    /// <summary>Sesje, które strona wygasiła, zanim Klient zapłacił.</summary>
+    public List<string> ExpiredSessions { get; } = [];
+
     /// <summary>Udaje brak kluczy Stripe w konfiguracji.</summary>
     public bool Configured { get; set; } = true;
 
@@ -33,6 +36,21 @@ public sealed class FakePaymentGateway : IPaymentGateway
             _sessions.Add((request, session));
             return Task.FromResult(session);
         }
+    }
+
+    public Task<bool> ExpireCheckoutAsync(string sessionId, CancellationToken cancellationToken)
+    {
+        if (!Configured)
+        {
+            throw new PaymentGatewayNotConfiguredException();
+        }
+
+        lock (_sessions)
+        {
+            ExpiredSessions.Add(sessionId);
+        }
+
+        return Task.FromResult(true);
     }
 
     public PaymentEvent? ReadWebhook(string payload, string? signature)
@@ -56,6 +74,7 @@ public sealed class FakePaymentGateway : IPaymentGateway
     public void Reset()
     {
         _sessions.Clear();
+        ExpiredSessions.Clear();
         Configured = true;
     }
 

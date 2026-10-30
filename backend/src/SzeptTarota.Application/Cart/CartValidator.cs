@@ -17,11 +17,10 @@ public sealed class CartValidator(IProductCatalog catalog, AvailabilityService a
 
     private static readonly IReadOnlyDictionary<string, string> NoFormErrors = new Dictionary<string, string>();
 
-    /// <param name="accountId">Zalogowany Klient; jego własne blokady z przerwanej płatności nie zajmują mu Terminów.</param>
-    public async Task<CartValidation> ValidateAsync(IReadOnlyList<CartItem> items, Guid? accountId, CancellationToken cancellationToken)
+    public async Task<CartValidation> ValidateAsync(IReadOnlyList<CartItem> items, CancellationToken cancellationToken)
     {
         var lines = new List<CartLine>(items.Count);
-        var availability = await LoadAvailabilityAsync(items, accountId, cancellationToken);
+        var availability = await LoadAvailabilityAsync(items, cancellationToken);
 
         foreach (var item in items)
         {
@@ -89,7 +88,7 @@ public sealed class CartValidator(IProductCatalog catalog, AvailabilityService a
     }
 
     /// <summary>Dostępność Klary w okresie wybranych Terminów; <c>null</c>, gdy nie ma Terminów albo kalendarza nie da się odczytać.</summary>
-    private async Task<Availability?> LoadAvailabilityAsync(IReadOnlyList<CartItem> items, Guid? accountId, CancellationToken cancellationToken)
+    private async Task<Availability?> LoadAvailabilityAsync(IReadOnlyList<CartItem> items, CancellationToken cancellationToken)
     {
         var starts = items
             .Where(i => catalog.FindBySlug(i.Slug) is { RequiresAppointment: true })
@@ -99,7 +98,7 @@ public sealed class CartValidator(IProductCatalog catalog, AvailabilityService a
             .ToList();
         return starts.Count == 0
             ? null
-            : await availabilityService.LoadAsync(starts.Min(), starts.Max().AddTicks(1), accountId, cancellationToken);
+            : await availabilityService.LoadAsync(starts.Min(), starts.Max().AddTicks(1), cancellationToken);
     }
 }
 

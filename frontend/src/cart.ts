@@ -206,6 +206,8 @@ export type CheckoutForm = {
   /** Imię i nazwisko Klienta. */
   name: string
   acceptedConsents: string[]
+  /** Niezalogowany Klient prosi o założenie Konta na podany adres. */
+  createAccount: boolean
 }
 
 export type CheckoutResult =
@@ -262,3 +264,27 @@ export const orderPath = (id: string) => `/zamowienie/${id}`
 
 /** Adres powrotu po przerwanej płatności to Koszyk z tym parametrem. */
 export const interruptedPaymentParam = 'platnosc'
+
+/** Przy przerwanej płatności adres powrotu ze Stripe niesie też numer jej Zamówienia. */
+export const interruptedOrderParam = 'zamowienie'
+
+/**
+ * Kończy płatność, z której Klient wrócił ze Stripe przyciskiem „wróć”: sesja Stripe wygasa, a Terminy
+ * Zamówienia od razu wracają do puli. Błąd nie przeszkadza: blokada i tak wygaśnie po 15 minutach.
+ */
+export function cancelPayment(orderId: string): Promise<void> {
+  // Jedno zapytanie na Zamówienie, nawet gdy Koszyk pyta o to kilka razy: drugie wróciłoby od razu, zanim
+  // pierwsze zwolni Terminy, i Koszyk pokazałby je jako zajęte.
+  let cancellation = cancellations.get(orderId)
+  if (!cancellation) {
+    cancellation = fetch(`/api/orders/${encodeURIComponent(orderId)}/cancel-payment`, { method: 'POST' }).then(
+      () => undefined,
+      // Blokada wygaśnie sama.
+      () => undefined,
+    )
+    cancellations.set(orderId, cancellation)
+  }
+  return cancellation
+}
+
+const cancellations = new Map<string, Promise<void>>()

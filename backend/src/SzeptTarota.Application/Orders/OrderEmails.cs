@@ -20,7 +20,8 @@ public static class OrderEmails
     /// Potwierdzenie dla Klienta: Terminy z linkami Meet, podsumowanie Zamówienia, a w załącznikach Ebooki i każdy
     /// Termin jako plik kalendarza do zapisania jednym kliknięciem.
     /// </summary>
-    public static EmailMessage ToKlient(Order order, IReadOnlyList<EmailAttachment> ebooks, IReadOnlyList<OrderAppointment> appointments)
+    public static EmailMessage ToKlient(
+        Order order, IReadOnlyList<EmailAttachment> ebooks, IReadOnlyList<OrderAppointment> appointments, string siteUrl)
     {
         var firstName = order.CustomerName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
         var body = new StringBuilder()
@@ -30,6 +31,7 @@ public static class OrderEmails
                 (firstName is null ? "" : $"Cześć {HtmlEncode(firstName)}, ") + "Twoje Zamówienie jest opłacone."
                 + (ebooks.Count > 0 ? " Zakupione Ebooki znajdziesz w załącznikach tego maila." : "")))
             .Append(TerminPanels(order, appointments, forKlara: false))
+            .Append(order.AccountCreated ? AccountCreatedNote(siteUrl) : "")
             .Append(SectionHeading("Twoje Zamówienie"))
             .Append(LinesTable(order, forKlara: false))
             .Append(Paragraph(
@@ -45,6 +47,12 @@ public static class OrderEmails
             $"zamowienie-{order.Id}-klient",
             Images(order));
     }
+
+    /// <summary>Konto założone przy tym Zamówieniu na prośbę Klienta: jak się do niego dostać.</summary>
+    private static string AccountCreatedNote(string siteUrl) =>
+        Paragraph(
+            "Założyłam Ci Konto na ten adres. Zaloguj się kodem z maila, żeby widzieć swoje Zamówienia i pobierać Ebooki: "
+            + Link($"{siteUrl.TrimEnd('/')}/logowanie", "zaloguj się"));
 
     /// <summary>Grafiki układu i okładki Produktów z Zamówienia, każda raz.</summary>
     private static IReadOnlyList<EmailImage> Images(Order order) =>
