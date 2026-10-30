@@ -3524,6 +3524,20 @@ main {
   color: var(--cream);
 }
 
+.my-ebook {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.my-ebook a:not(.button) {
+  color: var(--cream);
+  font-family: var(--serif);
+  font-size: 1.25rem;
+}
+
 /* Zamówienie (powrót ze Stripe) */
 
 .order-page {

@@ -73,7 +73,7 @@ public sealed class PaymentWebhookHandler(
         {
             var fileName = Path.GetFileName(line.EbookFileKey!);
             var content = await ebooks.ReadAsync(line.EbookFileKey!, cancellationToken);
-            attachments.Add(new EmailAttachment(fileName, ContentTypeOf(fileName), content));
+            attachments.Add(new EmailAttachment(fileName, EbookFile.ContentTypeOf(fileName), content));
         }
 
         await emails.SendAsync(OrderEmails.ToKlient(order, attachments, booked, shopOptions.Value.SiteUrl), cancellationToken);
@@ -124,9 +124,4 @@ public sealed class PaymentWebhookHandler(
     /// <summary>Opis wydarzenia: Klient i odpowiedzi z formularza Usługi, jako zwykły tekst.</summary>
     private static string EventDescription(Order order, OrderLine line) =>
         string.Join('\n', line.FormAnswers.Select(a => $"{a.Label}: {a.Value}").Prepend($"Klient: {order.CustomerName}, {order.Email}"));
-
-    private static string ContentTypeOf(string fileName) =>
-        Path.GetExtension(fileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase)
-            ? "application/pdf"
-            : "application/octet-stream";
 }

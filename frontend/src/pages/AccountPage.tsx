@@ -1,12 +1,22 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router'
-import { accountPath, formatPaidAt, loginPathFor, logOut, panelPath, useSession, type MyOrder } from '../account.ts'
+import {
+  accountPath,
+  ebookDownloadUrl,
+  formatPaidAt,
+  loginPathFor,
+  logOut,
+  panelPath,
+  useSession,
+  type MyEbook,
+  type MyOrder,
+} from '../account.ts'
 import { formatPrice, productPath } from '../catalog.ts'
 import { homeSectionPath, homeSections } from '../homeSections.ts'
 import { useApi } from '../useApi.ts'
 import { usePageTitle } from '../usePageTitle.ts'
 
-/** Konto zalogowanego Klienta: adres, wylogowanie i Moje Zamówienia. */
+/** Konto zalogowanego Klienta: adres, wylogowanie, Moje Ebooki i Moje Zamówienia. */
 export function AccountPage() {
   usePageTitle('Konto')
   const session = useSession()
@@ -27,6 +37,7 @@ export function AccountPage() {
         <>
           <p className="section__lead">Zalogowano na adres {session.email}.</p>
           <LogOutButton />
+          <MyEbooks />
           <MyOrders />
         </>
       )}
@@ -61,6 +72,33 @@ function LogOutButton() {
         </p>
       )}
     </>
+  )
+}
+
+function MyEbooks() {
+  const ebooks = useApi<MyEbook[]>('/api/account/ebooks')
+
+  return (
+    <div className="my-orders">
+      <h2>Moje Ebooki</h2>
+      {ebooks.status === 'loading' && <p>Wczytuję Ebooki…</p>}
+      {(ebooks.status === 'error' || ebooks.status === 'not-found') && (
+        <p>Nie udało się wczytać Ebooków. Spróbuj ponownie za chwilę.</p>
+      )}
+      {ebooks.status === 'ok' && ebooks.data.length === 0 && <p>Nie masz jeszcze kupionych Ebooków.</p>}
+      {ebooks.status === 'ok' && ebooks.data.length > 0 && (
+        <ul className="my-orders__list">
+          {ebooks.data.map((ebook) => (
+            <li key={ebook.slug} className="my-order my-ebook">
+              <Link to={productPath(ebook.slug)}>{ebook.name}</Link>
+              <a className="button button--ghost" href={ebookDownloadUrl(ebook.slug)} download>
+                Pobierz
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 

@@ -162,3 +162,11 @@ export type MyOrder = {
   items: { slug: string; name: string; kind: ProductKind; quantity: number; price: number }[]
   total: number
 }
+
+// GET /api/account/ebooks
+
+/** Kupiony Ebook; nazwa z chwili zakupu. */
+export type MyEbook = { slug: string; name: string }
+
+/** Plik kupionego Ebooka; pobieranie bez limitu, tylko po zalogowaniu na Konto, które go kupiło. */
+export const ebookDownloadUrl = (slug: string) => `/api/account/ebooks/${encodeURIComponent(slug)}`

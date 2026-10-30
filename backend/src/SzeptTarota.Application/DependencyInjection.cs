@@ -3,6 +3,7 @@ using SzeptTarota.Application.Accounts;
 using SzeptTarota.Application.Appointments;
 using SzeptTarota.Application.Calendar;
 using SzeptTarota.Application.Cart;
+using SzeptTarota.Application.Ebooks;
 using SzeptTarota.Application.Orders;
 
 namespace SzeptTarota.Application;
@@ -18,6 +19,7 @@ public static class DependencyInjection
         services.AddScoped<CalendarConnectionService>();
         services.AddScoped<AvailabilityService>();
         services.AddScoped<AvailabilityBlockService>();
+        services.AddScoped<MyEbooksService>();
 
         return services;
     }

@@ -11,6 +11,7 @@ using SzeptTarota.Application;
 using SzeptTarota.Api.Orders;
 using SzeptTarota.Api.Panel;
 using SzeptTarota.Application.Accounts;
+using SzeptTarota.Application.Ebooks;
 using SzeptTarota.Application.Email;
 using SzeptTarota.Application.Orders;
 using SzeptTarota.Domain.Accounts;
@@ -268,6 +269,23 @@ public static class AccountEndpoints
             .RequireAuthorization()
             .WithName("GetMyOrders");
 
+        account.MapGet("/ebooks", async (ClaimsPrincipal user, MyEbooksService ebooks, CancellationToken cancellationToken) =>
+                TypedResults.Ok((await ebooks.ListAsync(user.AccountId(), cancellationToken)).Select(MyEbookResponse.From).ToList()))
+            .RequireAuthorization()
+            .WithName("GetMyEbooks");
+
+        // Bez limitu pobrań; Ebook, którego Konto nie kupiło, wygląda jak nieistniejący.
+        account.MapGet("/ebooks/{slug}", async Task<Results<FileContentHttpResult, NotFound>> (
+                string slug,
+                ClaimsPrincipal user,
+                MyEbooksService ebooks,
+                CancellationToken cancellationToken) =>
+                await ebooks.DownloadAsync(user.AccountId(), slug, cancellationToken) is { } file
+                    ? TypedResults.File(file.Content, file.ContentType, file.FileName)
+                    : TypedResults.NotFound())
+            .RequireAuthorization()
+            .WithName("DownloadMyEbook");
+
         return api;
     }
 
@@ -324,4 +342,10 @@ public sealed record MyOrderResponse(Guid Id, DateTimeOffset PaidAt, IReadOnlyLi
         order.PaidAt!.Value,
         order.Lines.Select(OrderLineResponse.From).ToList(),
         order.Total);
+}
+
+/// <summary>Kupiony Ebook na liście „Moje Ebooki”; plik jest pod <c>/api/account/ebooks/{Slug}</c>.</summary>
+public sealed record MyEbookResponse(string Slug, string Name)
+{
+    public static MyEbookResponse From(OwnedEbook ebook) => new(ebook.Slug, ebook.Name);
 }
