@@ -738,6 +738,11 @@ main {
   transition:
     border-color 0.2s ease,
     transform 0.2s ease;
+
+  /* Na telefonie okładka mała z lewej, jak w mailu z Zamówieniem, żeby jedna karta nie zajmowała całego ekranu. */
+  @media (max-width: 640px) {
+    flex-direction: row;
+  }
 }
 
 .product-card:hover {
@@ -755,6 +760,14 @@ main {
   width: 100%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
+
+  @media (max-width: 640px) {
+    flex: none;
+    align-self: flex-start;
+    width: 6.5rem;
+    margin: 1rem 0 1rem 1rem;
+    border-radius: 0.6rem;
+  }
 }
 
 .product-card__body {
@@ -762,6 +775,11 @@ main {
   flex: 1;
   flex-direction: column;
   padding: 1.25rem 1.25rem 1.5rem;
+
+  @media (max-width: 640px) {
+    min-width: 0;
+    padding: 1rem;
+  }
 }
 
 .product-card h4 {
@@ -771,6 +789,10 @@ main {
   font-weight: 500;
   line-height: 1.15;
   color: var(--text-h);
+
+  @media (max-width: 640px) {
+    font-size: 1.3rem;
+  }
 }
 
 .product-card__kind {
